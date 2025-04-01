@@ -4,100 +4,105 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\CustomerController;
+use App\Http\Controllers\PasswordChangeController;
 use App\Http\Controllers\UserProfileController;
+
+/*
+|--------------------------------------------------------------------------
+| Rutas Públicas
+|--------------------------------------------------------------------------
+*/
 
 Route::get('/', function () {
     return view('welcome');
 });
 
-// LOGIN
-Route::get('/login', [AuthController::class, 'showLoginForm'])->name('login');
-Route::post('/login', [AuthController::class, 'store'])->name('login.store');
-Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
+/*
+|--------------------------------------------------------------------------
+| Autenticación
+|--------------------------------------------------------------------------
+*/
+Route::controller(AuthController::class)->group(function () {
+    // Login
+    Route::get('/login', 'showLoginForm')->name('login');
+    Route::post('/login', 'store')->name('login.store');
+    Route::post('/logout', 'logout')->name('logout');
 
-// OlVIDAR PASSWORD
-Route::get('/forgot-password', [AuthController::class, 'showForgotPasswordForm'])->name('password.request');
-Route::post('/forgot-password', [AuthController::class, 'sendResetLinkEmail'])->name('password.email');
+    // Recuperación de contraseña
+    Route::get('/forgot-password', 'showForgotPasswordForm')->name('password.request');
+    Route::post('/forgot-password', 'sendResetLinkEmail')->name('password.email');
+    Route::get('/reset-password/{token}', 'showResetPasswordForm')->name('password.reset');
+    Route::post('/reset-password', 'resetPassword')->name('password.update');
+});
 
-Route::get('/reset-password/{token}', [AuthController::class, 'showResetPasswordForm'])->name('password.reset');
-Route::post('/reset-password', [AuthController::class, 'resetPassword'])->name('password.update');
+/*
+|--------------------------------------------------------------------------
+| Rutas Protegidas (requieren autenticación)
+|--------------------------------------------------------------------------
+*/
+Route::middleware(['auth'])->group(function () {
+    // Cambio de contraseña
+    Route::controller(PasswordChangeController::class)->group(function () {
+        Route::get('/password/change', 'showChangeForm')->name('password.change');
+        Route::post('/password/change', 'changePassword')->name('password.change.store');
+    });
 
+    // Perfil de usuario
+    Route::controller(UserProfileController::class)->group(function () {
+        Route::get('/profile', 'edit')->name('profile.edit');
+        Route::put('/profile', 'update')->name('profile.update');
+    });
+});
 
+/*
+|--------------------------------------------------------------------------
+| Rutas para Administradores
+|--------------------------------------------------------------------------
+*/
 Route::middleware(['auth', 'role:admin'])->group(function () {
-
-
-    // Rutas para los paneles de control
+    // Dashboard
     Route::get('/admin', function () {
         return view('admin.dashboard');
     })->name('admin.dashboard');
 
-
-    // Rutas para Usuarios (User)
-    Route::prefix('users')->group(function () {
-        // Mostrar listado (con filtros)
-        Route::get('/', [UserController::class, 'index'])->name('users.index');
-
-        // Mostrar formulario de creación
-        Route::get('/create', [UserController::class, 'create'])->name('users.create');
-
-        // Guardar nuevo usuario (POST)
-        Route::post('/', [UserController::class, 'store'])->name('users.store');
-
-        // Mostrar detalles de un usuario
-        Route::get('/{id}', [UserController::class, 'show'])->name('users.show');
-
-        // Mostrar formulario de edición
-        Route::get('/{id}/editar', [UserController::class, 'edit'])->name('users.edit');
-
-        // Actualizar usuario (PUT/PATCH)
-        Route::put('/{id}', [UserController::class, 'update'])->name('users.update');
-
-        // Eliminar usuario (DELETE)
-        Route::delete('/{id}', [UserController::class, 'destroy'])->name('users.destroy');
+    // Gestión de usuarios
+    Route::prefix('users')->name('users.')->controller(UserController::class)->group(function () {
+        Route::get('/', 'index')->name('index');
+        Route::get('/create', 'create')->name('create');
+        Route::post('/', 'store')->name('store');
+        Route::get('/{id}', 'show')->name('show');
+        Route::get('/{id}/edit', 'edit')->name('edit');
+        Route::put('/{id}', 'update')->name('update');
+        Route::delete('/{id}', 'destroy')->name('destroy');
     });
 });
 
-
+/*
+|--------------------------------------------------------------------------
+| Rutas para Operadores y Administradores
+|--------------------------------------------------------------------------
+*/
 Route::middleware(['auth', 'role:admin,operator'])->group(function () {
-
-    // Rutas para el perfil de usuario
-    Route::get('/profile', [UserProfileController::class, 'edit'])
-        ->name('profile.edit');
-
-    Route::put('/profile', [UserProfileController::class, 'update'])
-        ->name('profile.update');
-
-
-    // Rutas para Clientes (Customer)
-    Route::prefix('customers')->group(function () {
-        // Mostrar listado (con filtros)
-        Route::get('/', [CustomerController::class, 'index'])->name('customers.index');
-
-        // Mostrar formulario de creación
-        Route::get('/create', [CustomerController::class, 'create'])->name('customers.create');
-
-        // Guardar nuevo cliente (POST)
-        Route::post('/', [CustomerController::class, 'store'])->name('customers.store');
-
-        // Mostrar detalles de un cliente
-        Route::get('/{NIT}', [CustomerController::class, 'show'])->name('customers.show');
-
-        // Mostrar formulario de edición
-        Route::get('/{NIT}/editar', [CustomerController::class, 'edit'])->name('customers.edit');
-
-        // Actualizar cliente (PUT/PATCH)
-        Route::put('/{NIT}', [CustomerController::class, 'update'])->name('customers.update');
-
-        // Eliminar cliente (DELETE)
-        Route::delete('/{NIT}', [CustomerController::class, 'destroy'])->name('customers.destroy');
+    // Gestión de clientes
+    Route::prefix('customers')->name('customers.')->controller(CustomerController::class)->group(function () {
+        Route::get('/', 'index')->name('index');
+        Route::get('/create', 'create')->name('create');
+        Route::post('/', 'store')->name('store');
+        Route::get('/{NIT}', 'show')->name('show');
+        Route::get('/{NIT}/edit', 'edit')->name('edit');
+        Route::put('/{NIT}', 'update')->name('update');
+        Route::delete('/{NIT}', 'destroy')->name('destroy');
     });
 });
 
+/*
+|--------------------------------------------------------------------------
+| Rutas para Operadores
+|--------------------------------------------------------------------------
+*/
 Route::middleware(['auth', 'role:operator'])->group(function () {
-    // Rutas para el panel de control del cliente
-
+    // Dashboard
     Route::get('/operator', function () {
         return view('operator.dashboard');
     })->name('operator.dashboard');
-
 });

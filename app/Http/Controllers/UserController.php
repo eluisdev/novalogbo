@@ -6,6 +6,7 @@ use App\Models\Role;
 use App\Models\User;
 use Illuminate\Support\Str;
 use Illuminate\Http\Request;
+use App\Mail\UserCredentials;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
 
@@ -31,41 +32,53 @@ class UserController extends Controller
 
     public function store(Request $request)
     {
+
         $request->validate([
-            'username' => 'required|unique:users',
             'name' => 'required',
             'surname' => 'required',
             'email' => 'required|email|unique:users',
-
-            // Si el Administrador genera el password
-            //'password' => 'required|min:6|confirmed',
             'role_id' => 'required|exists:roles,id',
         ], [
-            'username.required' => 'El nombre de usuario es obligatorio.',
-            'username.unique' => 'Este nombre de usuario ya está en uso.',
             'name.required' => 'El nombre es obligatorio.',
             'surname.required' => 'El apellido es obligatorio.',
             'email.required' => 'El correo electrónico es obligatorio.',
             'email.email' => 'El correo electrónico debe ser una dirección válida.',
             'email.unique' => 'Este correo electrónico ya está en uso.',
-
-            // Si el Administrador genera el password
-            //'password.required' => 'La contraseña es obligatoria.',
-            //'password.min' => 'La contraseña debe tener al menos 6 caracteres.',
-            //'password.confirmed' => 'Las contraseñas no coinciden.',
             'role_id.required' => 'El rol es obligatorio.',
             'role_id.exists' => 'El rol seleccionado no es válido.',
         ]);
 
-        // Generar contraseña aleatoria
-        $password = Str::random(10);
+        // Generar base del username (ej: "jperez")
+        $baseUsername = strtolower(
+            substr($request['name'], 0, 1) . // Primera letra del nombre
+                str_replace(' ', '', $request['surname']) // Apellido sin espacios
+        );
 
-        $data = $request->all();
-        $data['password'] = Hash::make($password); // Encriptar la contraseña
-        $user = User::create($data); // Crear el usuario
+        // Verificar si el username existe y agregar número
+        $username = $baseUsername;
+        $counter = 1;
+
+        while (User::where('username', $username)->exists()) {
+            $username = $baseUsername . $counter;
+            $counter++;
+        }
+
+        // Generar contraseña segura
+        $password = Str::random(10) . rand(0, 9) . '!';
+
+        // Crear usuario
+        $user = User::create([
+            'name' => $request['name'],
+            'surname' => $request['surname'],
+            'username' => $username,
+            'email' => $request['email'],
+            'password' => Hash::make($password),
+            'force_password_change' => true,
+            'role_id' => $request['role_id']
+        ]);
 
         // Enviar credenciales por correo
-        Mail::to($user->email)->send(new NewUserCredentialsMail($user, $password));
+        Mail::to($user->email)->send(new UserCredentials($username, $password));
 
 
         return redirect()->route('admin.users.index')->with('message', 'Usuario creado exitosamente.');

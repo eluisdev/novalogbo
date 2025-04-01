@@ -22,6 +22,7 @@ class UserAdminSeeder extends Seeder
             'password' => Hash::make('password'),
             'role_id' => 1, // Asumiendo que el rol 'admin' tiene ID 1
             'active' => true,
+            'force_password_change' => false,
         ]);
     }
 }

@@ -8,6 +8,7 @@
     "require": {
         "php": "^8.2",
         "laravel-lang/common": "^6.7",
+        "laravel-lang/lang": "^15.19",
         "laravel/framework": "^12.0",
         "laravel/tinker": "^2.10.1"
     },
@@ -46,7 +47,9 @@
         "post-create-project-cmd": [
             "@php artisan key:generate --ansi",
             "@php -r \"file_exists('database/database.sqlite') || touch('database/database.sqlite');\"",
-            "@php artisan migrate --graceful --ansi"
+            "@php artisan migrate --graceful --ansi",
+            "@php artisan vendor:publish --tag=laravel-assets --ansi --force",
+            "@php artisan lang:update"
         ],
         "dev": [
             "Composer\\Config::disableProcessTimeout",

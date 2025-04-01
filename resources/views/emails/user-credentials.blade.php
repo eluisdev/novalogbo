@@ -9,13 +9,14 @@
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             line-height: 1.6;
             color: #333;
-            padding: 20px;
+            margin: 0; /* Añadido para eliminar margen por defecto */
+            padding: 20px; /* Padding general para desktop */
         }
         .container {
             max-width: 600px;
             margin: 0 auto;
             background-color: #f9f9f9;
-            padding: 30px;
+            padding: 30px; /* Padding general para desktop */
             border-radius: 5px;
             box-shadow: 0 2px 5px rgba(0,0,0,0.1);
         }
@@ -47,6 +48,31 @@
             padding: 10px 20px;
             border-radius: 5px;
             margin-top: 20px;
+        }
+        .imglogo {
+            width: 160px;
+            height: 140px;
+        }
+
+        /* Media query para móviles */
+        @media screen and (max-width: 600px) {
+            body {
+                padding: 0 !important; /* Elimina todo el padding en móviles */
+            }
+            .container {
+                padding: 15px !important; /* Reduce el padding interno en móviles */
+                border-radius: 0 !important; /* Opcional: elimina bordes redondeados */
+            }
+            .imglogo {
+                width: 120px !important;
+                height: auto !important;
+            }
+            .title {
+                font-size: 1.5rem !important;
+            }
+            .credentials {
+                padding: 15px !important;
+            }
         }
     </style>
 </head>

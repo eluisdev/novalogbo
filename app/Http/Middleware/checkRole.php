@@ -3,6 +3,7 @@
 namespace App\Http\Middleware;
 
 use Closure;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Symfony\Component\HttpFoundation\Response;
@@ -44,7 +45,10 @@ class CheckRole
     private function userHasAnyRole(array $roles): bool
     {
         // Usando Auth facade explícitamente
-        return Auth::user()->roles->whereIn('description', $roles)->count() > 0;
+        //$user = User::where('id', Auth::id())->with('roles')->first();
+
+
+        return Auth::user()->role->whereIn('description', $roles)->count() > 0;
 
         // Alternativa si usas una columna 'role' directamente en la tabla users
         // return in_array(Auth::user()->role, $roles);

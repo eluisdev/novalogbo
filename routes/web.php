@@ -1,8 +1,8 @@
 <?php
 
-use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\UserController;
+use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\PasswordChangeController;
 use App\Http\Controllers\UserProfileController;
@@ -31,7 +31,7 @@ Route::controller(AuthController::class)->group(function () {
     // Recuperación de contraseña
     Route::get('/forgot-password', 'showForgotPasswordForm')->name('password.request');
     Route::post('/forgot-password', 'sendResetLinkEmail')->name('password.email');
-    Route::get('/reset-password/{token}', 'showResetPasswordForm')->name('password.reset');
+    Route::get('/reset-password/{token}', 'showResetPasswordForm')->name('password.reset'); //TODO: cambiar passwrod
     Route::post('/reset-password', 'resetPassword')->name('password.update');
 });
 
@@ -62,8 +62,8 @@ Route::middleware(['auth'])->group(function () {
 Route::middleware(['auth', 'role:admin'])->group(function () {
     // Dashboard
     Route::get('/admin', function () {
-        return view('admin.dashboard');
-    })->name('admin.dashboard');
+        return view('admin.users.index');
+    })->name('admin.users.index');
 
     // Gestión de usuarios
     Route::prefix('users')->name('users.')->controller(UserController::class)->group(function () {
@@ -71,7 +71,7 @@ Route::middleware(['auth', 'role:admin'])->group(function () {
         Route::get('/create', 'create')->name('create');
         Route::post('/', 'store')->name('store');
         Route::get('/{id}', 'show')->name('show');
-        Route::get('/{id}/edit', 'edit')->name('edit');
+        Route::get('/edit/{id}', 'edit')->name('edit');
         Route::put('/{id}', 'update')->name('update');
         Route::delete('/{id}', 'destroy')->name('destroy');
     });

@@ -79,16 +79,17 @@
 <body>
     <div class="container">
         <div class="header">
-            <h1>¡Bienvenido(a) a {{ config('app.name') }}!</h1>
+            <img src="https://www.novalogisticsrl.com/wp-content/uploads/2022/03/Logotipo-sin-fondo-2.png" class="imglogo"/>
+            <h1 class="title">¡Bienvenido(a) a Novalogbosrl!</h1>
             <p>Tu cuenta ha sido creada exitosamente.</p>
         </div>
 
-        <p>Hola <strong>{{ $user->name }}</strong>,</p>
+        <p>Hola <strong>{{ $user->name }} {{ $user->surname }}</strong>,</p>
 
         <p>Te damos la bienvenida a nuestra plataforma. A continuación encontrarás tus credenciales de acceso:</p>
 
         <div class="credentials">
-            <p><strong>Usuario:</strong> {{ $username }}</p>
+            <p><strong>Usuario:</strong> {{ $user->username }}</p>
             <p><strong>Contraseña:</strong> {{ $password }}</p>
         </div>
 

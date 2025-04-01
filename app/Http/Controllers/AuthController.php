@@ -32,11 +32,11 @@ class AuthController extends Controller
         }
 
         $user = Auth::user();
-        if ($user->force_password_change) {
-            return redirect()->route('password.change');
-        }
+        // if ($user->force_password_change) {
+        //     return redirect()->route('password.change'); TODO: aumentar vista
+        // }
         if ($user->role->description == 'admin') {
-            return redirect()->intended(route('admin.dashboard'));
+            return redirect()->intended(route('admin.users.index'));
         } elseif ($user->role->description == 'operator') {
             return redirect()->intended(route('operator.dashboard'));
         } else {

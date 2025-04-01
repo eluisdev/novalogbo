@@ -17,7 +17,6 @@ class UserController extends Controller
     {
         // Obtener todos los usuarios
         $users = User::with('role')->get(); // Cargar la relación 'role'
-
         // Retornar la vista con los usuarios
         return view('admin.users.index', compact('users'));
     }
@@ -78,7 +77,7 @@ class UserController extends Controller
         ]);
 
         // Enviar credenciales por correo
-        Mail::to($user->email)->send(new UserCredentials($username, $password));
+        Mail::to($user->email)->send(new UserCredentials($user, $password));
 
 
         return redirect()->route('admin.users.index')->with('message', 'Usuario creado exitosamente.');

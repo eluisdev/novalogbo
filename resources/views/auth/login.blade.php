@@ -19,39 +19,39 @@
             @csrf
             <div>
                 <label for="name" class="block font-medium text-gray-900">Nombre de usuario</label>
-                <input 
-                    type="text" 
-                    id="name" 
-                    name="name"
+                <input
+                    type="text"
+                    id="username"
+                    name="username"
                     placeholder="Usuario"
-                    value="{{ old('name') }}"
+                    value="{{ old('username') }}"
                     class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                    required 
+                    required
                     autofocus
                 >
             </div>
             <div>
                 <label for="password" class="block font-medium text-gray-900">Contraseña</label>
-                <input 
-                    type="password" 
-                    id="password" 
-                    name="password" 
+                <input
+                    type="password"
+                    id="password"
+                    name="password"
                     placeholder="**********"
                     class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
                     required
                     minlength="8"
                 >
             </div>
-            <button 
-                type="submit" 
+            <button
+                type="submit"
                 class="w-full flex justify-center py-3 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-gradient-to-r from-[#0e71a2] to-[#074665] hover:from-[#084665] hover:to-[#06364e] transition-colors duration-200 hover:cursor-pointer mt-6"
                 >
                 Iniciar sesión
             </button>
-            
-        </form> 
+
+        </form>
     </div>
     <div class="text-center text-sm text-gray-700 mt-5">
-        <a href="{{ route("forgot-password") }}" class="font-semibold">¿Olvidaste tu contraseña?</a> 
+        <a class="font-semibold">¿Olvidaste tu contraseña?</a>
     </div>
 @endsection

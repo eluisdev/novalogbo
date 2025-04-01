@@ -20,9 +20,10 @@
 
     @php
         $fields = [
-            'name' => 'Nombre completo',
+            'name' => 'Nombres',
+            'surname' => 'Apellidos',
             'email' => 'Correo electrónico',
-            'telefono' => 'Teléfono',
+            'phone' => 'Teléfono',
             'username' => 'Usuario',
         ];
     @endphp
@@ -65,14 +66,15 @@
     <div class="mb-4">
         <label class="block font-semibold text-gray-700 mb-2">Rol del usuario</label>
         <div class="flex justify-around">
-            @foreach (["admin" => "Administrador", "operario" => "Operario"] as $value => $label)
+            @foreach (["1" => "Administrador", "2" => "Operario"] as $value => $label)
                 <label class="inline-flex items-center">
                     <input 
                         type="radio" 
-                        name="role" 
+                        id="role_id"
+                        name="role_id" 
                         value="{{ $value }}" 
                         class="rounded-full border-gray-300 text-indigo-600 focus:ring-indigo-500"
-                        {{ old('role', isset($usuario) ? $usuario->role : '') == $value ? 'checked' : '' }}
+                        {{ old('description', isset($usuario) ? $usuario->description : '') == $value ? 'checked' : '' }}
                     >
                     <span class="ml-2">{{ $label }}</span>
                 </label>

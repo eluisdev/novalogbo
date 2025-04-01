@@ -13,7 +13,7 @@
                     @endforeach
         @endif
 
-        <form method="POST" action="{{ route('login') }}" class="space-y-4">
+        <form method="POST" action="{{ route('password.email') }}" class="space-y-4">
             @csrf
             <div>
                 <label for="email" class="block font-medium text-gray-900">Correro electronico</label>

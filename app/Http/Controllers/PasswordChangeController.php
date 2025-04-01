@@ -37,8 +37,9 @@ class PasswordChangeController extends Controller
         // Actualizar usando el modelo directamente (más robusto)
         try {
             User::where('id', $user->id)->update([
-                'password' => Hash::make($request->new_password),
+                'password' => Hash::make($request->new_password), 
                 'force_password_change' => false,
+                //TODO: aumentar vista de nuevo password (new_password, current_password)
             ]);
 
             // Cerrar sesión y regenerar token

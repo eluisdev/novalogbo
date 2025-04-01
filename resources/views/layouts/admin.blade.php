@@ -19,7 +19,7 @@
             <div class="flex items-center gap-3">
                 <select class="px-4 py-2 border rounded-lg text-gray-700 text-xs w-28" onchange="if (this.value) window.location.href = this.value;">
                     <option value="">Opciones</option>
-                    <option value="{{ route('users.edit') }}" {{ request()->url() == route('users.edit') ? 'selected' : '' }}>Editar datos</option>
+                    <option value="{{ route('users.edit',1) }}" {{ request()->url() == route('users.edit',1) ? 'selected' : '' }}>Editar datos</option>
                     <option value="{{ route('users.index') }}">Cerrar sesión</option>
                 </select>
                 <p>Hola: <span class="font-bold text-blue-950">Enrique</span></p>

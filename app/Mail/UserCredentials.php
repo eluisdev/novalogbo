@@ -2,6 +2,7 @@
 
 namespace App\Mail;
 
+use App\Models\User;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Mail\Mailable;
@@ -13,14 +14,14 @@ class UserCredentials extends Mailable
 {
     use Queueable, SerializesModels;
 
-    public $username;
     public $password;
+    public User $user;
     /**
      * Create a new message instance.
      */
-    public function __construct($username, $password)
+    public function __construct($user, $password)
     {
-        $this->username = $username;
+        $this->user = $user;
         $this->password = $password;
     }
 

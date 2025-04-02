@@ -8,6 +8,6 @@ class OperatorController extends Controller
 {
     public function index() 
     {
-        return view("clients.index");
+        return view("operators.dashboard");
     }
 }

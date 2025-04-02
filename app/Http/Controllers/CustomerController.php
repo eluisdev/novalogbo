@@ -7,7 +7,7 @@ use Illuminate\Http\Request;
 
 class CustomerController extends Controller
 {
-    public function index(Request $request)
+    public function index()
     {
         $customers = Customer::with('role')->latest()->paginate(10);
 
@@ -53,7 +53,7 @@ class CustomerController extends Controller
         Customer::create($request->all());
 
         // Redirigir a la lista de clientes con un mensaje de éxito
-        return redirect()->route('customers.index')->with('sucess', 'Cliente creado exitosamente.');
+        return redirect()->route('customers.index')->with('success', 'Cliente creado exitosamente.');
     }
 
     public function show($NIT)
@@ -81,9 +81,9 @@ class CustomerController extends Controller
     {
         // Validar los datos de entrada
         $request->validate([
-            'NIT' => 'required|unique:customers,NIT,' . $NIT,
+            'NIT' => 'required|unique:customers,NIT,' . $NIT . ',NIT',
             'name' => 'required|string|max:255',
-            'email' => 'required|email|unique:customers,email,' . $NIT,
+            'email' => 'required|email|unique:customers,email,' . $NIT . ',NIT',
             'phone' => 'nullable|string|max:20',
             'cellphone' => 'nullable|string|max:20',
             'address' => 'nullable|string|max:255',
@@ -118,7 +118,7 @@ class CustomerController extends Controller
         $customer->update($request->all());
 
         // Redirigir a la lista de clientes con un mensaje de éxito
-        return redirect()->route('customers.index')->with('message', 'Cliente actualizado exitosamente.');
+        return redirect()->route('customers.index')->with('success', 'Cliente actualizado exitosamente.');
     }
 
     public function destroy($NIT)

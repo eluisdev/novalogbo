@@ -72,6 +72,7 @@ class UserController extends Controller
             'username' => $username,
             'email' => $request['email'],
             'password' => Hash::make($password),
+            'phone' => $request['phone'],
             'force_password_change' => true,
             'role_id' => $request['role_id']
         ]);
@@ -80,17 +81,16 @@ class UserController extends Controller
         Mail::to($user->email)->send(new UserCredentials($user, $password));
 
 
-        return redirect()->route('admin.users.index')->with('message', 'Usuario creado exitosamente.');
+        return redirect()->route('users.index')->with('success', 'Usuario creado exitosamente.');
     }
 
 
     public function edit($id)
     {
-
         $user = User::find($id);
 
         if (!$user) {
-            return redirect()->route('admin.users.index')->with('error', 'Usuario no encontrado.');
+            return redirect()->route('users.index')->with('error', 'Usuario no encontrado.');
         }
         $roles = Role::all();
         return view('admin.users.edit', compact('user', 'roles'));
@@ -104,6 +104,7 @@ class UserController extends Controller
             'surname' => 'required',
             'email' => 'required|email|unique:users,email,' . $id,
             'role_id' => 'required|exists:roles,id',
+            'password' => 'nullable|string|min:8|confirmed'
         ], [
             'username.required' => 'El nombre de usuario es obligatorio.',
             'username.unique' => 'Este nombre de usuario ya está en uso.',
@@ -114,27 +115,36 @@ class UserController extends Controller
             'email.unique' => 'Este correo electrónico ya está en uso.',
             'role_id.required' => 'El rol es obligatorio.',
             'role_id.exists' => 'El rol seleccionado no es válido.',
+            'password.confirmed' => 'Las contraseñas no coinciden.',
+            'password.min' => 'La contraseña debe tener al menos 8 caracteres.',
         ]);
 
         $user = User::find($id);
         if (!$user) {
-            return redirect()->route('admin.users.index')->with('error', 'Usuario no encontrado.');
+            return redirect()->route('users.index')->with('error', 'Usuario no encontrado.');
         }
-        $user->update($request->all());
+        $data = $request->except('password');
 
-        return redirect()->route('admin.users.index')->with('message', 'Usuario actualizado exitosamente.');
+        if ($request->filled('password')) {
+            $user->password = Hash::make($request->password);
+        }
+
+        $user->update($data);
+
+        return redirect()->route('users.index')->with('success', 'Usuario actualizado exitosamente.');
     }
 
 
     public function destroy($id)
-    {
+    {   
+
         $user = User::find($id);
         if (!$user) {
-            return redirect()->route('admin.users.index')->with('error', 'Usuario no encontrado.');
+            return redirect()->route('users.index')->with('error', 'Usuario no encontrado.');
         }
         $user->delete();
 
-        return redirect()->route('users.index')->with('message', 'Usuario eliminado exitosamente.');
+        return redirect()->route('users.index')->with('success', 'Usuario eliminado exitosamente.');
     }
 
 

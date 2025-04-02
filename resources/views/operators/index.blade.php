@@ -73,17 +73,6 @@
     </table>
 </div>
 
-@if(session('success'))
-<script>
-    Swal.fire({
-        title: '¡Eliminado!',
-        text: "{{ session('success') }}",
-        icon: 'success',
-        confirmButtonText: 'Ok'
-    });
-</script>
-@endif
-
 <script>
     function confirmDelete(userId) {
         Swal.fire({

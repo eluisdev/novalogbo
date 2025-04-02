@@ -32,11 +32,11 @@ class AuthController extends Controller
         }
 
         $user = Auth::user();
-        // if ($user->force_password_change) {
-        //     return redirect()->route('password.change'); TODO: aumentar vista
-        // }
+        if ($user->force_password_change) {
+            return redirect()->route('password.change');
+        }
         if ($user->role->description == 'admin') {
-            return redirect()->intended(route('admin.users.index'));
+            return redirect()->intended(route('admin.dashboard'));
         } elseif ($user->role->description == 'operator') {
             return redirect()->intended(route('operator.dashboard'));
         } else {
@@ -52,7 +52,7 @@ class AuthController extends Controller
         $request->session()->invalidate();
         $request->session()->regenerateToken();
         // Redirigir a la página de inicio de sesión
-        return redirect('/login');
+        return redirect('/auth/login');
     }
 
     public function showForgotPasswordForm()
@@ -67,7 +67,7 @@ class AuthController extends Controller
         $user = User::where('email', $request->email)->first();
 
         if(!$user){
-            return back()->withErrors(['message' => 'No encontramos una cuenta con ese correo electrónico.']);
+            return back()->withErrors(['error' => 'No encontramos una cuenta con ese correo electrónico.']);
         }
 
         $status = Password::sendResetLink(
@@ -104,7 +104,7 @@ class AuthController extends Controller
         );
 
         return $status === Password::PASSWORD_RESET
-            ? redirect('/login')->with('status', __($status))
+            ? redirect('/auth/login')->with('status', __($status))
             : back()->withErrors(['email' => __($status)]);
     }
 

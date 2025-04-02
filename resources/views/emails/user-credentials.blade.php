@@ -81,7 +81,7 @@
         <p>Por razones de seguridad, te recomendamos cambiar tu contraseña después de iniciar sesión por primera vez.</p>
 
         <div style="text-align: center;">
-            <a href="{{ url('/login') }}" class="button">Iniciar Sesión</a>
+            <a href="{{ url('/auth/login') }}" class="button">Iniciar Sesión</a>
         </div>
 
         <div class="footer">

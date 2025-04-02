@@ -8,7 +8,7 @@
         <a href="{{ route("users.index") }}" class="bg-[#0B628D] hover:bg-[#2d4652] text-white rounded-sm p-2 text-sm font-semibold hover:cursor-pointer">Volver inicio</a>
     </div>
 
-    @include('admin.users.partials.form', ['usuario' => $usuario])                    
+    @include('admin.users.partials.form', ['usuario' => $user])                    
 
 </div>
 

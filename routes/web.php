@@ -1,10 +1,16 @@
 <?php
 
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\CityController;
+use App\Http\Controllers\ContinentController;
+use App\Http\Controllers\CountryController;
 use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\CustomerController;
+use App\Http\Controllers\IncotermController;
+use App\Http\Controllers\OperatorController;
 use App\Http\Controllers\PasswordChangeController;
+use App\Http\Controllers\ServiceController;
 use App\Http\Controllers\UserProfileController;
 
 /*
@@ -22,7 +28,9 @@ Route::get('/', function () {
 | Autenticación
 |--------------------------------------------------------------------------
 */
-Route::controller(AuthController::class)->group(function () {
+
+//TODO:CRUD DE LAS COTIZACIONES
+Route::prefix('auth')->controller(AuthController::class)->group(function () {
     // Login
     Route::get('/login', 'showLoginForm')->name('login');
     Route::post('/login', 'store')->name('login.store');
@@ -31,10 +39,9 @@ Route::controller(AuthController::class)->group(function () {
     // Recuperación de contraseña
     Route::get('/forgot-password', 'showForgotPasswordForm')->name('password.request');
     Route::post('/forgot-password', 'sendResetLinkEmail')->name('password.email');
-    Route::get('/reset-password/{token}', 'showResetPasswordForm')->name('password.reset'); //TODO: cambiar passwrod
+    Route::get('/reset-password/{token}', 'showResetPasswordForm')->name('password.reset');
     Route::post('/reset-password', 'resetPassword')->name('password.update');
 });
-
 /*
 |--------------------------------------------------------------------------
 | Rutas Protegidas (requieren autenticación)
@@ -49,7 +56,7 @@ Route::middleware(['auth'])->group(function () {
 
     // Perfil de usuario
     Route::controller(UserProfileController::class)->group(function () {
-        Route::get('/profile', 'edit')->name('profile.edit');
+        Route::get('/profile/{id}', 'edit')->name('profile.edit');
         Route::put('/profile', 'update')->name('profile.update');
     });
 });
@@ -62,8 +69,8 @@ Route::middleware(['auth'])->group(function () {
 Route::middleware(['auth', 'role:admin'])->group(function () {
     // Dashboard
     Route::get('/admin', function () {
-        return view('admin.users.index');
-    })->name('admin.users.index');
+        return view('admin.dashboard');
+    })->name('admin.dashboard');
 
     // Gestión de usuarios
     Route::prefix('users')->name('users.')->controller(UserController::class)->group(function () {
@@ -76,7 +83,7 @@ Route::middleware(['auth', 'role:admin'])->group(function () {
         Route::delete('/{id}', 'destroy')->name('destroy');
     });
 });
-
+//TODO: middelware admini y operador funciona
 /*
 |--------------------------------------------------------------------------
 | Rutas para Operadores y Administradores
@@ -89,7 +96,7 @@ Route::middleware(['auth', 'role:admin,operator'])->group(function () {
         Route::get('/create', 'create')->name('create');
         Route::post('/', 'store')->name('store');
         Route::get('/{NIT}', 'show')->name('show');
-        Route::get('/{NIT}/edit', 'edit')->name('edit');
+        Route::get('/edit/{NIT}', 'edit')->name('edit');
         Route::put('/{NIT}', 'update')->name('update');
         Route::delete('/{NIT}', 'destroy')->name('destroy');
     });
@@ -106,3 +113,41 @@ Route::middleware(['auth', 'role:operator'])->group(function () {
         return view('operator.dashboard');
     })->name('operator.dashboard');
 });
+
+
+//Route::get("/operator", [OperatorController::class, "index"])->name("operator.dashboard");
+
+// Route::get("/continents", [ContinentController::class,"index"])->name("continents.index");
+// Route::get("/continents/create", [ContinentController::class,"create"])->name("continents.create");
+// Route::post("/continents", [ContinentController::class,"store"])->name("continents.store");
+// Route::get("/continents/{id}", [ContinentController::class,"edit"])->name("continents.edit");
+// Route::put("/continents/{id}", [ContinentController::class,"update"])->name("continents.update");
+// Route::delete("/continents/{id}", [ContinentController::class,"destroy"])->name("continents.destroy");
+
+// Route::get("/countries", [CountryController::class,"index"])->name("countries.index");
+// Route::get("/countries/create", [CountryController::class,"create"])->name("countries.create");
+// Route::post("/countries", [CountryController::class,"store"])->name("countries.store");
+// Route::get("/countries/{id}", [CountryController::class,"edit"])->name("countries.edit");
+// Route::put("/countries/{id}", [CountryController::class,"update"])->name("countries.update");
+// Route::delete("/countries/{id}", [CountryController::class,"destroy"])->name("countries.destroy");
+
+// Route::get("/cities", [CityController::class,"index"])->name("cities.index");
+// Route::get("/cities/create", [CityController::class,"create"])->name("cities.create");
+// Route::post("/cities", [CityController::class,"store"])->name("cities.store");
+// Route::get("/cities/{id}", [CityController::class,"edit"])->name("cities.edit");
+// Route::put("/cities/{id}", [CityController::class,"update"])->name("cities.update");
+// Route::delete("/cities/{id}", [CityController::class,"destroy"])->name("cities.destroy");
+
+// Route::get("/services", [ServiceController::class,"index"])->name("services.index");
+// Route::get("/services/create", [ServiceController::class,"create"])->name("services.create");
+// Route::post("/services", [ServiceController::class,"store"])->name("services.store");
+// Route::get("/services/{id}", [ServiceController::class,"edit"])->name("services.edit");
+// Route::put("/services/{id}", [ServiceController::class,"update"])->name("services.update");
+// Route::delete("/services/{id}", [ServiceController::class,"destroy"])->name("services.destroy");
+
+// Route::get("/incoterms", [IncotermController::class,"index"])->name("incoterms.index");
+// Route::get("/incoterms/create", [IncotermController::class,"create"])->name("incoterms.create");
+// Route::post("/incoterms", [IncotermController::class,"store"])->name("incoterms.store");
+// Route::get("/incoterms/{id}", [IncotermController::class,"edit"])->name("incoterms.edit");
+// Route::put("/incoterms/{id}", [IncotermController::class,"update"])->name("incoterms.update");
+// Route::delete("/incoterms/{id}", [IncotermController::class,"destroy"])->name("incoterms.destroy");

@@ -47,7 +47,6 @@ class UserProfileController extends Controller
             'new_password.different' => 'La nueva contraseña debe ser diferente a la actual.',
         ]);
 
-
         if ($request->filled('new_password')) {
             $user->password = Hash::make($validated['new_password']);
         }
@@ -55,7 +54,7 @@ class UserProfileController extends Controller
 
         $user2 = User::where('id', $user->id);
         if (!$user2) {
-            return redirect()->route('admin.users.index')->with('error', 'Usuario no encontrado.');
+            return redirect()->route('users.index')->with('error', 'Usuario no encontrado.');
         }
 
         $user2->update([
@@ -66,7 +65,12 @@ class UserProfileController extends Controller
             'password' => $user->password,
         ]);
 
-        return redirect()->route('profile.edit')
+        if ($user->role->description === "admin") {
+            return redirect()->route('users.index')
             ->with('success', 'Perfil actualizado correctamente');
+        } else {
+            return redirect()->route('customers.index')
+            ->with('success', 'Perfil actualizado correctamente');
+        }
     }
 }

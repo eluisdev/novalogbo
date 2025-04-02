@@ -1,11 +1,17 @@
 <?php
 
-use App\Http\Controllers\AuthController;
-use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\AuthController;
+use App\Http\Controllers\CityController;
+use App\Http\Controllers\CostController;
+use App\Http\Controllers\UserController;
+use App\Http\Controllers\CountryController;
+use App\Http\Controllers\ServiceController;
 use App\Http\Controllers\CustomerController;
-use App\Http\Controllers\PasswordChangeController;
+use App\Http\Controllers\IncotermController;
+use App\Http\Controllers\ContinentController;
 use App\Http\Controllers\UserProfileController;
+use App\Http\Controllers\PasswordChangeController;
 
 /*
 |--------------------------------------------------------------------------
@@ -75,6 +81,85 @@ Route::middleware(['auth', 'role:admin'])->group(function () {
         Route::put('/{id}', 'update')->name('update');
         Route::delete('/{id}', 'destroy')->name('destroy');
     });
+
+    // Gestión de continentes
+    Route::prefix('continents')->name('continents.')->controller(ContinentController::class)->group(function () {
+        Route::get('/', 'index')->name('index');
+        Route::get('/create', 'create')->name('create');
+        Route::post('/', 'store')->name('store');
+        Route::get('/{id}', 'show')->name('show');
+        Route::get('/edit/{id}', 'edit')->name('edit');
+        Route::put('/', 'update')->name('update');
+        Route::delete('/{id}', 'destroy')->name('destroy');
+        Route::delete('/force-delete/{id}', 'forceDelete')->name('forceDelete');
+        Route::get('/trashed', 'trashed')->name('trashed');
+        Route::patch('/restore/{id}', 'restore')->name('restore');
+    });
+
+    // Gestión de países
+    Route::prefix('countries')->name('countries.')->controller(CountryController::class)->group(function () {
+        Route::get('/', 'index')->name('index');
+        Route::get('/create', 'create')->name('create');
+        Route::post('/', 'store')->name('store');
+        Route::get('/{id}', 'show')->name('show');
+        Route::get('/edit/{id}', 'edit')->name('edit');
+        Route::put('/', 'update')->name('update');
+        Route::delete('/{id}', 'destroy')->name('destroy');
+        Route::delete('/force-delete/{id}', 'forceDelete')->name('forceDelete');
+        Route::get('/trashed', 'trashed')->name('trashed');
+        Route::patch('/restore/{id}', 'restore')->name('restore');
+    });
+
+    // Gestión de ciudades
+    Route::prefix('cities')->name('cities.')->controller(CityController::class)->group(function () {
+        Route::get('/', 'index')->name('index');
+        Route::get('/create', 'create')->name('create');
+        Route::post('/', 'store')->name('store');
+        Route::get('/{id}', 'show')->name('show');
+        Route::get('/edit/{id}', 'edit')->name('edit');
+        Route::put('/', 'update')->name('update');
+        Route::delete('/{id}', 'destroy')->name('destroy');
+        Route::delete('/force-delete/{id}', 'forceDelete')->name('forceDelete');
+        Route::get('/trashed', 'trashed')->name('trashed');
+        Route::patch('/restore/{id}', 'restore')->name('restore');
+
+    });
+
+    // Gestión de Incoterms
+    Route::prefix('incoterms')->name('incoterms.')->controller(IncotermController::class)->group(function () {
+        Route::get('/', 'index')->name('index');
+        Route::get('/create', 'create')->name('create');
+        Route::post('/', 'store')->name('store');
+        Route::get('/{id}', 'show')->name('show');
+        Route::get('/edit/{id}', 'edit')->name('edit');
+        Route::put('/', 'update')->name('update');
+        Route::patch('toggle-status/{id}', 'toggleStatus')->name('incoterms.toggleStatus');
+    });
+
+    // Gestión de servicios
+    Route::prefix('services')->name('services.')->controller(ServiceController::class)->group(function () {
+        Route::get('/', 'index')->name('index');
+        Route::get('/create', 'create')->name('create');
+        Route::post('/', 'store')->name('store');
+        Route::get('/{id}', 'show')->name('show');
+        Route::get('/edit/{id}', 'edit')->name('edit');
+        Route::put('/', 'update')->name('update');
+        Route::delete('/{id}', 'destroy')->name('destroy');
+        Route::patch('toggle-status/{id}', 'toggleStatus')->name('services.toggleStatus');
+    });
+
+    // Gestión de costos
+    Route::prefix('costs')->name('costs.')->controller(CostController::class)->group(function () {
+        Route::get('/', 'index')->name('index');
+        Route::get('/create', 'create')->name('create');
+        Route::post('/', 'store')->name('store');
+        Route::get('/{id}', 'show')->name('show');
+        Route::get('/edit/{id}', 'edit')->name('edit');
+        Route::put('/', 'update')->name('update');
+        Route::delete('/{id}', 'destroy')->name('destroy');
+        Route::patch('toggle-status/{id}', 'toggleStatus')->name('costs.toggleStatus');
+    });
+
 });
 
 /*

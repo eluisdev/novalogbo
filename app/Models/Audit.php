@@ -24,6 +24,8 @@ class Audit extends Model
         'new_values' => 'array',
     ];
 
+    public $timestamps = true;
+
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);

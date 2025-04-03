@@ -7,7 +7,7 @@
         <select class="px-4 py-2 border rounded-lg text-gray-700 text-xs w-28" id="user-options"
             onchange="handleUserOption(this)">
             <option value="">Opciones</option>
-            <option value="{{ route('profile.edit', Auth::user()->id) }}">Editar datos</option>
+            <option value="{{ route('profile.edit') }}">Editar datos</option>
             <option value="logout">Cerrar sesión</option>
         </select>
         <form id="logout-form" action="{{ route('logout') }}" method="POST" style="display: none;">

@@ -1,6 +1,7 @@
 <form 
     action="{{ isset($customer) ? route('customers.update', $customer->NIT) : route('customers.store') }}" 
     method="POST" 
+    data-loading-form
     class="bg-white mx-auto max-w-2xl p-8 space-y-4 rounded-xl shadow-lg border-2 border-blue-200"
 >
     @csrf
@@ -20,7 +21,7 @@
 
     @php
         $fields = [
-            'name' => 'Nombre completo',
+            'name' => 'Nombre o Razon social',
             'NIT' => 'CI / NIT',
             'email' => 'Correo electrónico',
             'phone' => 'Teléfono',
@@ -66,10 +67,12 @@
         </label>
     </div>
 
-    <button
-        type="submit"
-        class="bg-gradient-to-r from-[#0e71a2] to-[#074665] hover:from-[#084665] hover:to-[#06364e] hover:cursor-pointer transition-all duration-200 p-2 rounded-lg text-white w-full font-semibold shadow-md"
-    >
-        {{ isset($customer) ? 'Actualizar datos' : 'Crear cliente' }}
+    <button type="submit"
+        class="w-full flex justify-center items-center py-3 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-gradient-to-r from-[#0e71a2] to-[#074665] hover:from-[#084665] hover:to-[#06364e] transition-colors duration-200 hover:cursor-pointer mt-6"
+        data-loading-text="{{ isset($customer) ? 'Actualizando...' : 'Creando...' }}" data-loading-classes="from-gray-400 to-gray-500">
+        <span data-button-text>{{ isset($customer) ? 'Actualizar datos' : 'Crear cliente' }}</span>
+        <span data-loading-spinner class="hidden">
+            <x-loading-spinner />
+        </span>
     </button>
 </form>

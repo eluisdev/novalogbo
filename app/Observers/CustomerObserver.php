@@ -20,7 +20,6 @@ class CustomerObserver
             'user_id' => Auth::id(),
             'new_values' => $customer->toArray(),
             'created_at' => now(),
-            //TODO: audit no tiene updated at
         ]);
     }
 

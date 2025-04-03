@@ -65,7 +65,6 @@ class CountryController extends Controller
 
     public function update(Request $request)
     {
-
         $country = Country::findOrFail($request->id);
         if (!$country) {
             return redirect()->route('countries.index')->with('error', 'País no encontrado.');
@@ -107,7 +106,7 @@ class CountryController extends Controller
     public function trashed()
     {
         $countries = Country::onlyTrashed()->with('continent')->get();
-        return view('countries.trashed', compact('countries'));
+        return view('admin.countries.trashed', compact('countries'));
     }
 
     public function restore($id)

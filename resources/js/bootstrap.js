@@ -1,30 +1,63 @@
 import axios from 'axios';
 import Swal from 'sweetalert2';
+
+// Configuración global
 window.axios = axios;
-window.Swal = Swal
+window.Swal = Swal;
 window.axios.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
 
-//Metodo para eliminar elemento
-document.addEventListener("DOMContentLoaded", function () {
-    document.body.addEventListener("click", function (event) {
-        if (event.target.closest(".delete-btn")) {
-            let button = event.target.closest(".delete-btn");
-            let id = button.getAttribute("data-id");
+// Configuraciones de las acciones
+const ACTION_CONFIG = {
+    'active-btn': {
+        icon: 'warning',
+        confirmText: 'Si, cambiar',
+        defaultText: 'Cambiar estado?'
+    },
+    'restore-btn': {
+        icon: 'info',
+        confirmText: 'Sí, recuperar',
+        defaultText: 'Recuperar elemento.'
+    },
+    'delete-btn': {
+        icon: 'warning',
+        confirmText: 'Sí, eliminar',
+        defaultText: 'Esta acción no se puede deshacer.'
+    }
+};
 
-            Swal.fire({
-                title: "¿Estás seguro?",
-                text: "Esta acción no se puede deshacer.",
-                icon: "warning",
-                showCancelButton: true,
-                confirmButtonColor: "#d33",
-                cancelButtonColor: "#3085d6",
-                confirmButtonText: "Sí, eliminar",
-                cancelButtonText: "Cancelar"
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    document.getElementById(`delete-form-${id}`).submit();
-                }
-            });
+// Configuración común de SweetAlert
+const SWAL_DEFAULT_CONFIG = {
+    showCancelButton: true,
+    confirmButtonColor: "#0B628D",
+    cancelButtonColor: "#3085d6",
+    cancelButtonText: "Cancelar"
+};
+
+// Manejador único para todos los botones de acción
+
+document.body.addEventListener("click", function (event) {
+    // Buscar el botón más cercano que coincida con alguno de nuestros selectores
+    const actionTypes = Object.keys(ACTION_CONFIG);
+    const button = event.target.closest(actionTypes.map(type => `.${type}`).join(', '));
+
+    if (!button) return;
+
+    const actionType = Array.from(button.classList).find(cls => cls.endsWith('-btn'));
+    const id = button.getAttribute("data-id");
+    const { icon, confirmText, defaultText } = ACTION_CONFIG[actionType];
+    const formId = `${actionType.replace('-btn', '')}-form-${id}`;
+
+    const title = actionType === 'restore-btn' ? '¿Recuperar elemento?' : '¿Estás seguro?';
+
+    Swal.fire({
+        ...SWAL_DEFAULT_CONFIG,
+        title,
+        text: defaultText,
+        icon,
+        confirmButtonText: confirmText
+    }).then((result) => {
+        if (result.isConfirmed) {
+            document.getElementById(formId).submit();
         }
     });
 });

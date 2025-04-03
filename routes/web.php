@@ -31,7 +31,6 @@ Route::get('/', function () {
 |--------------------------------------------------------------------------
 */
 
-//TODO:CRUD DE LAS COTIZACIONES
 Route::prefix('auth')->controller(AuthController::class)->group(function () {
     // Login
     Route::get('/login', 'showLoginForm')->name('login');
@@ -60,6 +59,7 @@ Route::middleware(['auth'])->group(function () {
     Route::controller(UserProfileController::class)->group(function () {
         Route::get('/profile', 'edit')->name('profile.edit');
         Route::put('/profile', 'update')->name('profile.update');
+        Route::get('/profile/perfil', 'update')->name('profile.show');
     });
 });
 
@@ -90,11 +90,11 @@ Route::middleware(['auth', 'role:admin'])->group(function () {
         Route::get('/', 'index')->name('index');
         Route::get('/create', 'create')->name('create');
         Route::post('/', 'store')->name('store');
+        Route::get('/trashed', 'trashed')->name('trashed');
         Route::get('/{id}', 'show')->name('show');
         Route::get('/edit/{id}', 'edit')->name('edit');
         Route::put('/{id}', 'update')->name('update');
         Route::delete('/{id}', 'destroy')->name('destroy');
-        Route::get('/trashed', 'trashed')->name('trashed');
         Route::patch('/restore/{id}', 'restore')->name('restore');
         Route::delete('/force-delete/{id}', 'forceDelete')->name('forceDelete');
     });
@@ -104,13 +104,13 @@ Route::middleware(['auth', 'role:admin'])->group(function () {
         Route::get('/', 'index')->name('index');
         Route::get('/create', 'create')->name('create');
         Route::post('/', 'store')->name('store');
+        Route::get('/trashed', 'trashed')->name('trashed');
+        Route::patch('/restore/{id}', 'restore')->name('restore');
+        Route::delete('/force-delete/{id}', 'forceDelete')->name('forceDelete');
         Route::get('/{id}', 'show')->name('show');
         Route::get('/edit/{id}', 'edit')->name('edit');
         Route::put('/{id}', 'update')->name('update');
         Route::delete('/{id}', 'destroy')->name('destroy');
-        Route::delete('/force-delete/{id}', 'forceDelete')->name('forceDelete');
-        Route::get('/trashed', 'trashed')->name('trashed');
-        Route::patch('/restore/{id}', 'restore')->name('restore');
     });
 
     // Gestión de ciudades
@@ -118,15 +118,15 @@ Route::middleware(['auth', 'role:admin'])->group(function () {
         Route::get('/', 'index')->name('index');
         Route::get('/create', 'create')->name('create');
         Route::post('/', 'store')->name('store');
+        Route::get('/trashed', 'trashed')->name('trashed');
+        Route::patch('/restore/{id}', 'restore')->name('restore');
+        Route::delete('/force-delete/{id}', 'forceDelete')->name('forceDelete');
         Route::get('/{id}', 'show')->name('show');
         Route::get('/edit/{id}', 'edit')->name('edit');
         Route::put('/{id}', 'update')->name('update');
         Route::delete('/{id}', 'destroy')->name('destroy');
-        Route::delete('/force-delete/{id}', 'forceDelete')->name('forceDelete');
-        Route::get('/trashed', 'trashed')->name('trashed');
-        Route::patch('/restore/{id}', 'restore')->name('restore');
-
     });
+
 
     // Gestión de Incoterms
     Route::prefix('incoterms')->name('incoterms.')->controller(IncotermController::class)->group(function () {
@@ -137,7 +137,7 @@ Route::middleware(['auth', 'role:admin'])->group(function () {
         Route::get('/edit/{id}', 'edit')->name('edit');
         Route::delete('/{id}', 'destroy')->name('destroy');
         Route::put('/{id}', 'update')->name('update');
-        Route::patch('toggle-status/{id}', 'toggleStatus')->name('incoterms.toggleStatus');
+        Route::patch('toggle-status/{id}', 'toggleStatus')->name('toggleStatus');
     });
 
     // Gestión de servicios
@@ -149,7 +149,7 @@ Route::middleware(['auth', 'role:admin'])->group(function () {
         Route::get('/edit/{id}', 'edit')->name('edit');
         Route::put('/{id}', 'update')->name('update');
         Route::delete('/{id}', 'destroy')->name('destroy');
-        Route::patch('toggle-status/{id}', 'toggleStatus')->name('services.toggleStatus');
+        Route::patch('toggle-status/{id}', 'toggleStatus')->name('toggleStatus');
     });
 
     // Gestión de costos
@@ -161,11 +161,9 @@ Route::middleware(['auth', 'role:admin'])->group(function () {
         Route::get('/edit/{id}', 'edit')->name('edit');
         Route::put('/{id}', 'update')->name('update');
         Route::delete('/{id}', 'destroy')->name('destroy');
-        Route::patch('toggle-status/{id}', 'toggleStatus')->name('costs.toggleStatus');
+        Route::patch('toggle-status/{id}', 'toggleStatus')->name('toggleStatus');
     });
-
 });
-//TODO: middelware admini y operador funciona
 /*
 |--------------------------------------------------------------------------
 | Rutas para Operadores y Administradores

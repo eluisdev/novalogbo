@@ -19,7 +19,7 @@ return new class extends Migration
             $table->unsignedBigInteger('user_id')->nullable(); // Usuario que realizó la acción
             $table->text('old_values')->nullable(); // Valores antiguos (JSON)
             $table->text('new_values')->nullable(); // Valores nuevos (JSON)
-            $table->timestamps();
+            $table->timestamps(); // Timestamps para created_at y updated_at
             $table->index(['auditable_type', 'auditable_id']);
             $table->foreign('user_id')->references('id')->on('users')->onDelete('set null');
         });

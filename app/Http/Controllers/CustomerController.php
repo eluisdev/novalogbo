@@ -14,6 +14,23 @@ class CustomerController extends Controller
         // Retornar la vista con los clientes
         return view('customers.index', compact('customers'));
     }
+    public function search(Request $request)
+    {
+        // Obtener el término de búsqueda
+        $searchTerm = $request->input('search');
+
+        // Realizar la búsqueda en la base de datos
+        $customers = Customer::with('role')
+            ->where('NIT', 'LIKE', "%{$searchTerm}%")
+            ->orWhere('name', 'LIKE', "%{$searchTerm}%")
+            ->orWhere('email', 'LIKE', "%{$searchTerm}%")
+            ->latest()
+            ->paginate(10);
+
+        // Retornar la vista con los resultados de búsqueda
+        //JSON
+        return response()->json($customers);
+    }
 
     public function create()
     {

@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Testing\Fluent\Concerns\Has;
 
 class Incoterm extends Model
@@ -23,4 +24,14 @@ class Incoterm extends Model
 
     public $timestamps = true;
 
+
+    /**
+     * The attributes that should be hidden for serialization.
+     *
+     * @var array<int, string>
+     */
+    public function quotations(): HasMany
+    {
+        return $this->hasMany(QuotationDetail::class);
+    }
 }

@@ -28,4 +28,8 @@ class Role extends Model
     {
         return $this->hasMany(User::class);
     }
+    public function customers():HasMany
+    {
+        return $this->hasMany(Customer::class);
+    }
 }

@@ -88,6 +88,6 @@ class Customer extends Model
 
     public function quotations(): HasMany
     {
-        return $this->hasMany(Quotation::class, 'customers_id', 'NIT');
+        return $this->hasMany(Quotation::class, 'customer_nit', 'NIT');
     }
 }

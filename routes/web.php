@@ -189,14 +189,17 @@ Route::middleware(['auth', 'role:admin,operator'])->group(function () {
     Route::prefix('quotations')->name('quotations.')->controller(QuotationController::class)->group(function () {
         Route::get('/', 'index')->name('index');
         Route::get('/create', 'create')->name('create');
-        //Route::post('/', 'store')->name('store');
-        //Route::get('/{id}', 'show')->name('show');
-        //Route::get('/edit/{id}', 'edit')->name('edit');
-        //Route::put('/{id}', 'update')->name('update');
-        //Route::delete('/{id}', 'destroy')->name('destroy');
-
+        Route::post('/', 'store')->name('store');
+        Route::get('/{id}', 'show')->name('show');
+        Route::get('/edit/{id}', 'edit')->name('edit');
+        Route::put('/{id}', 'update')->name('update');
+        Route::delete('/{id}', 'destroy')->name('destroy');
+        Route::patch('updateStatus/{id}', 'updateStatus')->name('updateStatus');
+        // PDF
+        Route::get('/pdf/{id}', 'generatePDF')->name('pdf');
         Route::get('/get-countries/{continent}', 'getCountries')->name('getCountries');
         Route::get('/get-cities/{country}', 'getCities')->name('getCities');
+        Route::get('/get-cities-country/{country}', 'getCitiesByCountry')->name('getCitiesByCountry');
     });
 });
 

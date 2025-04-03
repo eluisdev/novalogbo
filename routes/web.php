@@ -11,6 +11,7 @@ use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\IncotermController;
 use App\Http\Controllers\OperatorController;
 use App\Http\Controllers\ContinentController;
+use App\Http\Controllers\QuotationController;
 use App\Http\Controllers\UserProfileController;
 use App\Http\Controllers\PasswordChangeController;
 
@@ -183,6 +184,21 @@ Route::middleware(['auth', 'role:admin,operator'])->group(function () {
 
         // POR VERSE
         Route::get('/search', 'search')->name('search');
+    });
+
+
+    // Gestión de cotizaciones
+    Route::prefix('quotations')->name('quotations.')->controller(QuotationController::class)->group(function () {
+        Route::get('/', 'index')->name('index');
+        Route::get('/create', 'create')->name('create');
+        //Route::post('/', 'store')->name('store');
+        //Route::get('/{id}', 'show')->name('show');
+        //Route::get('/edit/{id}', 'edit')->name('edit');
+        //Route::put('/{id}', 'update')->name('update');
+        //Route::delete('/{id}', 'destroy')->name('destroy');
+
+        Route::get('/get-countries/{continent}', 'getCountries')->name('getCountries');
+        Route::get('/get-cities/{country}', 'getCities')->name('getCities');
     });
 });
 

@@ -36,14 +36,14 @@ class CostController extends Controller
 
         Cost::create($request->all());
 
-        return redirect()->route('costs.index')->with('success', 'Cost created successfully.');
+        return redirect()->route('costs.index')->with('success', 'Costo creado correctamente.');
     }
 
     public function edit($id)
     {
         $cost = Cost::findOrFail($id);
         if (!$cost) {
-            return redirect()->route('costs.index')->with('error', 'Cost not found.');
+            return redirect()->route('costs.index')->with('error', 'Costo no encontrado.');
         }
 
         return view('admin.costs.edit', compact('cost'));
@@ -53,7 +53,7 @@ class CostController extends Controller
     {
         $cost = Cost::findOrFail($id);
         if (!$cost) {
-            return redirect()->route('costs.index')->with('error', 'Cost not found.');
+            return redirect()->route('costs.index')->with('error', 'Costo no encontrado..');
         }
 
         return view('admin.costs.show', compact('cost'));
@@ -62,7 +62,7 @@ class CostController extends Controller
     {
         $cost = Cost::findOrFail($id);
         if (!$cost) {
-            return redirect()->route('costs.index')->with('error', 'Cost not found.');
+            return redirect()->route('costs.index')->with('error', 'Costo no encontrado..');
         }
 
         $request->validate(
@@ -81,28 +81,28 @@ class CostController extends Controller
 
         $cost->update($request->all());
 
-        return redirect()->route('costs.index')->with('success', 'Cost updated successfully.');
+        return redirect()->route('costs.index')->with('success', 'Costo actualizado correctamente.');
     }
     public function destroy($id)
     {
         $cost = Cost::findOrFail($id);
         if (!$cost) {
-            return redirect()->route('costs.index')->with('error', 'Cost not found.');
+            return redirect()->route('costs.index')->with('error', 'Costo no encontrado.');
         }
 
         $cost->delete();
 
-        return redirect()->route('costs.index')->with('success', 'Cost deleted successfully.');
+        return redirect()->route('costs.index')->with('success', 'Costo actualizado correctamente.');
     }
     public function toggleStatus($id){
         $cost = Cost::findOrFail($id);
         if (!$cost) {
-            return redirect()->route('costs.index')->with('error', 'Cost not found.');
+            return redirect()->route('costs.index')->with('error', 'Costo no encontrado..');
         }
 
         $cost->is_active = !$cost->is_active;
         $cost->save();
 
-        return redirect()->route('costs.index')->with('success', 'Cost status updated successfully.');
+        return redirect()->route('costs.index')->with('success', 'Costo estado actualizado correctamente.');
     }
 }

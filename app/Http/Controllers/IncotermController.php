@@ -85,7 +85,8 @@ class IncotermController extends Controller
         if (!$incoterm) {
             return redirect()->route('incoterms.index')->with('error', 'Incoterm no encontrado.');
         }
-        $incoterm->delete();
+        //TODO: Arreglar clave foranea con quatiation al eliminar un incoterm
+        $incoterm->delete(); 
         return redirect()->route('incoterms.index')->with('success', 'Incoterm eliminado exitosamente.');
     }
     public function toggleStatus($id)

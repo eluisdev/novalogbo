@@ -16,7 +16,8 @@ class CityController extends Controller
     }
     public function create()
     {
-        return view('admin.cities.create');
+        $countries = Country::orderBy('name')->get();
+        return view('admin.cities.create', compact("countries"));
     }
     public function store(Request $request)
     {

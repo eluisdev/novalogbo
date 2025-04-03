@@ -18,6 +18,12 @@ class UserProfileController extends Controller
         $user = Auth::user();
         return view('profile.edit', compact('user'));
     }
+    
+    public function show()
+    {
+        $user = Auth::user();
+        return view('profile.edit', compact('user'));
+    }
 
     /**
      * Actualizar los datos del perfil

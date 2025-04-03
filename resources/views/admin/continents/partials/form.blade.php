@@ -2,6 +2,7 @@
     action="{{ isset($continent) ? route('continents.update', $continent->id) : route('continents.store') }}" 
     method="POST" 
     class="bg-white mx-auto max-w-2xl p-8 space-y-4 rounded-xl shadow-lg border-2 border-blue-200"
+    data-loading-form
 >
 
     @csrf
@@ -21,7 +22,8 @@
 
     @php
         $fields = [
-            'name' => 'Nombre de continente'
+            'name' => 'Nombre de continente',
+            'code' => 'Codigo de continente',
         ];
     @endphp
 
@@ -38,11 +40,13 @@
         </div>
     @endforeach
 
-    <button
-        type="submit"
-        class="bg-gradient-to-r from-[#0e71a2] to-[#074665] hover:from-[#084665] hover:to-[#06364e] hover:cursor-pointer transition-all duration-200 p-2 rounded-lg text-white w-full font-semibold shadow-md"
-    >
-        {{ isset($continent) ? 'Actualizar datos' : 'Crear continente' }}
+    <button type="submit"
+        class="w-full flex justify-center items-center py-3 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-gradient-to-r from-[#0e71a2] to-[#074665] hover:from-[#084665] hover:to-[#06364e] transition-colors duration-200 hover:cursor-pointer mt-6"
+        data-loading-text="{{ isset($continent) ? 'Actualizando...' : 'Creando...' }}" data-loading-classes="from-gray-400 to-gray-500">
+        <span data-button-text>{{ isset($continent) ? 'Actualizar datos' : 'Crear continente' }}</span>
+        <span data-loading-spinner class="hidden">
+            <x-loading-spinner />
+        </span>
     </button>
 
 </form>

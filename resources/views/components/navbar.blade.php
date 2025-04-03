@@ -1,28 +1,52 @@
-<nav class="bg-white flex justify-between p-2 px-8 text-sm border-b-2">
-    <div class="flex items-center gap-3">
-        <img src="{{ asset($logoPath) }}" alt="logo" class="w-12" />
-        <span class="font-bold text-yellow-700">{{ $userRole }}</span>
+<nav class="bg-white shadow-sm border-b border-gray-200 px-6 py-3">
+    <div class="flex justify-between items-center">
+
+        <div class="flex items-center space-x-4">
+            <a href="{{ $userRole === 'Administrador' ? route('admin.dashboard') : route('operator.dashboard') }}" class="flex items-center">
+                <img src="{{ asset($logoPath) }}" alt="Logo" class="h-10 w-auto transition-transform hover:scale-105">
+            </a>
+            <span class="hidden md:inline-block px-3 py-1 rounded-full text-xs font-semibold bg-amber-100 text-amber-800">
+                {{ $userRole }}
+            </span>
+        </div>
+
+        <div class="flex items-center space-x-4">
+            <p class="hidden sm:block text-gray-600 text-sm">
+                Hola, <span class="font-medium text-blue-800">{{ $userName }}</span>
+            </p>
+            
+            <div class="relative">
+                <select 
+                    id="user-options"
+                    class="appearance-none bg-white border border-gray-300 rounded-lg pl-4 pr-8 py-2 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all cursor-pointer"
+                    onchange="handleUserOption(this)"
+                >
+                    <option value="" disabled selected>Opciones</option>
+                    <option value="{{ route('profile.show') }}" class="py-1">Ver perfil</option>
+                    <option value="{{ route('profile.edit') }}" class="py-1">Editar datos</option>
+                    <option value="logout" class="text-red-500 hover:bg-red-50">Cerrar sesión</option>
+                </select>
+                <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
+                    <svg class="h-4 w-4" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd"></path>
+                    </svg>
+                </div>
+            </div>
+        </div>
     </div>
-    <div class="flex items-center gap-3">
-        <select class="px-4 py-2 border rounded-lg text-gray-700 text-xs w-28" id="user-options"
-            onchange="handleUserOption(this)">
-            <option value="">Opciones</option>
-            <option value="{{ route('profile.edit') }}">Editar datos</option>
-            <option value="logout">Cerrar sesión</option>
-        </select>
-        <form id="logout-form" action="{{ route('logout') }}" method="POST" style="display: none;">
-            @csrf
-        </form>
-        <p>Hola: <span class="font-bold text-blue-950">{{ $userName }}</span></p>
-    </div>
+
+    <form id="logout-form" action="{{ route('logout') }}" method="POST" class="hidden">
+        @csrf
+    </form>
 </nav>
 
 <script>
-    document.getElementById('user-options').addEventListener('change', function() {
-        if (this.value === 'logout') {
+    function handleUserOption(select) {
+        if (select.value === 'logout') {
             document.getElementById('logout-form').submit();
-        } else if (this.value) {
-            window.location.href = this.value;
+        } else if (select.value) {
+            window.location.href = select.value;
         }
-    });
+        select.value = ''; // Resetear el select después de la selección
+    }
 </script>

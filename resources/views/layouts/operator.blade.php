@@ -3,7 +3,11 @@
 @section('content')
 
     <div class="bg-gray-300/70 h-dvh flex flex-col">
-        <x-navbar user-name="{{ Auth::user()->username}}" user-role="Operador" logo-path="images/logoNova.png" />
+        <x-navbar 
+            user-name="{{ Auth::user()->username}}" 
+            user-role="Operador" 
+            logo-path="images/logoNova.png" 
+        />
         <section class="flex flex-1 h-full min-h-0">
             <div class="w-72 bg-[#dc8727] h-full overflow-y-auto py-4 border-b-cyan-600">
                 <p class="flex items-center justify-center gap-2">

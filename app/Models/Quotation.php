@@ -2,42 +2,48 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class Quotation extends Model
 {
     use HasFactory;
 
     protected $fillable = [
-        'number',
+        'reference_number',
+        'currency',
         'delivery_date',
         'amount',
-        'currency_origin',
-        'currency_destination',
         'exchange_rate',
         'incoterm_id',
         'customers_id',
-        'users_id'
+        'users_id',
+        'status',
+
     ];
     protected $casts = [
         'delivery_date' => 'datetime',
         'amount' => 'decimal:2',
         'exchange_rate' => 'decimal:2',
     ];
-    function incoterm(): BelongsTo
+
+    public function customer(): BelongsTo
     {
-        return $this->belongsTo(Incoterm::class);
+        return $this->belongsTo(Customer::class, 'customers_id', 'NIT');
     }
-    function customer(): BelongsTo
-    {
-        return $this->belongsTo(Customer::class);
-    }
-    function user(): BelongsTo
+    public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
     }
+    public function details(): HasMany
+    {
+        return $this->hasMany(QuotationDetail::class);
+    }
 
-
+    public function services(): HasMany
+    {
+        return $this->hasMany(QuotationService::class);
+    }
 }

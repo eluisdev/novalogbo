@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Service extends Model
 {
@@ -19,4 +20,9 @@ class Service extends Model
     ];
 
     public $timestamps = true;
+
+    public function quotationServices(): HasMany
+    {
+        return $this->hasMany(QuotationService::class);
+    }
 }

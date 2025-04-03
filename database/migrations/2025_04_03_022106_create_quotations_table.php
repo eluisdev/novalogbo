@@ -13,18 +13,19 @@ return new class extends Migration
     {
         Schema::create('quotations', function (Blueprint $table) {
             $table->id();
-            $table->int('number');
             $table->dateTime('delivery_date');
-            $table->decimal('amount', 10, 2);
-            $table->string('currency_origin');
-            $table->string('currency_destination');
+            $table->integer('reference_number');
+            $table->string('currency');
             $table->decimal('exchange_rate', 10, 2);
-            $table->foreignId('incoterm_id')->constrained('incoterms')->onDelete('cascade');
-            $table->foreignId('customers_id')->constrained('customers')->onDelete('cascade');
+            $table->decimal('amount', 10, 2);
+            $table->string('status')->default('pending');
             $table->foreignId('users_id')->constrained('users')->onDelete('cascade');
             $table->timestamps();
+            $table->integer('customer_nit');
+            $table->foreign('customer_nit')->references('NIT')->on('customers')->onDelete('cascade');
         });
     }
+
 
     /**
      * Reverse the migrations.

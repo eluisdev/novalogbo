@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Cost extends Model
 {
@@ -17,6 +18,11 @@ class Cost extends Model
     protected $casts = [
         'is_active' => 'boolean',
     ];
+
+    public function CostDetails():HasMany
+    {
+        return $this->hasMany(CostDetail::class);
+    }
 
 
 }

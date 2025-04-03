@@ -1,4 +1,10 @@
-@extends("layouts.admin")
+@if (Auth::user()->role_id == '1')
+    @php $layout = 'layouts.admin'; @endphp
+@else
+    @php $layout = 'layouts.operator'; @endphp
+@endif
+
+@extends($layout)
 
 @section("dashboard-option")
 

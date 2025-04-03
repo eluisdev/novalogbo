@@ -1,4 +1,4 @@
-@if (Auth::user()->role->description === 'admin')
+@if (Auth::user()->role_id == '1')
     @php $layout = 'layouts.admin'; @endphp
 @else
     @php $layout = 'layouts.operator'; @endphp

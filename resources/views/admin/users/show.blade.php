@@ -1,57 +1,89 @@
 @extends('layouts.admin')
 
 @section('dashboard-option')
-    <div class="relative overflow-x-auto max-w-6xl mx-auto">
-        <div class="flex items-center justify-between bg-white my-5 p-2 px-4 rounded-full border-2 shadow-2xl">
-            <h2 class="text-xl font-black text-yellow-700">Ver usuario</h2>
-            <a href="{{ route('users.index') }}"
-                class="bg-[#0B628D] hover:bg-[#2d4652] text-white rounded-sm p-2 text-sm font-semibold hover:cursor-pointer">Volver
-                inicio</a>
+<div class="w-full mx-auto px-4 sm:px-6 lg:px-8">
+
+    <div class="flex flex-col sm:flex-row items-center justify-between gap-4 bg-white rounded-xl shadow-sm p-4 mb-6 border border-gray-200">
+        <h2 class="text-xl font-black text-gray-800">
+            <span class="text-[#0B628D]">Detalles del Usuario</span>
+        </h2>
+        <div class="flex space-x-2">
+            <a href="{{ route('users.index') }}" 
+               class="flex items-center justify-center px-4 py-2 bg-[#0B628D] hover:bg-[#19262c] text-white text-sm font-medium rounded-lg transition-colors duration-200 shadow-sm">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                </svg>
+                Volver a usuarios
+            </a>
         </div>
+    </div>
 
-        <div class="bg-white shadow-xl rounded-lg p-6 max-w-6xl mx-auto">
+    <div class="bg-white shadow-md rounded-lg overflow-hidden border border-gray-200 mb-6">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 p-6">
 
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                <div>
-                    <p class=""><span class="font-semibold">ID:</span> {{ $user->id }}</p>
-                    <p class=""><span class="font-semibold">Usuario:</span> {{ $user->username }}</p>
-                    <p class=""><span class="font-semibold">Nombre:</span> {{ $user->name }}</p>
-                    <p class=""><span class="font-semibold">Apellido:</span> {{ $user->surname }}</p>
+            <div class="space-y-4">
+                <div class="border-b border-gray-100 pb-3">
+                    <p class="text-sm font-medium text-gray-500">ID de Usuario</p>
+                    <p class="text-lg font-semibold text-gray-900">{{ $user->id }}</p>
                 </div>
-
-                <div>
-                    <p class=""><span class="font-semibold">Correo Electrónico:</span> {{ $user->email }}</p>
-                    <p class=""><span class="font-semibold">Teléfono:</span> {{ $user->phone ?? 'No disponible' }}</p>
-                    <p class=""><span class="font-semibold">Rol:</span> {{ $user->role->name ?? 'No asignado' }}</p>
+                
+                <div class="border-b border-gray-100 pb-3">
+                    <p class="text-sm font-medium text-gray-500">Nombre de Usuario</p>
+                    <p class="text-lg font-semibold text-gray-900">{{ $user->username }}</p>
                 </div>
-
-                <div>
-                    <p class=""><span class="font-semibold">Estado:</span>
-                        <span class="px-3 py-1 rounded-full"
-                        {{-- {{ $user->active ? 'bg-green-500' : 'bg-red-500' }}" --}}
-                        >
-                            {{ $user->active ? 'Activo' : 'Inactivo' }}
-                        </span>
-                    </p>
-                    <p class=""><span class="font-semibold">Verificación de Email:</span>
-                        {{ $user->email_verified_at ? $user->email_verified_at->format('d/m/Y H:i') : 'No verificado' }}
-                    </p>
-                    <p class="">
-                        <span class="font-semibold">Creado el:</span>
-                        {{ $user->created_at->translatedFormat('F j, Y - H:i') }}
-                    </p>
-
-                    <p class="">
-                        <span class="font-semibold">Última actualización:</span>
-                        {{ $user->updated_at->translatedFormat('F j, Y - H:i') }}
-                    </p>
+                
+                <div class="border-b border-gray-100 pb-3">
+                    <p class="text-sm font-medium text-gray-500">Nombre Completo</p>
+                    <p class="text-gray-700">{{ $user->name }} {{ $user->surname }}</p>
                 </div>
+            </div>
 
+            <div class="space-y-4">
+                <div class="border-b border-gray-100 pb-3">
+                    <p class="text-sm font-medium text-gray-500">Correo Electrónico</p>
+                    <p class="text-lg font-semibold text-gray-900">{{ $user->email }}</p>
+                </div>
+                
+                <div class="border-b border-gray-100 pb-3">
+                    <p class="text-sm font-medium text-gray-500">Teléfono</p>
+                    <p class="text-gray-700">{{ $user->phone ?? 'No disponible' }}</p>
+                </div>
+                
+                <div class="border-b border-gray-100 pb-3">
+                    <p class="text-sm font-medium text-gray-500">Rol</p>
+                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full font-medium bg-blue-100 text-blue-800 mt-1">
+                        {{ $user->role_id === 2 ? 'Operador' : 'Administrador' }}
+                    </span>
+                </div>
+            </div>
+
+            <div class="space-y-4">
+                
+                <div class="border-b border-gray-100 pb-3">
+                    <p class="text-sm font-medium text-gray-500">Fecha de Registro</p>
+                    <p class="text-gray-700">{{ $user->created_at->translatedFormat('l, j F Y - H:i') }}</p>
+                </div>
+                
+                <div class="border-b border-gray-100 pb-3">
+                    <p class="text-sm font-medium text-gray-500">Última Actualización</p>
+                    <p class="text-gray-700">{{ $user->updated_at->translatedFormat('l, j F Y - H:i') }}</p>
+                </div>
             </div>
         </div>
-        <div class="bg-white shadow-xl rounded-lg p-6 max-w-6xl mx-auto mt-5">
-            <h2 class="text-2xl font-bold text-gray-800 mb-4">Cotizaciones</h2>
-        </div>
-
     </div>
+
+    <div class="bg-white shadow-md rounded-lg overflow-hidden border border-gray-200">
+        <div class="px-6 py-4 border-b border-gray-200">
+            <h3 class="text-lg font-medium text-gray-900">Cotizaciones Relacionadas</h3>
+        </div>
+        <div class="p-6">
+            <div class="flex flex-col items-center justify-center py-8">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 text-gray-400 mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+                <p class="text-gray-500 text-center">No hay cotizaciones registradas para este usuario</p>
+            </div>
+        </div>
+    </div>
+</div>
 @endsection

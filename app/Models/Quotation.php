@@ -18,7 +18,7 @@ class Quotation extends Model
         'amount',
         'exchange_rate',
         'incoterm_id',
-        'customers_id',
+        'customer_nit',
         'users_id',
         'status',
 
@@ -31,7 +31,7 @@ class Quotation extends Model
 
     public function customer(): BelongsTo
     {
-        return $this->belongsTo(Customer::class, 'customers_id', 'NIT');
+        return $this->belongsTo(Customer::class, 'customer_nit', 'NIT');
     }
     public function user(): BelongsTo
     {

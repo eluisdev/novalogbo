@@ -16,10 +16,19 @@ class PasswordChangeController extends Controller
 
     public function changePassword(Request $request)
     {
-        $request->validate([
-            'current_password' => 'required',
-            'new_password' => 'required|string|min:8',
-        ]);
+        $request->validate(
+            [
+                'current_password' => 'required',
+                'new_password' => 'required|string|min:8|confirmed  |different:current_password',
+            ],
+            [
+                'current_password.required' => 'La contraseña actual es obligatoria.',
+                'new_password.required' => 'La nueva contraseña es obligatoria.',
+                'new_password.min' => 'La nueva contraseña debe tener al menos 8 caracteres.',
+                'new_password.confirmed' => 'Las contraseñas no coinciden.',
+                'new_password.different' => 'La nueva contraseña debe ser diferente a la actual.',
+            ]
+        );
 
         /** @var \App\Models\User $user */
         $user = Auth::user();
@@ -37,7 +46,7 @@ class PasswordChangeController extends Controller
         // Actualizar usando el modelo directamente (más robusto)
         try {
             User::where('id', $user->id)->update([
-                'password' => Hash::make($request->new_password), 
+                'password' => Hash::make($request->new_password),
                 'force_password_change' => false,
             ]);
 
@@ -47,9 +56,8 @@ class PasswordChangeController extends Controller
             $request->session()->regenerateToken();
 
             return redirect('/auth/login')->with('success', 'Contraseña cambiada exitosamente. Por favor, inicie sesión con su nueva contraseña.');
-
         } catch (\Exception $e) {
-            return back()->withErrors(['error' => 'Ocurrió un error al actualizar la contraseña: '.$e->getMessage()]);
+            return back()->withErrors(['error' => 'Ocurrió un error al actualizar la contraseña: ' . $e->getMessage()]);
         }
     }
 }

@@ -20,6 +20,7 @@ class DatabaseSeeder extends Seeder
             IncotermSeeder::class,
             ServiceSeeder::class,
             CostSeeder::class,
+            CustomerSeeder::class,
         ]);
     }
 }

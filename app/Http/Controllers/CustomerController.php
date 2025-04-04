@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Customer;
+use App\Models\Quotation;
 use Illuminate\Http\Request;
 
 class CustomerController extends Controller
@@ -16,19 +17,15 @@ class CustomerController extends Controller
     }
     public function search(Request $request)
     {
-        // Obtener el término de búsqueda
-        $searchTerm = $request->input('search');
+        $search = $request->get('q');
 
-        // Realizar la búsqueda en la base de datos
-        $customers = Customer::with('role')
-            ->where('NIT', 'LIKE', "%{$searchTerm}%")
-            ->orWhere('name', 'LIKE', "%{$searchTerm}%")
-            ->orWhere('email', 'LIKE', "%{$searchTerm}%")
-            ->latest()
-            ->paginate(10);
+        $customers = Customer::where('NIT', 'LIKE', "%{$search}%")
+            ->orWhere('name', 'LIKE', "%{$search}%")
+            ->where('active', true)
+            ->select('NIT as id', 'name', 'email')
+            ->limit(10)
+            ->get();
 
-        // Retornar la vista con los resultados de búsqueda
-        //JSON
         return response()->json($customers);
     }
 
@@ -75,8 +72,21 @@ class CustomerController extends Controller
 
     public function show($NIT)
     {
-        $customer = Customer::with('role')->findOrFail($NIT);
-        // Verificar si el cliente existe
+
+        $customer = Customer::with(
+            [
+                'role',
+                'quotations',
+                'quotations.services',
+                'quotations.details',
+                'quotations.details.origin',
+                'quotations.details.destination',
+                'quotations.details.incoterm',
+                'quotations.details.costDetails',
+                'quotations.details.costDetails.cost',
+            ]
+        )->findOrFail($NIT);
+        dd($customer);
         if (!$customer) {
             return redirect()->route('customers.index')->with('error', 'Cliente no encontrado.');
         }
@@ -122,7 +132,7 @@ class CustomerController extends Controller
             'active.boolean' => 'El estado activo debe ser verdadero o falso.',
             'role_id.required' => 'El rol es obligatorio.',
             'role_id.exists' => 'El rol seleccionado no es válido.'
-         ]);
+        ]);
 
         // Obtener el cliente por ID
         $customer = Customer::find($NIT);

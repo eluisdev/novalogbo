@@ -37,6 +37,27 @@ class QuotationController extends Controller
 
         return view('quotations.index', compact('quotations'));
     }
+    public function createQuotation($nit)
+    {
+        $customer = Customer::where('NIT', $nit)->get();
+        if ($customer->isEmpty()) {
+            return redirect()->route('quotations.create')->with('error', 'Cliente no encontrado.');
+        }
+        $incoterms = Incoterm::where('is_active', 1)->get();
+        $services = Service::where('is_active', 1)->get();
+        $countries = Country::whereNull('deleted_at')->get();
+        $costs = Cost::where('is_active', 1)->get();
+        $exchangeRates = ExchangeRate::where('active', 1)->get();
+        $customers = Customer::where('active', 1)->get();
+        return view('quotations.create', compact(
+            'incoterms',
+            'services',
+            'countries',
+            'costs',
+            'exchangeRates',
+            'customer',
+        ));
+    }
 
     public function create()
     {
@@ -153,8 +174,6 @@ class QuotationController extends Controller
             DB::rollBack();
             return back()->withInput()->with('error', 'Error creating quotation: ' . $e->getMessage());
         }
-
-
     }
     public function show($id)
     {

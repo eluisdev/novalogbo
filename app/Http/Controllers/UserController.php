@@ -136,7 +136,7 @@ class UserController extends Controller
 
 
     public function destroy($id)
-    {   
+    {
 
         $user = User::find($id);
         if (!$user) {
@@ -155,5 +155,15 @@ class UserController extends Controller
             return redirect()->route('admin.users.index')->with('error', 'Usuario no encontrado.');
         }
         return view('admin.users.show', compact('user'));
+    }
+
+    public function toggleStatus($id){
+        $user = User::find($id);
+        if (!$user) {
+            return redirect()->route('users.index')->with('error', 'Usuario no encontrado.');
+        }
+        $user->status = !$user->status;
+        $user->save();
+        return redirect()->route('users.index')->with('success', 'Estado del usuario actualizado exitosamente.');
     }
 }

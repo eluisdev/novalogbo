@@ -37,27 +37,7 @@ class QuotationController extends Controller
 
         return view('quotations.index', compact('quotations'));
     }
-    public function createQuotation($nit)
-    {
-        $customer = Customer::where('NIT', $nit)->get();
-        if ($customer->isEmpty()) {
-            return redirect()->route('quotations.create')->with('error', 'Cliente no encontrado.');
-        }
-        $incoterms = Incoterm::where('is_active', 1)->get();
-        $services = Service::where('is_active', 1)->get();
-        $countries = Country::whereNull('deleted_at')->get();
-        $costs = Cost::where('is_active', 1)->get();
-        $exchangeRates = ExchangeRate::where('active', 1)->get();
-        $customers = Customer::where('active', 1)->get();
-        return view('quotations.create', compact(
-            'incoterms',
-            'services',
-            'countries',
-            'costs',
-            'exchangeRates',
-            'customer',
-        ));
-    }
+
 
     public function create()
     {
@@ -78,23 +58,18 @@ class QuotationController extends Controller
         ));
     }
 
-    public function getCountries(Continent $continent)
+    public function searchLocation(Request $request)
     {
-        return $continent->countries()->where('is_active', true)->get();
-    }
-
-    public function getCities(Country $country)
-    {
-        return $country->cities()->where('is_active', true)->get();
-    }
-    public function getCitiesByCountry(Request $request)
-    {
-        $countryId = $request->country_id;
-        $cities = City::where('country_id', $countryId)
-            ->whereNull('deleted_at')
+        $searchTerm = $request->input('searchTerm');
+        $locations = Continent::where('name', 'LIKE', "%$searchTerm%")
+            ->orWhereHas('countries', function ($query) use ($searchTerm) {
+                $query->where('name', 'LIKE', "%$searchTerm%");
+            })
+            ->orWhereHas('countries.cities', function ($query) use ($searchTerm) {
+                $query->where('name', 'LIKE', "%$searchTerm%");
+            })
             ->get();
-
-        return response()->json($cities);
+        return response()->json($locations);
     }
 
 

@@ -25,6 +25,9 @@ Route::get('/', function () {
     return view('welcome');
 });
 
+
+
+
 /*
 |--------------------------------------------------------------------------
 | Autenticación
@@ -165,6 +168,8 @@ Route::middleware(['auth', 'role:admin'])->group(function () {
         Route::patch('toggle-status/{id}', 'toggleStatus')->name('toggleStatus');
     });
 });
+
+
 /*
 |--------------------------------------------------------------------------
 | Rutas para Operadores y Administradores
@@ -174,15 +179,15 @@ Route::middleware(['auth', 'role:admin,operator'])->group(function () {
     // Gestión de clientes
     Route::prefix('customers')->name('customers.')->controller(CustomerController::class)->group(function () {
         Route::get('/', 'index')->name('index');
-        Route::get('/create', 'create')->name('create');
         Route::post('/', 'store')->name('store');
-        Route::get('/{NIT}', 'show')->name('show');
+        Route::get('/create', 'create')->name('create');
+        Route::get('/search', 'search')->name('search');
         Route::get('/edit/{NIT}', 'edit')->name('edit');
+        Route::get('/{NIT}', 'show')->name('show');
         Route::put('/{NIT}', 'update')->name('update');
         Route::delete('/{NIT}', 'destroy')->name('destroy');
 
         // POR VERSE
-        Route::get('/search/{id}', 'search')->name('search');
     });
 
 
@@ -190,20 +195,17 @@ Route::middleware(['auth', 'role:admin,operator'])->group(function () {
     Route::prefix('quotations')->name('quotations.')->controller(QuotationController::class)->group(function () {
         Route::get('/', 'index')->name('index');
         Route::get('/create', 'create')->name('create');
-        Route::get('/create/{nit}', 'createQuotation')->name('createQuotation');
         Route::post('/', 'store')->name('store');
+        Route::get('/searchLocation', 'searchLocation')->name('searchLocation');
         Route::get('/{id}', 'show')->name('show');
-
         Route::get('/edit/{id}', 'edit')->name('edit');
         Route::put('/{id}', 'update')->name('update');
         Route::delete('/{id}', 'destroy')->name('destroy');
         Route::patch('updateStatus/{id}', 'updateStatus')->name('updateStatus');
 
         // PDF
-        Route::get('/pdf/{id}', 'generatePDF')->name('pdf');
-        Route::get('/get-countries/{continent}', 'getCountries')->name('getCountries');
-        Route::get('/get-cities/{country}', 'getCities')->name('getCities');
-        Route::get('/get-cities-country/{country}', 'getCitiesByCountry')->name('getCitiesByCountry');
+        //Route::get('/pdf/{id}', 'generatePDF')->name('pdf');
+
     });
 });
 

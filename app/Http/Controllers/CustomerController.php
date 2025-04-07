@@ -86,7 +86,6 @@ class CustomerController extends Controller
                 'quotations.details.costDetails.cost',
             ]
         )->findOrFail($NIT);
-        dd($customer);
         if (!$customer) {
             return redirect()->route('customers.index')->with('error', 'Cliente no encontrado.');
         }

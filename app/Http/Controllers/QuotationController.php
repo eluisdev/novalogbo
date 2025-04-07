@@ -17,6 +17,7 @@ use App\Models\QuotationDetail;
 use App\Models\QuotationService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Validator;
 
 class QuotationController extends Controller
 {
@@ -60,23 +61,106 @@ class QuotationController extends Controller
 
     public function searchLocation(Request $request)
     {
-        $searchTerm = $request->input('searchTerm');
-        $locations = Continent::where('name', 'LIKE', "%$searchTerm%")
-            ->orWhereHas('countries', function ($query) use ($searchTerm) {
-                $query->where('name', 'LIKE', "%$searchTerm%");
-            })
-            ->orWhereHas('countries.cities', function ($query) use ($searchTerm) {
-                $query->where('name', 'LIKE', "%$searchTerm%");
-            })
-            ->get();
-        return response()->json($locations);
-    }
+        $request->validate([
+            'searchTerm' => 'required|string|max:255',
+        ]);
 
+        $searchTerm = trim(strtolower($request->input('searchTerm')));
+
+        if (strlen($searchTerm) < 2) {
+            return response()->json(['success' => false]);
+        }
+
+        try {
+            $searchPattern = "%{$searchTerm}%";
+
+            // 1. Países que coinciden (con todas sus ciudades)
+            $matchingCountries = Country::whereRaw('LOWER(name) LIKE ?', [$searchPattern])
+                ->with(['cities' => function ($query) {
+                    $query->select('id', 'name', 'country_id');
+                }])
+                ->get(['id', 'name']);
+
+            // 2. Ciudades que coinciden (con su país)
+            $matchingCities = City::whereRaw('LOWER(name) LIKE ?', [$searchPattern])
+                ->with(['country' => function ($query) {
+                    $query->select('id', 'name');
+                }])
+                ->get(['id', 'name', 'country_id']);
+
+            // Procesar resultados
+            $results = $matchingCountries->map(function ($country) use ($searchTerm) {
+                return [
+                    'id' => $country->id,
+                    'name' => $country->name,
+                    'type' => 'country',
+                    'match_type' => 'country',
+                    'cities' => $country->cities->map(function ($city) use ($country, $searchTerm) {
+                        return [
+                            'id' => $city->id,
+                            'name' => $city->name,
+                            'type' => 'city',
+                            'match_type' => str_contains(strtolower($city->name), $searchTerm) ? 'city' : null,
+                            'country_id' => $country->id,
+                            'country_name' => $country->name
+                        ];
+                    })->toArray()
+                ];
+            })->toArray();
+
+            // Agregar ciudades coincidentes cuyos países no coincidieron
+            $processedCountryIds = collect($results)->pluck('id')->toArray();
+            $processedCityIds = collect($results)->pluck('cities.*.id')->flatten()->toArray();
+
+            foreach ($matchingCities as $city) {
+                if (!in_array($city->id, $processedCityIds)) {
+                    $country = $city->country;
+
+                    if (in_array($country->id, $processedCountryIds)) {
+                        $countryIndex = array_search($country->id, array_column($results, 'id'));
+                        $results[$countryIndex]['cities'][] = [
+                            'id' => $city->id,
+                            'name' => $city->name,
+                            'type' => 'city',
+                            'match_type' => 'city',
+                            'country_id' => $country->id,
+                            'country_name' => $country->name
+                        ];
+                    } else {
+                        $results[] = [
+                            'id' => $country->id,
+                            'name' => $country->name,
+                            'type' => 'country',
+                            'match_type' => null,
+                            'cities' => [[
+                                'id' => $city->id,
+                                'name' => $city->name,
+                                'type' => 'city',
+                                'match_type' => 'city',
+                                'country_id' => $country->id,
+                                'country_name' => $country->name
+                            ]]
+                        ];
+                    }
+                }
+            }
+
+            return response()->json([
+                'success' => true,
+                'data' => $results
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'error' => config('app.debug') ? $e->getMessage() : null
+            ]);
+        }
+    }
 
     public function store(Request $request)
     {
         $validatedData = $request->validate([
-            'delivery_date' => 'required|date',
+            // 'delivery_date' => 'required|date',
             'reference_number' => 'required|integer',
             'currency' => 'required|string|max:3',
             'exchange_rate' => 'required|numeric',
@@ -88,7 +172,8 @@ class QuotationController extends Controller
 
         try {
             $quotation = new Quotation();
-            $quotation->delivery_date = $validatedData['delivery_date'];
+            // $quotation->delivery_date = $validatedData['delivery_date'];
+            $quotation->delivery_date = now();
             $quotation->reference_number = $validatedData['reference_number'];
             $quotation->currency = $validatedData['currency'];
             $quotation->exchange_rate = $validatedData['exchange_rate'];
@@ -237,7 +322,7 @@ class QuotationController extends Controller
         }
 
         $validatedData = $request->validate([
-            'delivery_date' => 'required|date',
+            // 'delivery_date' => 'required|date',
             'reference_number' => 'required|integer',
             'currency' => 'required|string|max:3',
             'exchange_rate' => 'required|numeric',
@@ -250,7 +335,8 @@ class QuotationController extends Controller
         DB::beginTransaction();
 
         try {
-            $quotation->delivery_date = $validatedData['delivery_date'];
+            // $quotation->delivery_date = $validatedData['delivery_date'];
+            $quotation->delivery_date = now();
             $quotation->reference_number = $validatedData['reference_number'];
             $quotation->currency = $validatedData['currency'];
             $quotation->exchange_rate = $validatedData['exchange_rate'];
@@ -381,6 +467,61 @@ class QuotationController extends Controller
         } catch (\Exception $e) {
             DB::rollBack();
             return back()->with('error', 'Error: ' . $e->getMessage());
+        }
+    }
+
+    public function storeCustomer(Request $request)
+    {
+        try {
+            // Validar los datos de entrada
+            $validator = Validator::make($request->all(), [
+                'NIT' => 'required|integer|unique:customers',
+                'name' => 'required|string|max:255',
+                'email' => 'required|email|unique:customers,email',
+                'phone' => 'nullable|string|max:20',
+                'cellphone' => 'nullable|string|max:20',
+                'address' => 'nullable|string|max:255',
+                'department' => 'nullable|string|max:100',
+                'role_id' => 'required|exists:roles,id',
+            ], [
+                'NIT.required' => 'El NIT\CI es obligatorio.',
+                'NIT.integer' => 'El NIT\CI debe ser un número entero.',
+                'NIT.unique' => 'Este NIT\CI ya está en uso.',
+                'name.required' => 'La razón social es obligatoria.',
+                'email.required' => 'El correo electrónico es obligatorio.',
+                'email.email' => 'El correo electrónico debe ser una dirección válida.',
+                'email.unique' => 'Este correo electrónico ya está en uso.',
+                'phone.nullable' => 'El teléfono es opcional.',
+                'cellphone.nullable' => 'El celular es opcional.',
+                'address.nullable' => 'La dirección es opcional.',
+                'department.nullable' => 'El departamento o lugar de residencia es opcional.',
+                'role_id.required' => 'El rol es obligatorio.',
+                'role_id.exists' => 'El rol seleccionado no es válido.',
+            ]);
+
+            if ($validator->fails()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Error de validación',
+                    'errors' => $validator->errors(),
+                    'customer' => null
+                ], 422);
+            }
+
+            // Crear un nuevo cliente
+            $customer = Customer::create($request->all());
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Cliente creado exitosamente',
+                'customer' => $customer,
+            ], 201);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error al crear el cliente: ' . $e->getMessage(),
+                'customer' => null
+            ], 500);
         }
     }
 }

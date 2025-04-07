@@ -12,16 +12,16 @@ class CostDetail extends Model
     use HasFactory;
 
     protected $fillable = [
-        'quotation_detail_id',
+        'quotation_id',
         'cost_id',
         'amount',
         'currency',
         'concept'
     ];
 
-    public function detail():BelongsTo
+    public function quotation():BelongsTo
     {
-        return $this->belongsTo(QuotationDetail::class, 'quotation_detail_id');
+        return $this->belongsTo(Quotation::class, 'quotation_detail_id');
     }
     public function cost():BelongsTo
     {

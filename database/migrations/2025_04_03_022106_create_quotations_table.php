@@ -19,6 +19,7 @@ return new class extends Migration
             $table->decimal('exchange_rate', 10, 2);
             $table->decimal('amount', 10, 2);
             $table->string('status')->default('pending');
+            $table->text('observations')->nullable();
             $table->foreignId('users_id')->constrained('users')->onDelete('cascade');
             $table->timestamps();
             $table->integer('customer_nit');

@@ -21,7 +21,7 @@ class Quotation extends Model
         'customer_nit',
         'users_id',
         'status',
-
+        'observations',
     ];
     protected $casts = [
         'delivery_date' => 'datetime',
@@ -37,13 +37,17 @@ class Quotation extends Model
     {
         return $this->belongsTo(User::class);
     }
-    public function details(): HasMany
+    public function products(): HasMany
     {
-        return $this->hasMany(QuotationDetail::class);
+        return $this->hasMany(Product::class);
     }
 
     public function services(): HasMany
     {
         return $this->hasMany(QuotationService::class);
+    }
+
+    public function costs(): HasMany{
+        return $this->hasMany(CostDetail::class);
     }
 }

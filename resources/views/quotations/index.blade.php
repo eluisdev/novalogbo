@@ -13,7 +13,7 @@
             <span class="text-[#0B628D]">Cotizaciones</span>
         </h2>
         <div class="flex space-x-2">
-            <a href="{{ route('quotations.create') }}" 
+            <a href="{{ route('quotations.create') }}"
                class="flex items-center justify-center px-4 py-2 bg-[#0B628D] hover:bg-[#19262c] text-white text-sm font-medium rounded-lg transition-colors duration-200 shadow-sm">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
@@ -62,7 +62,7 @@
                             </td>
                         </tr>
                     @else
-                        @foreach ($quotations as $quoation)
+                        {{-- @foreach ($quotations as $quoation)
                         <tr class="hover:bg-gray-50 transition-colors duration-150">
                             <td class="px-6 py-4 whitespace-nowrap">
                                 <div class="text-sm font-medium text-gray-900">{{ $customer->name }}</div>
@@ -87,7 +87,7 @@
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                 <div class="flex justify-center space-x-2">
-                                    <a href="{{ route('quotations.show', $customer->NIT) }}" 
+                                    <a href="{{ route('quotations.show', $customer->NIT) }}"
                                        class="text-blue-600 hover:text-blue-900 p-1 rounded-full hover:bg-blue-50 transition-colors duration-200"
                                        title="Ver detalle">
                                         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -95,7 +95,7 @@
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
                                         </svg>
                                     </a>
-                                    <a href="{{ route('quotations.edit', $customer->NIT) }}" 
+                                    <a href="{{ route('quotations.edit', $customer->NIT) }}"
                                        class="text-yellow-600 hover:text-yellow-900 p-1 rounded-full hover:bg-yellow-50 transition-colors duration-200"
                                        title="Editar">
                                         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -106,7 +106,7 @@
                                 </div>
                             </td>
                         </tr>
-                        @endforeach
+                        @endforeach --}}
                     @endif
                 </tbody>
             </table>

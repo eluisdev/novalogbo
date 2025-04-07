@@ -2,34 +2,25 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Testing\Fluent\Concerns\Has;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 
-class Incoterm extends Model
+class QuantityDescription extends Model
 {
+    //
+
     use HasFactory;
 
     protected $fillable = [
-        'code',
         'name',
-        'is_active',
+        'is_active'
     ];
 
-    protected $cast = [
+    protected $casts = [
         'is_active' => 'boolean',
     ];
 
-
-    public $timestamps = true;
-
-
-    /**
-     * The attributes that should be hidden for serialization.
-     *
-     * @var array<int, string>
-     */
     public function products(): HasMany
     {
         return $this->hasMany(Product::class);

@@ -341,23 +341,22 @@ class QuotationController extends Controller
                     $productDetail->volume = $product['volume'];
                     $productDetail->volume_unit = $product['volume_unit'];
                     $productDetail->description = $product['description'];
-                    $productDetail->amount = 0;
                     $productDetail->save();
+                }
+            }
+            $costTotal = 0;
 
-
-                    // Process cost details for this quotation detail
-                    if (isset($detail['costs'])) {
-                        foreach ($detail['costs'] as $cost) {
-                            $costDetail = new CostDetail();
-                            $costDetail->quotation_detail_id = $productDetail->id;
-                            $costDetail->cost_id = $cost['cost_id'];
-                            $costDetail->concept = $cost['concept'];
-                            $costDetail->amount = $cost['amount'];
-                            $productDetail->amount += $cost['amount'];
-                            $costDetail->currency = $cost['currency'] ?? 'USD';
-                            $costDetail->save();
-                        }
-                    }
+            // Process cost details for this quotation detail
+            if ($request->has('costs')) {
+                foreach ($request->costs as $cost) {
+                    $costDetail = new CostDetail();
+                    $costDetail->quotation_id = $quotation->id;
+                    $costDetail->cost_id = $cost['cost_id'];
+                    $costDetail->concept = $cost['concept'];
+                    $costDetail->amount = $cost['amount'];
+                    $costTotal += $cost['amount'];
+                    $costDetail->currency = $cost['currency'] ?? 'USD';
+                    $costDetail->save();
                 }
             }
 
@@ -371,9 +370,7 @@ class QuotationController extends Controller
                     $quotationService->save();
                 }
             }
-            // Calcular el monto total de la cotización sumando los montos de sus detalles
-            $totalAmount = Product::where('quotation_id', $quotation->id)->sum('amount');
-            $quotation->amount = $totalAmount;
+            $quotation->amount = $costTotal;
             $quotation->save();
 
             DB::commit();

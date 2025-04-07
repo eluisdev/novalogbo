@@ -24,7 +24,6 @@ return new class extends Migration
             $table->decimal('volume', 10, 2);
             $table->enum('volume_unit', ['kg_vol', 'm3']);
             $table->string('description');
-            $table->decimal('amount', 10, 2);
             $table->timestamps();
         });
     }

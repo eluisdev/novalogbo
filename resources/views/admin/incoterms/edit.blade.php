@@ -2,9 +2,12 @@
 
 @section("dashboard-option")
 
-<div class="relative overflow-x-auto max-w-6xl mx-auto">
-    <div class="flex items-center justify-between bg-white my-5 p-2 px-4 rounded-full border-2 shadow-2xl">
-        <h2 class="text-xl font-black text-yellow-700">Editar incoterm</h2>
+<div class="w-full mx-auto px-4 sm:px-6 lg:px-8">
+    <div
+        class="flex flex-col sm:flex-row items-center justify-between gap-4 bg-white rounded-xl shadow-sm p-3 mb-6 border border-gray-200">
+        <h2 class="text-xl font-black text-gray-800">
+            <span class="text-[#0B628D]">Editar incoterm</span>
+        </h2>
         <a href="{{ route("incoterms.index") }}" class="bg-[#0B628D] hover:bg-[#2d4652] text-white rounded-sm p-2 text-sm font-semibold hover:cursor-pointer">Volver inicio</a>
     </div>
 

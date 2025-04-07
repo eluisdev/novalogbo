@@ -14,6 +14,7 @@ class Product extends Model
     use HasFactory;
 
     protected $fillable = [
+        'name',
         'quotation_id',
         'origin_id',
         'destination_id',
@@ -43,10 +44,7 @@ class Product extends Model
     {
         return $this->belongsTo(Incoterm::class);
     }
-    public function costDetails(): HasMany
-    {
-        return $this->hasMany(CostDetail::class);
-    }
+
     public function quantityDescription(): BelongsTo
     {
         return $this->belongsTo(QuantityDescription::class);

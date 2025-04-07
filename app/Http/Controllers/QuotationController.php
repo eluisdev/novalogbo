@@ -70,6 +70,33 @@ class QuotationController extends Controller
         ));
     }
 
+    public function searchCustomer(Request $request)
+    {
+        $search = $request->get('search');
+
+        $customers = Customer::where('NIT', 'LIKE', "%{$search}%")
+            ->orWhere('name', 'LIKE', "%{$search}%")
+            ->where('active', true)
+            ->select('NIT as id', 'name', 'email')
+            ->limit(10)
+            ->get();
+
+        return response()->json($customers);
+    }
+
+    public function searchQuantityDescription(Request $request)
+    {
+        $search = $request->get('search');
+
+        $quantityDescription = QuantityDescription::where('name', 'LIKE', "%{$search}%")
+            ->where('is_active', true)
+            ->get();
+
+        return response()->json($quantityDescription);
+    }
+
+
+
     public function searchLocation(Request $request)
     {
         $request->validate([
@@ -223,14 +250,52 @@ class QuotationController extends Controller
         }
     }
 
+    public function storeQuantityDescripcion(Request $request)
+    {
+        try {
+            $validator = Validator::make($request->all(), [
+                'name' => 'required|string|max:255',
+                'is_active' => 'required|boolean',
+            ], [
+                'name.required' => 'El nombre es obligatorio.',
+                'name.string' => 'El nombre debe ser una cadena de texto.',
+                'name.max' => 'El nombre no puede exceder los 255 caracteres.',
+                'is_active.required' => 'El estado es obligatorio.',
+                'is_active.boolean' => 'El estado debe ser verdadero o falso.',
+            ]);
+
+            if ($validator->fails()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Error de validación',
+                    'errors' => $validator->errors(),
+                    'quantityDescription' => null
+                ], 422);
+            }
+
+            $quantityDescription = QuantityDescription::create($request->all());
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Cliente creado exitosamente',
+                'quantityDescription' => $quantityDescription,
+            ], 201);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error al crear el cliente: ' . $e->getMessage(),
+                'quantityDescription' => null
+            ], 500);
+        }
+    }
+
     public function store(Request $request)
     {
         $validatedData = $request->validate([
-            'delivery_date' => 'required|date',
             'reference_number' => 'required|integer',
             'currency' => 'required|string|max:3',
             'exchange_rate' => 'required|numeric',
-            'customer_nit' => 'required|exists:customers,NIT',
+            'NIT' => 'required|exists:customers,NIT',
             'products' => 'nullable|array',
             'products.*.origin_id' => 'required_with:products',
             'products.*.destination_id' => 'required_with:products',
@@ -246,20 +311,19 @@ class QuotationController extends Controller
             'products.*.costs.*.concept' => 'nullable|string',
             'products.*.costs.*.amount' => 'required_with:products.*.costs|numeric',
             'products.*.costs.*.currency' => 'nullable|string|max:3',
-            'services' => 'nullable|array', // Asegúrate de que 'services' sea un array si está presente
-            'services.*.id' => 'required_with:services|exists:services,id',
-            'services.*.included' => 'nullable|boolean',
+            'services' => 'nullable|array',
         ]);
+
         DB::beginTransaction();
 
         try {
             $quotation = new Quotation();
-            $quotation->delivery_date = $validatedData['delivery_date'];
+            $quotation->delivery_date = Carbon::now();
             $quotation->reference_number = $validatedData['reference_number'];
             $quotation->currency = $validatedData['currency'];
             $quotation->exchange_rate = $validatedData['exchange_rate'];
             $quotation->amount = 0;
-            $quotation->customer_nit = $validatedData['customer_nit'];
+            $quotation->customer_nit = $validatedData['NIT'];
             $quotation->users_id = Auth::id();
             $quotation->status = 'pending';
             $quotation->save();
@@ -299,11 +363,11 @@ class QuotationController extends Controller
 
             // Process services
             if ($request->has('services')) {
-                foreach ($request->services as $service) {
+                foreach ($request->services as $key => $service) {
                     $quotationService = new QuotationService();
                     $quotationService->quotation_id = $quotation->id;
-                    $quotationService->service_id = $service['id'];
-                    $quotationService->included = $service['included'] ?? false;
+                    $quotationService->service_id = $key;
+                    $quotationService->included = $service == 'include' ? true : false;
                     $quotationService->save();
                 }
             }
@@ -395,11 +459,11 @@ class QuotationController extends Controller
     public function update(Request $request, $id)
     {
         $validatedData = $request->validate([
-            'delivery_date' => 'required|date',
+            //'delivery_date' => 'required|date',
             'reference_number' => 'required|integer',
             'currency' => 'required|string|max:3',
             'exchange_rate' => 'required|numeric',
-            'customer_nit' => 'required|exists:customers,NIT',
+            'NIT' => 'required|exists:customers,NIT',
             'products' => 'nullable|array',
             'products.*.origin_id' => 'required_with:products',
             'products.*.destination_id' => 'required_with:products',
@@ -416,19 +480,17 @@ class QuotationController extends Controller
             'products.*.costs.*.amount' => 'required_with:products.*.costs|numeric',
             'products.*.costs.*.currency' => 'nullable|string|max:3',
             'services' => 'nullable|array',
-            'services.*.id' => 'required_with:services|exists:services,id',
-            'services.*.included' => 'nullable|boolean',
         ]);
 
         DB::beginTransaction();
 
         try {
             $quotation = Quotation::findOrFail($id);
-            $quotation->delivery_date = $validatedData['delivery_date'];
+            $quotation->delivery_date = Carbon::now();
             $quotation->reference_number = $validatedData['reference_number'];
             $quotation->currency = $validatedData['currency'];
             $quotation->exchange_rate = $validatedData['exchange_rate'];
-            $quotation->customer_nit = $validatedData['customer_nit'];
+            $quotation->customer_nit = $validatedData['NIT'];
             $quotation->save();
 
             // Eliminar productos y costos existentes para reemplazarlos

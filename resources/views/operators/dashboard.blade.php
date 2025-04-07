@@ -4,7 +4,7 @@
     <div class="h-dvh flex flex-col bg-gradient-to-t from-[#052f43] to-[#032c40]">
         <x-navbar user-name="{{ Auth::user()->username }}" user-role="Operador" logo-path="images/logoNova.png" />
 
-        <h1 class="text-4xl font-extrabold text-center my-24 text-amber-300">Aplicaciones</h1>
+        <h1 class="text-4xl font-extrabold text-center my-32 text-amber-200">Aplicaciones</h1>
         <ul class="flex gap-10 justify-center items-center max-w-6xl mx-auto flex-wrap">
 
 

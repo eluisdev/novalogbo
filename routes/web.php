@@ -27,7 +27,7 @@ Route::get('/', function () {
     return view('welcome');
 });
 
-Route::get('/{id}', [QuotationController::class, 'show'])->name('show');
+//Route::get('/{id}', [QuotationController::class, 'show'])->name('show');
 /*
 |--------------------------------------------------------------------------
 | Autenticación
@@ -62,7 +62,7 @@ Route::middleware(['auth'])->group(function () {
     Route::controller(UserProfileController::class)->group(function () {
         Route::get('/profile', 'edit')->name('profile.edit');
         Route::put('/profile', 'update')->name('profile.update');
-        Route::get('/profile/perfil', 'update')->name('profile.show');
+        Route::get('/profile/ver', 'show')->name('profile.show');
     });
 });
 
@@ -194,7 +194,6 @@ Route::middleware(['auth', 'role:admin,operator'])->group(function () {
         Route::get('/', 'index')->name('index');
         Route::post('/', 'store')->name('store');
         Route::get('/create', 'create')->name('create');
-        Route::get('/search', 'search')->name('search');
         Route::get('/edit/{NIT}', 'edit')->name('edit');
         Route::get('/{NIT}', 'show')->name('show');
         Route::put('/{NIT}', 'update')->name('update');
@@ -207,9 +206,13 @@ Route::middleware(['auth', 'role:admin,operator'])->group(function () {
     // Gestión de cotizaciones
     Route::prefix('quotations')->name('quotations.')->controller(QuotationController::class)->group(function () {
         Route::get('/', 'index')->name('index');
-        Route::get('/create', 'create')->name('create');
         Route::post('/', 'store')->name('store');
+        Route::post('/storeCustomer', 'storeCustomer')->name('storeCustomer');
+        Route::post('/storeQuantityDescripcion', 'storeQuantityDescripcion')->name('storeQuantityDescripcion');
         Route::get('/searchLocation', 'searchLocation')->name('searchLocation');
+        Route::get('/searchCustomer', 'searchCustomer')->name('searchCustomer');
+        Route::get('/searchQuantityDescription', 'searchQuantityDescription')->name('searchQuantityDescription');
+        Route::get('/create', 'create')->name('create');
         Route::get('/{id}', 'show')->name('show');
         Route::get('/edit/{id}', 'edit')->name('edit');
         Route::put('/{id}', 'update')->name('update');

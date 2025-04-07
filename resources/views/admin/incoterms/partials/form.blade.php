@@ -32,6 +32,21 @@
         </div>
     @endforeach
 
+    <div class="flex items-center justify-between mt-4">
+        <span class="font-semibold text-gray-700">Estado del incoterm</span>
+        <label class="relative inline-flex items-center cursor-pointer">
+            <input type="hidden" name="is_active" value="0">
+            <input type="checkbox" name="is_active" class="sr-only peer" value="1"
+                {{ old('is_active', isset($service) ? $service->is_active : true) ? 'checked' : '' }}>
+            <div
+                class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600">
+            </div>
+            <span class="ml-3 text-sm font-medium text-gray-900">
+                {{ old('active', isset($service) ? $service->is_active : true) ? 'Activo' : 'Inactivo' }}
+            </span>
+        </label>
+    </div>
+
     <button type="submit"
         class="w-full flex justify-center items-center py-3 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-gradient-to-r from-[#0e71a2] to-[#074665] hover:from-[#084665] hover:to-[#06364e] transition-colors duration-200 hover:cursor-pointer mt-6"
         data-loading-text="{{ isset($incoterm) ? 'Actualizando...' : 'Creando...' }}"

@@ -13,7 +13,9 @@
         <p>This is a simple Laravel application.</p>
         <p>Laravel version: {{ Illuminate\Foundation\Application::VERSION }}</p>
         <p>PHP version: {{ PHP_VERSION }}</p>
-        <form action="" method="post" {{ route('word.generate') }}>
+        <form
+        action=""
+        {{-- method="post" {{ route('word.generate') }}> --}}
             @csrf
             <input type="text" name="name" placeholder="Enter your name">
             <button type="submit">Submit</button>

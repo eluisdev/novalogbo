@@ -15,19 +15,7 @@ class CustomerController extends Controller
         // Retornar la vista con los clientes
         return view('customers.index', compact('customers'));
     }
-    public function search(Request $request)
-    {
-        $search = $request->get('q');
 
-        $customers = Customer::where('NIT', 'LIKE', "%{$search}%")
-            ->orWhere('name', 'LIKE', "%{$search}%")
-            ->where('active', true)
-            ->select('NIT as id', 'name', 'email')
-            ->limit(10)
-            ->get();
-
-        return response()->json($customers);
-    }
 
     public function create()
     {
@@ -88,7 +76,6 @@ class CustomerController extends Controller
                 'quotations.details.costDetails.cost',
             ]
         )->findOrFail($NIT);
-        dd($customer);
         if (!$customer) {
             return redirect()->route('customers.index')->with('error', 'Cliente no encontrado.');
         }

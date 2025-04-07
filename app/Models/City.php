@@ -28,13 +28,13 @@ class City extends Model
     {
         return $this->belongsTo(Country::class);
     }
-    public function originQuotations():HasMany
+    public function originProduct():HasMany
     {
-        return $this->hasMany(QuotationDetail::class, 'origin_id');
+        return $this->hasMany(Product::class, 'origin_id');
     }
-    public function destinationQuotations():HasMany
+    public function destinationProduct():HasMany
     {
-        return $this->hasMany(QuotationDetail::class, 'destination_id');
+        return $this->hasMany(Product::class, 'destination_id');
     }
 
 }

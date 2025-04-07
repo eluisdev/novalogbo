@@ -3,8 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\Customer;
-use App\Models\Quotation;
 use Illuminate\Http\Request;
+
 
 class CustomerController extends Controller
 {
@@ -34,6 +34,8 @@ class CustomerController extends Controller
         // Retornar la vista para crear un nuevo cliente
         return view('customers.create');
     }
+
+
 
     public function store(Request $request)
     {

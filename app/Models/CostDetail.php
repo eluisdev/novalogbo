@@ -19,9 +19,9 @@ class CostDetail extends Model
         'concept'
     ];
 
-    public function detail():BelongsTo
+    public function product():BelongsTo
     {
-        return $this->belongsTo(QuotationDetail::class, 'quotation_detail_id');
+        return $this->belongsTo(Product::class, 'quotation_detail_id');
     }
     public function cost():BelongsTo
     {

@@ -12,8 +12,10 @@ use App\Http\Controllers\IncotermController;
 use App\Http\Controllers\OperatorController;
 use App\Http\Controllers\ContinentController;
 use App\Http\Controllers\QuotationController;
+use App\Http\Controllers\CotizacionController;
 use App\Http\Controllers\UserProfileController;
 use App\Http\Controllers\PasswordChangeController;
+use App\Http\Controllers\QuantityDescriptionController;
 
 /*
 |--------------------------------------------------------------------------
@@ -25,9 +27,7 @@ Route::get('/', function () {
     return view('welcome');
 });
 
-
-
-
+Route::get('/{id}', [QuotationController::class, 'show'])->name('show');
 /*
 |--------------------------------------------------------------------------
 | Autenticación
@@ -167,6 +167,19 @@ Route::middleware(['auth', 'role:admin'])->group(function () {
         Route::delete('/{id}', 'destroy')->name('destroy');
         Route::patch('toggle-status/{id}', 'toggleStatus')->name('toggleStatus');
     });
+
+    // Gestión de descripciones de cantidad
+
+    Route::prefix('quantity_descriptions')->name('quantity_descriptions.')->controller(QuantityDescriptionController::class)->group(function () {
+        Route::get('/', 'index')->name('index');
+        Route::get('/create', 'create')->name('create');
+        Route::post('/', 'store')->name('store');
+        Route::get('/{id}', 'show')->name('show');
+        Route::get('/edit/{id}', 'edit')->name('edit');
+        Route::put('/{id}', 'update')->name('update');
+        Route::delete('/{id}', 'destroy')->name('destroy');
+        Route::patch('toggle-status/{id}', 'toggleStatus')->name('toggleStatus');
+    });
 });
 
 
@@ -202,7 +215,8 @@ Route::middleware(['auth', 'role:admin,operator'])->group(function () {
         Route::put('/{id}', 'update')->name('update');
         Route::delete('/{id}', 'destroy')->name('destroy');
         Route::patch('updateStatus/{id}', 'updateStatus')->name('updateStatus');
-
+        Route::post('/customers/ajax-store', 'storeCustomer')
+            ->name('customers.ajax-store');
         // PDF
         //Route::get('/pdf/{id}', 'generatePDF')->name('pdf');
 

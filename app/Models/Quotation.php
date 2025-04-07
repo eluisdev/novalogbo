@@ -37,9 +37,9 @@ class Quotation extends Model
     {
         return $this->belongsTo(User::class);
     }
-    public function details(): HasMany
+    public function products(): HasMany
     {
-        return $this->hasMany(QuotationDetail::class);
+        return $this->hasMany(Product::class);
     }
 
     public function services(): HasMany

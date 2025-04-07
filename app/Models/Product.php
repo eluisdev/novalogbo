@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
-class QuotationDetail extends Model
+class Product extends Model
 {
     //
 
@@ -19,11 +19,12 @@ class QuotationDetail extends Model
         'destination_id',
         'incoterm_id',
         'quantity',
-        'quantity_description',
+        'quantity_description_id',
         'weight',
         'volume',
         'volume_unit',
         'description',
+        'amount'
     ];
 
     public function quotation(): BelongsTo
@@ -46,4 +47,9 @@ class QuotationDetail extends Model
     {
         return $this->hasMany(CostDetail::class);
     }
+    public function quantityDescription(): BelongsTo
+    {
+        return $this->belongsTo(QuantityDescription::class);
+    }
+
 }

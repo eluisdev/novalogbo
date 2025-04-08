@@ -13,6 +13,7 @@ class QuantityDescriptionSeeder extends Seeder
      */
     public function run(): void
     {
-        QuantityDescription::create(["name" => "BOX", "is_active" => true]);
+        QuantityDescription::create(["name" => "CAJA", "is_active" => true]);
+        QuantityDescription::create(["name" => "ENTERO", "is_active" => true]);
     }
 }

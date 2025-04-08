@@ -47,7 +47,7 @@ class Quotation extends Model
         return $this->hasMany(QuotationService::class);
     }
 
-    public function costs(): HasMany{
+    public function costDetails(): HasMany{
         return $this->hasMany(CostDetail::class);
     }
 }

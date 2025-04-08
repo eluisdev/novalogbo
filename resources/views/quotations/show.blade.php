@@ -13,7 +13,7 @@
             <span class="text-[#0B628D]">Detalles del Cliente</span>
         </h2>
         <div class="flex space-x-2">
-            <a href="{{ route('customers.index') }}" 
+            <a href="{{ route('customers.index') }}"
                class="flex items-center justify-center px-4 py-2 bg-[#0B628D] hover:bg-[#19262c] text-white text-sm font-medium rounded-lg transition-colors duration-200 shadow-sm">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
@@ -30,18 +30,18 @@
                     <p class="text-sm font-medium text-gray-500">CI/NIT</p>
                     <p class="text-lg font-semibold text-gray-900">{{ $customer->NIT }}</p>
                 </div>
-                
+
                 <div class="border-b border-gray-100 pb-2">
                     <p class="text-sm font-medium text-gray-500">Nombre/Razón Social</p>
                     <p class="text-lg font-semibold text-gray-900">{{ $customer->name }}</p>
                 </div>
-                
+
                 <div class="border-b border-gray-100 pb-2">
                     <p class="text-sm font-medium text-gray-500">Correo Electrónico</p>
                     <p class="text-lg font-semibold text-gray-900">{{ $customer->email }}</p>
 
                 </div>
-                
+
                 <div class="border-b border-gray-100 pb-2">
                     <p class="text-sm font-medium text-gray-500">Teléfono/Celular</p>
                     <div class="flex gap-4">
@@ -56,24 +56,24 @@
                     <p class="text-sm font-medium text-gray-500">Dirección</p>
                     <p class="text-gray-700">{{ $customer->address ?? 'No especificada' }}</p>
                 </div>
-                
+
                 <div class="border-b border-gray-100 pb-2">
                     <p class="text-sm font-medium text-gray-500">Departamento</p>
                     <p class="text-gray-700">{{ $customer->department ?? 'No especificado' }}</p>
                 </div>
-                
+
                 {{-- <div class="border-b border-gray-100 pb-2">
                     <p class="text-sm font-medium text-gray-500">Estado</p>
                     <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {{ $customer->active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800' }}">
                         {{ $customer->active ? 'Activo' : 'Inactivo' }}
                     </span>
                 </div> --}}
-                
+
                 <div class="border-b border-gray-100 pb-2">
                     <p class="text-sm font-medium text-gray-500">Fecha de Registro</p>
                     <p class="text-gray-700">{{ $customer->created_at->translatedFormat('l, j F Y - H:i') }}</p>
                 </div>
-                
+
                 <div class="border-b border-gray-100 pb-2">
                     <p class="text-sm font-medium text-gray-500">Última Actualización</p>
                     <p class="text-gray-700">{{ $customer->updated_at->translatedFormat('l, j F Y - H:i') }}</p>

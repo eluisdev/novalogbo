@@ -9,12 +9,13 @@ use GuzzleHttp\Client;
 use App\Models\Service;
 use App\Models\Customer;
 use App\Models\Incoterm;
-use App\Models\QuantityDescription;
 use Illuminate\Http\Request;
 use PhpOffice\PhpWord\PhpWord;
 use PhpOffice\PhpWord\IOFactory;
 use PhpOffice\PhpWord\Shared\Html;
+use App\Models\QuantityDescription;
 use PhpOffice\PhpWord\Element\Table;
+use PhpOffice\PhpWord\Style\Language;
 use PhpOffice\PhpWord\Element\Section;
 use PhpOffice\PhpWord\Element\TextRun;
 use PhpOffice\PhpWord\Shared\Converter;
@@ -22,8 +23,530 @@ use PhpOffice\PhpWord\TemplateProcessor;
 use PhpOffice\PhpWord\SimpleType\JcTable;
 use PhpOffice\PhpWord\SimpleType\TblWidth;
 
-class CotizacionController extends Controller
+class TestController extends Controller
 {
+
+    private function getCostsData($costs)
+    {
+        $processedCosts = [];
+
+        foreach ($costs as $cost) {
+            $logisticCost = Cost::findOrFail($cost['id']);
+
+            $processedCosts[] = [
+                'name' => $logisticCost->name,
+                'description' => $logisticCost->description,
+                'amount' => $cost['amount'],
+                'currency' => $logisticCost->currency
+            ];
+        }
+        return $processedCosts;
+    }
+    public function generarCotizacion(Request $request)
+    {
+
+        // // Validar los datos del request
+        // $validated = $request->validate([
+        //     'NIT' => 'required|string',
+        //     'currency' => 'required|string',
+        //     'exchange_rate' => 'required|numeric',
+        //     'reference_number' => 'required|string',
+        //     'products' => 'required|array',
+        //     'services' => 'required|array',
+        //     'logistic_costs' => 'required|array'
+        // ]);
+
+        $validated =  [
+            'NIT' => '1419568',
+            'currency' => 'USD',
+            'exchange_rate' => '6.96',
+            'reference_number' => '1254125',
+            'delivery_date' => '2023-10-01',
+            'products' => [
+                1 => [
+                    'product_name' => 'Product1',
+                    'origin_id' => '41',
+                    'destination_id' => '64',
+                    'weight' => '45',
+                    'incoterm_id' => '6',
+                    'unit_quantity' => '1',
+                    'quantity' => '40',
+                    'quantity_description' => 'box',
+                    'volume_value' => '55',
+                    'volume_unit' => 'KG'
+                ]
+            ],
+            'services' => [
+                1 => 'include',
+                3 => 'include',
+                7 => 'exclude',
+                9 => 'exclude',
+                13 => 'include',
+                17 => 'include'
+            ],
+            'logistic_costs' => [
+                1 => [
+                    'enabled' => 'on',
+                    'amount' => '550',
+                    'id' => '1'
+                ],
+                2 => [
+                    'enabled' => 'on',
+                    'amount' => '500',
+                    'id' => '2'
+                ]
+            ]
+        ];
+        $simulatedClientData = [
+            'nit' => '1419568',
+            'name' => 'Lucas S.A.',
+            'email' => 'cliente@simulado.com',
+            'phone' => '123456789',
+            'address' => 'Dirección simulada 123'
+        ];
+        $clientData = $simulatedClientData;
+        $costsData = $this->getCostsData($validated['logistic_costs']);
+
+        $totalCost = array_reduce($costsData, function ($carry, $item) {
+            return $carry + floatval(str_replace(',', '', $item['amount']));
+        }, 0);
+        $totalCostFormatted = number_format($totalCost, 2, ',', '.');
+        $deliveryDate = Carbon::parse($validated['delivery_date'])->locale('es')->isoFormat('D [de] MMMM [de] YYYY');
+
+
+        $phpWord = new PhpWord();
+        // Configurar el idioma español para el documento
+        $phpWord->getSettings()->setThemeFontLang(new Language(Language::ES_ES));
+
+        // Establecer propiedades del documento en español
+        $properties = $phpWord->getDocInfo();
+        $properties->setTitle('Documento en Español');
+        $properties->setCreator('NOVALOGISTIC BOLIVIA SRL');
+        $properties->setCompany('NOVALOGISTIC BOLIVIA SRL');
+        $phpWord->setDefaultFontName('Montserrat');
+        $pageWidthInches = 8.52;
+        $headerHeightInches = 2.26; // Altura deseada para la imagen del encabezado en pulgadas
+        $footerHeightInches = 1.83; // Altura deseada para la imagen del pie de página en pulgadas
+
+        $pageWidthPoints = $pageWidthInches * 72;
+        $headerHeightPoints = $headerHeightInches * 72;
+        $footerHeightPoints = $footerHeightInches * 72;
+
+        $section = $phpWord->addSection([
+            'paperSize' => 'Letter',
+            //'headerHeight' => Converter::inchToTwip(1.95), // Altura del header
+            //'footerHeight' => Converter::inchToTwip(1.7)   // Altura del footer
+            'marginTop' => Converter::inchToTwip(2.26),
+            'marginBottom' => Converter::inchToTwip(1.97),
+        ]);
+
+        $header = $section->addHeader();
+        $header->addImage(
+            storage_path('app/templates/Herder.png'),
+            [
+                'width' => $pageWidthPoints,
+                'height' => $headerHeightPoints,
+                'positioning' => 'absolute',
+                'posHorizontal' => \PhpOffice\PhpWord\Style\Image::POSITION_HORIZONTAL_LEFT,
+                'posHorizontalRel' => 'page',
+                'posVerticalRel' => 'page',
+                'marginTop' => 0,
+                'marginLeft' => 0
+            ]
+        );
+        $footer = $section->addFooter();
+        $footer->addImage(
+            storage_path('app/templates/Footer.png'),
+            [
+                'width' => $pageWidthPoints,
+                'height' => $footerHeightPoints,
+                'positioning' => 'absolute',
+                'posHorizontal' => \PhpOffice\PhpWord\Style\Image::POSITION_HORIZONTAL_LEFT,
+                'posHorizontalRel' => 'page',
+                'posVertical' => \PhpOffice\PhpWord\Style\Image::POSITION_VERTICAL_BOTTOM,
+                'posVerticalRel' => 'page',
+                'marginLeft' => 0,
+                'marginBottom' => 0
+            ]
+        );
+        $section->addText(
+            'No.007-2025',
+            [
+                'size' => 11,
+                'bold' => true,
+            ],
+            ['spaceAfter' => 0, 'align' => 'right']
+        );
+        $section->addText(
+            'OP-001-25', // NUMERO DE OPERACION
+            [
+                'size' => 11,
+                'bold' => true,
+            ],
+            ['spaceAfter' => Converter::pointToTwip(11), 'align' => 'right']
+        );
+
+        $section->addText(
+            'NOTA DE COBRANZA',
+            ['size' => 11, 'underline' => 'single', 'bold' => true, 'allCaps' => true,],
+            ['spaceAfter' => Converter::pointToTwip(15), 'align' => 'center']
+        );
+        // Estilos
+        $fontStyle = [
+            'name' => 'Montserrat',
+            'size' => 11,
+            'bold' => true
+        ];
+
+        $valueStyle = [
+            'name' => 'Montserrat',
+            'size' => 11,
+            'bold' => false,
+        ];
+
+        // Estilo de párrafo sin espaciado
+        $paragraphStyle = [
+            'spaceAfter' => 0,
+            'spaceBefore' => 0,
+            'spacing' => 0
+        ];
+        // Crear una tabla que ocupe todo el ancho de la página
+        $tableStyle = [
+            'cellMargin' => 50, // Elimina todos los márgenes de las celdas
+            'width' => 100, // 100% del ancho disponible
+            'unit' => 'pct', // porcentaje
+        ];
+
+        $table = $section->addTable($tableStyle);
+
+        // Primera fila: CLIENTE
+        $row = $table->addRow(); // Altura exacta para controlar el espacio
+
+        // CLIENTE (celda izquierda)
+        $cell = $row->addCell(5000, ['valign' => 'bottom', 'gridSpan' => 2]);
+        $textRun = $cell->addTextRun($paragraphStyle); // Aquí el estilo del párrafo
+        $textRun->addText("CLIENTE: ", $fontStyle); // Aquí solo estilo de fuente
+        $textRun->addText("\tICYS MEDICAL", $valueStyle); // Aquí solo estilo de fuente
+
+        $row = $table->addRow();
+        $cell = $row->addCell(5000, ['valign' => 'bottom', 'gridSpan' => 2]);
+        $textRun = $cell->addTextRun($paragraphStyle);
+        $textRun->addText("FECHA: ", $fontStyle);
+        $textRun->addText("\t" . Carbon::now()->format('d/m/Y'), $valueStyle);
+
+
+        $row = $table->addRow();
+        $cell = $row->addCell(5000, ['valign' => 'bottom',]);
+        $textRun = $cell->addTextRun([
+            'spaceAfter' => Converter::pointToTwip(3),
+            'spaceBefore' => 0,
+            'spacing' => 0
+        ]);
+        $textRun->addText("TC: ", $fontStyle);
+        $textRun->addText("\t\t6.96", $valueStyle);
+
+        $cell = $row->addCell(5000, [
+            'valign' => 'bottom',
+
+        ]);
+        $textRun = $cell->addTextRun([
+            'spaceAfter' => Converter::pointToTwip(3),
+            'spaceBefore' => 0,
+            'spacing' => 0,
+            'alignment' => 'right'
+        ]);
+        $textRun->addText("REF: ", $fontStyle);
+        $textRun->addText("IM24180", $valueStyle);
+
+        // Crear tabla de datos del envío
+        $tableStyle = [
+            'borderColor' => '000000',
+            'cellMarginLeft' => 50,
+            'cellMarginRight' => 50, // Elimina todos los márgenes internos de las celdas
+            //'layout' => \PhpOffice\PhpWord\Style\Table::LAYOUT_FIXED,
+            'width' => 100,
+        ];
+        $phpWord->addTableStyle('shipmentTable', $tableStyle);
+        $table = $section->addTable('shipmentTable');
+
+        $table->addRow();
+        $table->addCell(Converter::cmToTwip(10), [
+            'valign' => 'center',
+            'borderSize' => 10,
+        ])->addText('DESCRIPCIÓN', [
+            'bold' => true,
+            'size' => 11,
+            'allCaps' => true
+        ], [
+            'spaceBefore' => 0,
+            'spaceAfter' => 0,
+            'spacing' => 0, // Interlineado 1
+            'lineHeight' => 1.0,
+            'align' => 'center'
+        ]);
+        $table->addCell(Converter::cmToTwip(4), [
+            'valign' => 'center',
+            'borderSize' => 10,
+        ])->addText('MONTO BS', [
+            'bold' => true,
+            'size' => 11,
+            'allCaps' => true
+        ], [
+            'spaceBefore' => 0,
+            'spaceAfter' => 0,
+            'spacing' => 0, // Interlineado 1
+            'lineHeight' => 1.0,
+            'align' => 'right'
+        ]);
+        $table->addCell(Converter::cmToTwip(4), [
+            'valign' => 'center',
+            'borderSize' => 10,
+        ])->addText('MONTO USD', [
+            'bold' => true,
+            'size' => 11,
+            'allCaps' => true
+        ], [
+            'spaceBefore' => 0,
+            'spaceAfter' => 0,
+            'spacing' => 0, // Interlineado 1
+            'lineHeight' => 1.0,
+            'align' => 'right'
+        ]);
+
+        // Filas de costos
+        foreach ($costsData as $cost) {
+            $table->addRow();
+            $table->addCell(Converter::cmToTwip(10), [
+                'valign' => 'center',
+                'borderSize' => 10,
+            ])->addText($cost['name'], [
+                'size' => 11
+            ], [
+                'spaceBefore' => 0,
+                'spaceAfter' => 0,
+                'spacing' => 0,
+                'lineHeight' => 1.0,
+                'align' => 'left'
+            ]);
+            $table->addCell(Converter::cmToTwip(4), [
+                'valign' => 'center',
+                'borderSize' => 10,
+            ])->addText(number_format($cost['amount'], 2, ',', '.'), [
+                'size' => 11
+            ], [
+                'spaceBefore' => 0,
+                'spaceAfter' => 0,
+                'spacing' => 0,
+                'lineHeight' => 1.0,
+                'align' => 'right'
+            ]);
+            $table->addCell(Converter::cmToTwip(4), [
+                'valign' => 'center',
+                'borderSize' => 10,
+            ])->addText(number_format($cost['amount'], 2, ',', '.'), [
+                'size' => 11
+            ], [
+                'spaceBefore' => 0,
+                'spaceAfter' => 0,
+                'spacing' => 0,
+                'lineHeight' => 1.0,
+                'align' => 'right'
+            ]);
+        }
+
+        $rowsToAdd = max(0, 18 - count($costsData));
+        for ($i = 0; $i < $rowsToAdd; $i++) {
+            $table->addRow();
+            $table->addCell(Converter::cmToTwip(10), [
+                'valign' => 'center',
+                'borderTopSize' => 0,
+                'borderBottomSize' => 0,
+                'borderTopColor' => 'FFFFFF',
+                'borderBottomColor' => 'FFFFFF',
+                'borderBottomSize' => 0,
+                'borderRightSize' => 10,
+                'borderLeftSize' => 10,
+            ])->addText('', [
+                'size' => 11
+            ], [
+                'spaceBefore' => 0,
+                'spaceAfter' => 0,
+                'spacing' => 0,
+                'lineHeight' => 1.0,
+                'align' => 'left'
+            ]);
+            $table->addCell(Converter::cmToTwip(4), [
+                'valign' => 'center',
+                'borderTopSize' => 0,
+                'borderBottomSize' => 0,
+                'borderTopColor' => 'FFFFFF',
+                'borderBottomColor' => 'FFFFFF',
+                'borderLeftSize' => 10,
+                'borderRightSize' => 10,
+            ])->addText('', [
+                'size' => 11
+            ], [
+                'spaceBefore' => 0,
+                'spaceAfter' => 0,
+                'spacing' => 0,
+                'lineHeight' => 1.0,
+                'align' => 'right'
+            ]);
+            $table->addCell(Converter::cmToTwip(4), [
+                'valign' => 'center',
+                'borderTopSize' => 0,
+                'borderBottomSize' => 0,
+                'borderTopColor' => 'FFFFFF',
+                'borderBottomColor' => 'FFFFFF',
+                'borderLeftSize' => 10,
+                'borderRightSize' => 10,
+            ])->addText('', [
+                'size' => 11
+            ], [
+                'spaceBefore' => 0,
+                'spaceAfter' => 0,
+                'spacing' => 0,
+                'lineHeight' => 1.0,
+                'align' => 'right'
+            ]);
+        }
+
+
+
+        $table->addRow();
+        $table->addCell(Converter::cmToTwip(10), [
+            'valign' => 'center',
+            'borderSize' => 10,
+        ])->addText('TOTAL', [
+            'size' => 11,
+            'bold' => true,
+            'allCaps' => true
+        ], [
+            'spaceBefore' => 0,
+            'spaceAfter' => 0,
+            'spacing' => 0, // Interlineado 1
+            'lineHeight' => 1.0,
+            'align' => 'right'
+        ]);
+        $table->addCell(Converter::cmToTwip(4), [
+            'valign' => 'center',
+            'borderSize' => 10,
+        ])->addText($totalCostFormatted, [
+            'size' => 11,
+            'allCaps' => true,
+            'bold' => true
+        ], [
+            'spaceBefore' => 0,
+            'spaceAfter' => 0,
+            'spacing' => 0, // Interlineado 1
+            'lineHeight' => 1.0,
+            'align' => 'right'
+        ]);
+        $table->addCell(Converter::cmToTwip(4), [
+            'valign' => 'center',
+            'borderSize' => 10,
+        ])->addText($totalCostFormatted, [
+            'size' => 11,
+            'allCaps' => true,
+            'bold' => true
+        ], [
+            'spaceBefore' => 0,
+            'spaceAfter' => 0,
+            'spacing' => 0, // Interlineado 1
+            'lineHeight' => 1.0,
+            'align' => 'right'
+        ]);
+
+        // Total con cellspan
+
+        // Segunda fila: FECHA
+        $row = $table->addRow();
+        // FECHA (celda izquierda)
+        $cell = $row->addCell(5000, [
+            'valign' => 'center',
+            'gridSpan' => 3,
+            'valign' => 'center',
+            'borderSize' => 10,
+        ]);
+        $textRun = $cell->addTextRun($paragraphStyle);
+        $textRun->addText("Son: ", $fontStyle);
+        $textRun->addText("\t" . Carbon::now()->format('d/m/Y'), [
+            'size' => 11,
+            'allCaps' => true
+        ], [
+            'spaceBefore' => 0,
+            'spaceAfter' => 0,
+            'spacing' => 0, // Interlineado 1
+            'lineHeight' => 1.0,
+            'align' => 'left'
+        ]);
+
+
+        $section->addText(
+            'NOVALOGBO SRL',
+            [
+                'size' => 8,
+                'bold' => true
+            ],
+            [
+                'spaceBefore' => Converter::pointToTwip(8),
+                'spaceAfter' => 0,
+            ]
+        );
+        $section->addText(
+            'NIT: 412B48023',
+            [
+                'size' => 8,
+                'bold' => true
+            ],
+            [
+                'spaceAfter' => 0,
+                'spaceBefore' => 0,
+            ]
+        );
+        $section->addText(
+            'BANCO BISA',
+            [
+                'size' => 8,
+                'bold' => true
+            ],
+            [
+                'spaceAfter' => 0,
+                'spaceBefore' => 0,
+            ]
+        );
+        $section->addText(
+            'BS: 7994826010',
+            [
+                'size' => 8,
+                'bold' => true
+            ],
+            [
+                'spaceAfter' => 0,
+                'spaceBefore' => 0,
+            ]
+        );
+        $section->addText(
+            'BS: 7994829064',
+            [
+                'size' => 8,
+                'bold' => true
+            ],
+            [
+                'spaceAfter' => 0,
+                'spaceBefore' => 0,
+            ]
+        );
+
+
+        // Guardar el documento
+        $filename = 'NotaCobranza.docx';
+        $tempFile = tempnam(sys_get_temp_dir(), 'PHPWord');
+        $writer = IOFactory::createWriter($phpWord, 'Word2007');
+        $writer->save($tempFile);
+        // Descargar el archivo
+        return response()->download($tempFile, $filename)->deleteFileAfterSend(true);
+    }
 
     // public function generarCotizacion0(Request $request)
     // {
@@ -690,5 +1213,4 @@ class CotizacionController extends Controller
     /**
      * Obtiene datos del cliente por NIT
      */
-
 }

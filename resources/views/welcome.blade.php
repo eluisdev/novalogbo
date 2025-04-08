@@ -15,7 +15,7 @@
         <p>PHP version: {{ PHP_VERSION }}</p>
         <form
         action=""
-        {{-- method="post" {{ route('word.generate') }}> --}}
+        method="post" {{ route('word.generate') }}>
             @csrf
             <input type="text" name="name" placeholder="Enter your name">
             <button type="submit">Submit</button>

@@ -23,7 +23,7 @@ return new class extends Migration
             $table->decimal('weight', 10, 2);
             $table->decimal('volume', 10, 2);
             $table->enum('volume_unit', ['kg_vol', 'm3']);
-            $table->string('description');
+            $table->string('description')->nullable();
             $table->timestamps();
         });
     }

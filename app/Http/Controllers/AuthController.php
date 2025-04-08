@@ -14,8 +14,12 @@ class AuthController extends Controller
 {
     public function showLoginForm()
     {
+        if (Auth::check()) {
+            return $this->redirectAuthenticatedUser();
+        }
         return view('auth.login');
     }
+
     public function store(Request $request)
     {
         $credentials = $request->validate([
@@ -25,12 +29,16 @@ class AuthController extends Controller
 
         if (!Auth::attempt(['username' => $credentials['username'], 'password' => $credentials['password']])) {
             // Si las credenciales no son válidas, redirigir de vuelta con un mensaje de error
-
             return back()->withErrors([
                 'message' => 'Las credenciales no coinciden con nuestros registros.',
             ]);
         }
 
+        return $this->redirectAuthenticatedUser();
+    }
+
+    protected function redirectAuthenticatedUser()
+    {
         $user = Auth::user();
         if ($user->force_password_change) {
             return redirect()->route('password.change');
@@ -44,6 +52,7 @@ class AuthController extends Controller
             return redirect()->intended(route('home'));
         }
     }
+
     public function logout(Request $request)
     {
         // Cerrar sesión del usuario autenticado
@@ -63,16 +72,16 @@ class AuthController extends Controller
     public function sendResetLinkEmail(Request $request)
     {
         $request->validate(['email' => 'required|email|exists:users,email']
-        ,[
-            'email.required' => 'El correo electrónico es obligatorio.',
-            'email.email' => 'El correo electrónico debe ser una dirección válida.',
-            'email.exists' => 'No encontramos una cuenta con ese correo electrónico.',
-        ]
-    );
+            , [
+                'email.required' => 'El correo electrónico es obligatorio.',
+                'email.email' => 'El correo electrónico debe ser una dirección válida.',
+                'email.exists' => 'No encontramos una cuenta con ese correo electrónico.',
+            ]
+        );
 
         $user = User::where('email', $request->email)->first();
 
-        if(!$user){
+        if (!$user) {
             return back()->withErrors(['error' => 'No encontramos una cuenta con ese correo electrónico.']);
         }
 
@@ -81,8 +90,8 @@ class AuthController extends Controller
         );
 
         return $status === Password::ResetLinkSent
-        ? back()->with(['status' => __($status)])
-        : back()->withErrors(['email' => __($status)]);
+            ? back()->with(['status' => __($status)])
+            : back()->withErrors(['email' => __($status)]);
     }
 
     public function showResetPasswordForm($token)
@@ -90,20 +99,21 @@ class AuthController extends Controller
         return view('auth.new-password', ['token' => $token]);
     }
 
-    public function resetPassword(Request $request){
+    public function resetPassword(Request $request)
+    {
         $request->validate([
             'token' => 'required',
             'email' => 'required|email',
             'password' => 'required|confirmed|min:6',
         ],
-        [
-            'token.required' => 'El token es obligatorio.',
-            'email.required' => 'El correo electrónico es obligatorio.',
-            'email.email' => 'El correo electrónico debe ser una dirección válida.',
-            'password.required' => 'La contraseña es obligatoria.',
-            'password.confirmed' => 'Las contraseñas no coinciden.',
-            'password.min' => 'La contraseña debe tener al menos 6 caracteres.',
-        ]);
+            [
+                'token.required' => 'El token es obligatorio.',
+                'email.required' => 'El correo electrónico es obligatorio.',
+                'email.email' => 'El correo electrónico debe ser una dirección válida.',
+                'password.required' => 'La contraseña es obligatoria.',
+                'password.confirmed' => 'Las contraseñas no coinciden.',
+                'password.min' => 'La contraseña debe tener al menos 6 caracteres.',
+            ]);
         $status = Password::reset(
             $request->only('email', 'password', 'password_confirmation', 'token'),
             function (User $user, string $password) {
@@ -121,5 +131,4 @@ class AuthController extends Controller
             ? redirect('/auth/login')->with('status', __($status))
             : back()->withErrors(['email' => __($status)]);
     }
-
 }

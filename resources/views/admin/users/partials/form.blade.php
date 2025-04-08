@@ -95,10 +95,10 @@
     </button>
 
 </form>
-@if (isset($usuario))
+{{-- @if (isset($usuario))
 <script>
     document.getElementById('toggle-password').addEventListener('change', function() {
         document.getElementById('password-fields').classList.toggle('hidden');
     });
 </script>
-@endif
+@endif --}}

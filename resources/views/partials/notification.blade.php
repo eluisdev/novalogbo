@@ -1,4 +1,4 @@
-@if (session('success'))
+{{-- @if (session('success'))
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             Swal.fire({
@@ -48,4 +48,4 @@
             });
         });
     </script>
-@endif
+@endif --}}

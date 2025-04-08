@@ -1,4 +1,6 @@
 document.addEventListener('DOMContentLoaded', function () {
+    // initSelect2ForBlock(block);
+    
     // Verifica si la URL contiene 'quotations/create'
     if (window.location.pathname.includes('quotations/create')) {
         initializePage(); // Ejecuta tu función principal
@@ -7,12 +9,6 @@ document.addEventListener('DOMContentLoaded', function () {
 });
 
 function initializePage() {
-    window.updateExchangeRate();
-
-    if (document.querySelectorAll('.product-block').length === 0) {
-        addProductBlock();
-    }
-
     setupEventListeners();
 }
 
@@ -82,163 +78,6 @@ window.updateExchangeRate = function() {
         exchangeRateInput.disabled = false;
     }
 };
-//QUOTATIOS
 
-window.initSelect2ForBlock = function(block) {
-    $(block).find('.origin-select').select2({
-        theme: 'bootstrap-5',
-        placeholder: 'Buscar país de origen...',
-        allowClear: true,
-        width: '100%',
-        language: {
-            noResults: function () {
-                return "No se encontraron países";
-            },
-            searching: function () {
-                return "Buscando...";
-            },
-            inputTooShort: function () {
-                return "Ingrese al menos 2 caracteres";
-            }
-        },
-        ajax: {
-            url: '/quotations/searchLocation',
-            dataType: 'json',
-            delay: 300,
-            data: function(params) {
-                return {
-                    searchTerm: params.term
-                };
-            },
-            processResults: function(data) {
-                if (!data.success || !data.data) {
-                    return {
-                        results: []
-                    };
-                }
-
-                // Procesamos los resultados de forma segura
-                let results = [];
-
-                data.data.forEach(function(country) {
-                    // Agregar el país como grupo
-                    results.push({
-                        id: `country_${country.id}`,
-                        text: country.name,
-                        disabled: true
-                    });
-
-                    // Agregar las ciudades de este país
-                    if (country.cities && Array.isArray(country.cities)) {
-                        country.cities.forEach(function(city) {
-                            results.push({
-                                id: `${city.id}`,
-                                text: `${city.name}, ${country.name}`,
-                                cityName: city.name,
-                                countryName: country.name,
-                                countryId: country.id
-                            });
-                        });
-                    }
-                });
-
-                return {
-                    results: results
-                };
-            }
-        },
-        minimumInputLength: 2,
-        templateResult: formatLocationResult,
-        templateSelection: formatLocationSelection
-    });
-
-    $(block).find('.destiny-select').select2({
-        theme: 'bootstrap-5',
-        placeholder: 'Buscar país de destino...',
-        allowClear: true,
-        width: '100%',
-        language: {
-            noResults: function () {
-                return "No se encontraron países";
-            },
-            searching: function () {
-                return "Buscando...";
-            },
-            inputTooShort: function () {
-                return "Ingrese al menos 2 caracteres";
-            }
-        },
-        ajax: {
-            url: '/quotations/searchLocation',
-            dataType: 'json',
-            delay: 300,
-            data: function(params) {
-                return {
-                    searchTerm: params.term
-                };
-            },
-            processResults: function(data) {
-                if (!data.success || !data.data) {
-                    return {
-                        results: []
-                    };
-                }
-
-                // Procesamos los resultados de forma segura
-                let results = [];
-
-                data.data.forEach(function(country) {
-                    // Agregar el país como grupo
-                    results.push({
-                        id: `country_${country.id}`,
-                        text: country.name,
-                        disabled: true
-                    });
-
-                    // Agregar las ciudades de este país
-                    if (country.cities && Array.isArray(country.cities)) {
-                        country.cities.forEach(function(city) {
-                            results.push({
-                                id: `${city.id}`,
-                                text: `${city.name}, ${country.name}`,
-                                cityName: city.name,
-                                countryName: country.name,
-                                countryId: country.id
-                            });
-                        });
-                    }
-                });
-
-                return {
-                    results: results
-                };
-            }
-        },
-        minimumInputLength: 2,
-        templateResult: formatLocationResult,
-        templateSelection: formatLocationSelection
-    });
-
-        
-    function formatLocationResult(item) {
-        if (!item.id) {
-            return item.text;
-        }
-
-        if (item.id.startsWith('country_')) {
-            return $('<div class="bg-gray-600 text-white p-2">' + item.text + '</div>');
-        } else {
-            return $('<div class="city-option hover:font-bold transition-colors duration-500 ease-in">' + item.text + '</div>');
-        }
-    }
-
-    function formatLocationSelection(item) {
-        if (!item.id) {
-            return item.text;
-        }
-
-        return item.text;
-    }
-}
 
 

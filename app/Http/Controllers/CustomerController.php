@@ -68,12 +68,12 @@ class CustomerController extends Controller
                 'role',
                 'quotations',
                 'quotations.services',
-                'quotations.details',
-                'quotations.details.origin',
-                'quotations.details.destination',
-                'quotations.details.incoterm',
-                'quotations.details.costDetails',
-                'quotations.details.costDetails.cost',
+                'quotations.products',
+                'quotations.products.origin',
+                'quotations.products.destination',
+                'quotations.products.incoterm',
+                'quotations.costDetails',
+                'quotations.costDetails.cost',
             ]
         )->findOrFail($NIT);
         if (!$customer) {

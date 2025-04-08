@@ -4,6 +4,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\CityController;
 use App\Http\Controllers\CostController;
+use App\Http\Controllers\TestController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\CountryController;
 use App\Http\Controllers\ServiceController;
@@ -12,7 +13,6 @@ use App\Http\Controllers\IncotermController;
 use App\Http\Controllers\OperatorController;
 use App\Http\Controllers\ContinentController;
 use App\Http\Controllers\QuotationController;
-use App\Http\Controllers\CotizacionController;
 use App\Http\Controllers\UserProfileController;
 use App\Http\Controllers\PasswordChangeController;
 use App\Http\Controllers\QuantityDescriptionController;
@@ -26,6 +26,8 @@ use App\Http\Controllers\QuantityDescriptionController;
 Route::get('/', function () {
     return view('welcome');
 });
+
+Route::post('/', [TestController::class, 'generarCotizacion'])->name('word.generate');
 
 //Route::get('/{id}', [QuotationController::class, 'show'])->name('show');
 /*

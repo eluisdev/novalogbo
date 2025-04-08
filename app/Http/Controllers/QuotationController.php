@@ -95,8 +95,6 @@ class QuotationController extends Controller
         return response()->json($quantityDescription);
     }
 
-
-
     public function searchLocation(Request $request)
     {
         $request->validate([
@@ -291,26 +289,50 @@ class QuotationController extends Controller
 
     public function store(Request $request)
     {
-        $validatedData = $request->validate([
-            'reference_number' => 'required|integer',
-            'currency' => 'required|string|max:3',
-            'exchange_rate' => 'required|numeric',
-            'NIT' => 'required|exists:customers,NIT',
-            'products' => 'nullable|array',
-            'products.*.origin_id' => 'required_with:products',
-            'products.*.destination_id' => 'required_with:products',
-            'products.*.incoterm_id' => 'required_with:products',
-            // 'products.*.quantity' => 'required_with:products|numeric',
-            'products.*.quantity' => 'required_with:products|string',
-            'products.*.quantity_description_id' => 'required_with:products',
-            'products.*.weight' => 'nullable|numeric',
-            'products.*.volume' => 'nullable|numeric',
-            'products.*.volume_unit' => 'nullable|string|max:10',
-            'products.*.description' => 'nullable|string',
-            'costs' => 'nullable|array',
-            'services' => 'nullable|array',
-        ]);
-        
+        $validatedData = $request->validate(
+            [
+                'reference_number' => 'required|integer',
+                'currency' => 'required|string|max:3',
+                'exchange_rate' => 'required|numeric',
+                'NIT' => 'required|exists:customers,NIT',
+                'products' => 'nullable|array',
+                'products.*.origin_id' => 'required_with:products',
+                'products.*.destination_id' => 'required_with:products',
+                'products.*.incoterm_id' => 'required_with:products',
+                'products.*.quantity' => 'required_with:products|string',
+                'products.*.quantity_description_id' => 'required_with:products',
+                'products.*.weight' => 'nullable|numeric',
+                'products.*.volume' => 'nullable|numeric',
+                'products.*.volume_unit' => 'nullable|string|max:10',
+                'products.*.description' => 'nullable|string',
+                'costs' => 'nullable|array',
+                'services' => 'nullable|array',
+            ],
+            [
+                'reference_number.required' => 'El número de referencia es obligatorio.',
+                'reference_number.integer' => 'El número de referencia debe ser un número entero.',
+                'currency.required' => 'La moneda es obligatoria.',
+                'currency.string' => 'La moneda debe ser una cadena de texto.',
+                'currency.max' => 'La moneda no puede exceder los 3 caracteres.',
+                'exchange_rate.required' => 'El tipo de cambio es obligatorio.',
+                'exchange_rate.numeric' => 'El tipo de cambio debe ser un número.',
+                'NIT.required' => 'El NIT es obligatorio.',
+                'NIT.exists' => 'El NIT no existe en la base de datos.',
+                'products.array' => 'Los productos deben ser un arreglo.',
+                'products.*.origin_id.required_with' => 'El origen es obligatorio.',
+                'products.*.destination_id.required_with' => 'El destino es obligatorio.',
+                'products.*.incoterm_id.required_with' => 'El incoterm es obligatorio.',
+                'products.*.quantity.required_with' => 'La cantidad es obligatoria.',
+                'products.*.quantity.string' => 'La cantidad debe ser una cadena de texto.',
+                'products.*.quantity_description_id.required_with' => 'La descripción de la cantidad es obligatoria.',
+                'products.*.weight.numeric' => 'El peso debe ser un número.',
+                'products.*.volume.numeric' => 'El volumen debe ser un número.',
+                'products.*.volume_unit.string' => 'La unidad de volumen debe ser una cadena de texto.',
+                'products.*.volume_unit.max' => 'La unidad de volumen no puede exceder los 10 caracteres.',
+                'products.*.description.string' => 'La descripción debe ser una cadena de texto.',
+            ]
+        );
+
         DB::beginTransaction();
 
         try {
@@ -324,6 +346,9 @@ class QuotationController extends Controller
             $quotation->users_id = Auth::id();
             $quotation->status = 'pending';
             $quotation->save();
+
+            $totalAmount = 0;
+
             if ($request->has('products')) {
                 foreach ($request->products as $product) {
                     $productDetail = new Product();
@@ -336,26 +361,28 @@ class QuotationController extends Controller
                     $productDetail->weight = $product['weight'];
                     $productDetail->volume = $product['volume'];
                     $productDetail->volume_unit = $product['volume_unit'];
-                    $productDetail->description = $product['description'];
+                    $productDetail->description = $product['description'] ?? '';
                     $productDetail->save();
                 }
             }
-            $costTotal = 0;
-            // Process cost details for this quotation detail
+
+            // Process cost details for this quotation
             if ($request->has('costs')) {
                 foreach ($request->costs as $cost) {
-                    $costDetail = new CostDetail();
-                    $costDetail->quotation_id = $quotation->id;
                     if (isset($cost['enabled']) && $cost['enabled']) {
+                        $costDetail = new CostDetail();
+                        $costDetail->quotation_id = $quotation->id;
                         $costDetail->cost_id = $cost['cost_id'];
-                        $costDetail->concept = $cost['concept'];
+                        $costDetail->concept = $cost['concept'] ?? '';
                         $costDetail->amount = $cost['amount'];
-                        $costTotal += $cost['amount'];
                         $costDetail->currency = $quotation->currency;
                         $costDetail->save();
+
+                        $totalAmount += $cost['amount'];
                     }
                 }
             }
+
             // Process services
             if ($request->has('services')) {
                 foreach ($request->services as $key => $service) {
@@ -366,7 +393,9 @@ class QuotationController extends Controller
                     $quotationService->save();
                 }
             }
-            $quotation->amount = $costTotal;
+
+            // Update total amount
+            $quotation->amount = $totalAmount;
             $quotation->save();
 
             DB::commit();
@@ -382,177 +411,261 @@ class QuotationController extends Controller
     {
         $quotation = Quotation::with([
             'customer',
-            'user',
             'products.origin',
             'products.destination',
             'products.incoterm',
-            'products.costDetails',
             'products.quantityDescription',
-            'services.service'
+            'services.service',
+            'costDetails.cost'
         ])->findOrFail($id);
 
-        return view('quotations.show', compact('quotation'));
+        // Estructura base similar al array de ejemplo
+        $response = [
+            'NIT' => $quotation->customer_nit,
+            'currency' => $quotation->currency,
+            'exchange_rate' => $quotation->exchange_rate,
+            'reference_number' => $quotation->reference_number,
+            'products' => [],
+            'services' => [],
+            'costs' => []
+        ];
+
+        // Procesar productos
+        foreach ($quotation->products as $key => $product) {
+            $response['products'][$key + 1] = [
+                'product_name' => $product->description,
+                'origin_id' => (string)$product->origin_id,
+                'destination_id' => (string)$product->destination_id,
+                'weight' => (string)$product->weight,
+                'incoterm_id' => (string)$product->incoterm_id,
+                'quantity' => $product->quantity,
+                'quantity_description_id' => (string)$product->quantity_description_id,
+                'volume' => (string)$product->volume,
+                'volume_unit' => $product->volume_unit,
+                'description' => $product->description,
+                // Agregar nombres adicionales
+                'origin_name' => $product->origin->name,
+                'destination_name' => $product->destination->name,
+                'incoterm_name' => $product->incoterm->code,
+                'quantity_description_name' => $product->quantityDescription->name
+            ];
+        }
+
+        // Procesar servicios (manteniendo la estructura include/exclude)
+        foreach ($quotation->services as $service) {
+            $response['services'][$service->service_id] = $service->included ? 'include' : 'exclude';
+            // Agregar nombre del servicio
+            $response['service_names'][$service->service_id] = $service->service->name;
+        }
+
+        foreach ($quotation->costDetails as $costDetail) {
+            $response['costs'][$costDetail->cost_id] = [
+                'enabled' => '1',
+                'amount' => (string)$costDetail->amount,
+                'cost_id' => (string)$costDetail->cost_id,
+                'concept' => $costDetail->concept,
+                // Agregar nombre del costo
+                'cost_name' => $costDetail->cost->name
+            ];
+        }
+
+        $response['customer_info'] = [
+            'name' => $quotation->customer->name,
+            'email' => $quotation->customer->email,
+            'phone' => $quotation->customer->phone
+        ];
+
+        return view('quotations.show', ['quotation_data' => $response]);
     }
 
     public function edit($id)
     {
         $quotation = Quotation::with([
             'customer',
-            'user',
-            'products.origin',
-            'products.destination',
+            'products.origin.country',
+            'products.destination.country',
             'products.incoterm',
-            'products.costDetails',
             'products.quantityDescription',
-            'services.service'
+            'services.service',
+            'costDetails.cost'
         ])->findOrFail($id);
 
-        $incoterms = Incoterm::where('is_active', 1)->get();
-        $services = Service::where('is_active', 1)->get();
-        $countries = Country::whereNull('deleted_at')->get();
-        $costs = Cost::where('is_active', 1)->get();
-        $exchangeRates = ExchangeRate::where('active', 1)->get();
-        $customers = Customer::where('active', 1)->get();
-        $QuantityDescriptions = QuantityDescription::where('is_active', 1)->get();
-        $continents = Continent::whereNull('deleted_at')->get();
-        $cities = City::whereNull('deleted_at')->get();
+        // Estructura base para el formulario de edición
+        $formData = [
+            '_token' => csrf_token(), // Token CSRF para el formulario
+            'NIT' => $quotation->customer_nit,
+            'currency' => $quotation->currency,
+            'exchange_rate' => $quotation->exchange_rate,
+            'reference_number' => $quotation->reference_number,
+            'products' => [],
+            'services' => [],
+            'costs' => []
+        ];
 
-        $originCities = [];
-        $destinationCities = [];
-
-        foreach ($quotation->details as $detail) {
-            if ($detail->origin && $detail->origin->country) {
-                $originCities[$detail->origin->country->id] = City::where('country_id', $detail->origin->country->id)
-                    ->whereNull('deleted_at')
-                    ->get();
-            }
-
-            if ($detail->destination && $detail->destination->country) {
-                $destinationCities[$detail->destination->country->id] = City::where('country_id', $detail->destination->country->id)
-                    ->whereNull('deleted_at')
-                    ->get();
-            }
+        // Procesar productos para edición
+        foreach ($quotation->products as $key => $product) {
+            $formData['products'][$key + 1] = [
+                'product_name' => $product->description,
+                'origin_id' => (string)$product->origin_id,
+                'destination_id' => (string)$product->destination_id,
+                'weight' => (string)$product->weight,
+                'incoterm_id' => (string)$product->incoterm_id,
+                'quantity' => $product->quantity,
+                'quantity_description_id' => (string)$product->quantity_description_id,
+                'volume' => (string)$product->volume,
+                'volume_unit' => $product->volume_unit,
+                'description' => $product->description,
+                // Datos adicionales para mostrar en el formulario
+                'origin_name' => $product->origin->name,
+                'origin_country_id' => $product->origin->country->id,
+                'destination_name' => $product->destination->name,
+                'destination_country_id' => $product->destination->country->id,
+                'incoterm_name' => $product->incoterm->code,
+                'quantity_description_name' => $product->quantityDescription->name
+            ];
         }
 
-        return view('quotations.edit', compact(
-            'quotation',
-            'incoterms',
-            'services',
-            'countries',
-            'costs',
-            'exchangeRates',
-            'customers',
-            'originCities',
-            'destinationCities',
-            'QuantityDescriptions',
-            'cities',
-        ));
+        // Procesar servicios para edición (formato include/exclude)
+        foreach ($quotation->services as $service) {
+            $formData['services'][$service->service_id] = $service->included ? 'include' : 'exclude';
+        }
+
+        // Procesar costos para edición
+        foreach ($quotation->costDetails as $costDetail) {
+            $formData['costs'][$costDetail->cost_id] = [
+                'enabled' => '1', // Todos los costos guardados están habilitados
+                'amount' => (string)$costDetail->amount,
+                'cost_id' => (string)$costDetail->cost_id,
+                'concept' => $costDetail->concept,
+                'cost_name' => $costDetail->cost->name
+            ];
+        }
+
+        // Obtener listas completas para los selects del formulario
+        $formSelects = [
+            'incoterms' => Incoterm::where('is_active', 1)->get(),
+            'services' => Service::where('is_active', 1)->get(),
+            'costs' => Cost::where('is_active', 1)->get(),
+            'exchangeRates' => ExchangeRate::where('active', 1)->get(),
+            'QuantityDescriptions' => QuantityDescription::where('is_active', 1)->get(),
+        ];
+
+        // Preparar ciudades por país para selects anidados
+
+
+        return view('quotations.show', ['quotation_data' => [
+            'formData' => $formData, // Datos específicos de esta cotización
+            'formSelects' => $formSelects, // Listas completas para selects
+            'quotation_id' => $id // ID de la cotización para el formulario
+        ]]);
     }
 
     public function update(Request $request, $id)
     {
+        // Validación de los datos de entrada
         $validatedData = $request->validate([
-            //'delivery_date' => 'required|date',
-            'reference_number' => 'required|integer',
+            'NIT' => 'required|exists:customers,NIT',
             'currency' => 'required|string|max:3',
             'exchange_rate' => 'required|numeric',
-            'NIT' => 'required|exists:customers,NIT',
-            'products' => 'nullable|array',
-            'products.*.origin_id' => 'required_with:products',
-            'products.*.destination_id' => 'required_with:products',
-            'products.*.incoterm_id' => 'required_with:products',
-            'products.*.quantity' => 'required_with:products|numeric',
-            'products.*.quantity_description_id' => 'required_with:products',
+            'reference_number' => 'required|string',
+            'products' => 'required|array',
+            'products.*.product_name' => 'required|string',
+            'products.*.origin_id' => 'required|exists:cities,id',
+            'products.*.destination_id' => 'required|exists:cities,id',
+            'products.*.incoterm_id' => 'required|exists:incoterms,id',
+            'products.*.quantity' => 'required|string',
+            'products.*.quantity_description_id' => 'required|exists:quantity_descriptions,id',
             'products.*.weight' => 'nullable|numeric',
             'products.*.volume' => 'nullable|numeric',
             'products.*.volume_unit' => 'nullable|string|max:10',
             'products.*.description' => 'nullable|string',
-            'products.*.costs' => 'nullable|array',
-            'products.*.costs.*.cost_id' => 'required_with:products.*.costs',
-            'products.*.costs.*.concept' => 'nullable|string',
-            'products.*.costs.*.amount' => 'required_with:products.*.costs|numeric',
-            'products.*.costs.*.currency' => 'nullable|string|max:3',
-            'services' => 'nullable|array',
+            'services' => 'required|array',
+            'costs' => 'required|array',
+            'costs.*.cost_id' => 'required|exists:costs,id',
+            'costs.*.amount' => 'required|numeric',
+            'costs.*.concept' => 'nullable|string'
         ]);
 
         DB::beginTransaction();
 
         try {
+            // Obtener la cotización existente
             $quotation = Quotation::findOrFail($id);
-            $quotation->delivery_date = Carbon::now();
-            $quotation->reference_number = $validatedData['reference_number'];
-            $quotation->currency = $validatedData['currency'];
-            $quotation->exchange_rate = $validatedData['exchange_rate'];
-            $quotation->customer_nit = $validatedData['NIT'];
-            $quotation->save();
 
-            // Eliminar productos y costos existentes para reemplazarlos
-            $quotation->products()->each(function ($product) {
-                $product->costDetails()->delete();
-                $product->delete();
-            });
+            // Actualizar datos básicos de la cotización
+            $quotation->update([
+                'customer_nit' => $validatedData['NIT'],
+                'currency' => $validatedData['currency'],
+                'exchange_rate' => $validatedData['exchange_rate'],
+                'reference_number' => $validatedData['reference_number'],
+                'amount' => 0 // Se recalculará al final
+            ]);
 
-            // Eliminar servicios existentes
+            // Eliminar productos, servicios y costos existentes
+            $quotation->products()->delete();
             $quotation->services()->delete();
+            $quotation->costDetails()->delete();
 
-            // Agregar nuevos productos y costos
-            if ($request->has('products')) {
-                foreach ($request->products as $product) {
-                    $productDetail = new Product();
-                    $productDetail->quotation_id = $quotation->id;
-                    $productDetail->origin_id = $product['origin_id'];
-                    $productDetail->destination_id = $product['destination_id'];
-                    $productDetail->incoterm_id = $product['incoterm_id'];
-                    $productDetail->quantity = $product['quantity'];
-                    $productDetail->quantity_description_id = $product['quantity_description_id'];
-                    $productDetail->weight = $product['weight'];
-                    $productDetail->volume = $product['volume'];
-                    $productDetail->volume_unit = $product['volume_unit'];
-                    $productDetail->description = $product['description'];
-                    $productDetail->amount = 0;
-                    $productDetail->save();
-
-                    if (isset($product['costs'])) {
-                        foreach ($product['costs'] as $cost) {
-                            $costDetail = new CostDetail();
-                            $costDetail->quotation_detail_id = $productDetail->id;
-                            $costDetail->cost_id = $cost['cost_id'];
-                            $costDetail->concept = $cost['concept'];
-                            $costDetail->amount = $cost['amount'];
-                            $productDetail->amount += $cost['amount'];
-                            $costDetail->currency = $cost['currency'] ?? 'USD';
-                            $costDetail->save();
-                        }
-                        $productDetail->save();
-                    }
-                }
+            // Procesar y guardar los nuevos productos
+            foreach ($validatedData['products'] as $productData) {
+                $product = new Product([
+                    'quotation_id' => $quotation->id,
+                    'origin_id' => $productData['origin_id'],
+                    'destination_id' => $productData['destination_id'],
+                    'incoterm_id' => $productData['incoterm_id'],
+                    'quantity' => $productData['quantity'],
+                    'quantity_description_id' => $productData['quantity_description_id'],
+                    'weight' => $productData['weight'] ?? null,
+                    'volume' => $productData['volume'] ?? null,
+                    'volume_unit' => $productData['volume_unit'] ?? null,
+                    'description' => $productData['description'] ?? $productData['product_name']
+                ]);
+                $product->save();
             }
 
-            // Agregar nuevos servicios
-            if ($request->has('services')) {
-                foreach ($request->services as $service) {
-                    $quotationService = new QuotationService();
-                    $quotationService->quotation_id = $quotation->id;
-                    $quotationService->service_id = $service['id'];
-                    $quotationService->included = $service['included'] ?? false;
+            // Procesar y guardar los servicios
+            foreach ($validatedData['services'] as $serviceId => $status) {
+                if (is_numeric($serviceId)) { // Asegurar que es un ID válido
+                    $quotationService = new QuotationService([
+                        'quotation_id' => $quotation->id,
+                        'service_id' => $serviceId,
+                        'included' => $status === 'include'
+                    ]);
                     $quotationService->save();
                 }
             }
 
-            // Actualizar monto total
-            $totalAmount = Product::where('quotation_id', $quotation->id)->sum('amount');
+            // Procesar y guardar los costos
+            $totalAmount = 0;
+            foreach ($validatedData['costs'] as $costId => $costData) {
+                if (isset($costData['enabled']) && $costData['enabled'] === '1') {
+                    $costDetail = new CostDetail([
+                        'quotation_id' => $quotation->id,
+                        'cost_id' => $costId,
+                        'amount' => $costData['amount'],
+                        'currency' => $validatedData['currency'],
+                        'concept' => $costData['concept'] ?? ''
+                    ]);
+                    $costDetail->save();
+
+                    $totalAmount += $costData['amount'];
+                }
+            }
+
+            // Actualizar el monto total de la cotización
             $quotation->amount = $totalAmount;
             $quotation->save();
 
             DB::commit();
 
             return redirect()->route('quotations.show', $quotation->id)
-                ->with('success', 'Cotización actualizada satisfactoriamente.');
+                ->with('success', 'Cotización actualizada exitosamente');
         } catch (\Exception $e) {
             DB::rollBack();
-            return back()->withInput()->with('error', 'Error actualizando cotización: ' . $e->getMessage());
+            return back()->withInput()->with('error', 'Error al actualizar la cotización: ' . $e->getMessage());
         }
     }
+
 
     public function updateStatus(Request $request, $id)
     {
@@ -571,28 +684,29 @@ class QuotationController extends Controller
 
     public function destroy($id)
     {
-        $user = Auth::user();
-        $isAdmin = $user->role_id === 1;
-
         $quotation = Quotation::findOrFail($id);
 
-        // Check access permissions
-        if (!$isAdmin && $quotation->users_id !== $user->id) {
-            return abort(403, 'Acción no autorizada.');
+        // Verificar permisos (solo admin o el creador puede eliminar)
+        if (Auth::user()->role_id !== 1 && $quotation->users_id !== Auth::id()) {
+            return back()->with('error', 'No tienes permiso para eliminar esta cotización');
         }
 
         DB::beginTransaction();
 
         try {
+            $quotation->products()->delete();
+            $quotation->services()->delete();
+            $quotation->costDetails()->delete();
+
             $quotation->delete();
 
             DB::commit();
 
             return redirect()->route('quotations.index')
-                ->with('success', 'Cotización eliminada correctamente.');
+                ->with('success', 'Cotización eliminada exitosamente');
         } catch (\Exception $e) {
             DB::rollBack();
-            return back()->with('error', 'Error: ' . $e->getMessage());
+            return back()->with('error', 'Error al eliminar la cotización: ' . $e->getMessage());
         }
     }
     public function generarCotizacion(Request $request)
@@ -1168,6 +1282,7 @@ class QuotationController extends Controller
         // Descargar el archivo
         return response()->download($tempFile, $filename)->deleteFileAfterSend(true);
     }
+
 
     private function getClientData($nit)
     {

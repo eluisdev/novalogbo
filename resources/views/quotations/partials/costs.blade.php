@@ -1,4 +1,4 @@
-<div class="p-6 border-b-2 border-blue-600 bg-white shadow-sm" >
+<div class="p-6 border-b-2 border-blue-600 bg-white shadow-sm">
     <!-- Encabezado mejorado -->
     <div class="flex items-center mb-6">
         <span class="inline-flex items-center justify-center p-3 rounded-full bg-blue-50 text-blue-600 mr-3">
@@ -53,7 +53,9 @@
                 </div>
             </div>
             
-            <input type="hidden" name="costs[{{ $cost->id }}][id]" value="{{ $cost->id }}">
+            <input type="hidden" name="costs[{{ $cost->id }}][cost_id]" value="{{ $cost->id }}">
+            <input type="hidden" name="costs[{{ $cost->id }}][concept]" value="sin valor">
+            
         </div>
         @endforeach
     </div>
@@ -77,5 +79,4 @@
             costCard.querySelector('.cost-amount').value = '';
         }
     }
-
 </script>

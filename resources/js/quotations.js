@@ -10,7 +10,7 @@ function initializePage() {
     window.updateExchangeRate();
 
     if (document.querySelectorAll('.product-block').length === 0) {
-        addDetailBlock();
+        addProductBlock();
     }
 
     setupEventListeners();

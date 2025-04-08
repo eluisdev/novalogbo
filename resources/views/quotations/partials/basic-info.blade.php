@@ -72,7 +72,7 @@
                 }
             },
             ajax: {
-                url: '/customers/search',
+                url: '/quotations/searchCustomer',
                 dataType: 'json',
                 delay: 300,
                 data: function(params) {

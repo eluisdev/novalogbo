@@ -21,6 +21,7 @@ class DatabaseSeeder extends Seeder
             ServiceSeeder::class,
             CostSeeder::class,
             CustomerSeeder::class,
+            QuantityDescriptionSeeder::class
         ]);
     }
 }

@@ -300,20 +300,17 @@ class QuotationController extends Controller
             'products.*.origin_id' => 'required_with:products',
             'products.*.destination_id' => 'required_with:products',
             'products.*.incoterm_id' => 'required_with:products',
-            'products.*.quantity' => 'required_with:products|numeric',
+            // 'products.*.quantity' => 'required_with:products|numeric',
+            'products.*.quantity' => 'required_with:products|string',
             'products.*.quantity_description_id' => 'required_with:products',
             'products.*.weight' => 'nullable|numeric',
             'products.*.volume' => 'nullable|numeric',
             'products.*.volume_unit' => 'nullable|string|max:10',
             'products.*.description' => 'nullable|string',
-            'products.*.costs' => 'nullable|array',
-            'products.*.costs.*.cost_id' => 'required_with:products.*.costs',
-            'products.*.costs.*.concept' => 'nullable|string',
-            'products.*.costs.*.amount' => 'required_with:products.*.costs|numeric',
-            'products.*.costs.*.currency' => 'nullable|string|max:3',
+            'costs' => 'nullable|array',
             'services' => 'nullable|array',
         ]);
-
+        
         DB::beginTransaction();
 
         try {
@@ -327,7 +324,6 @@ class QuotationController extends Controller
             $quotation->users_id = Auth::id();
             $quotation->status = 'pending';
             $quotation->save();
-
             if ($request->has('products')) {
                 foreach ($request->products as $product) {
                     $productDetail = new Product();
@@ -345,21 +341,21 @@ class QuotationController extends Controller
                 }
             }
             $costTotal = 0;
-
             // Process cost details for this quotation detail
             if ($request->has('costs')) {
                 foreach ($request->costs as $cost) {
                     $costDetail = new CostDetail();
                     $costDetail->quotation_id = $quotation->id;
-                    $costDetail->cost_id = $cost['cost_id'];
-                    $costDetail->concept = $cost['concept'];
-                    $costDetail->amount = $cost['amount'];
-                    $costTotal += $cost['amount'];
-                    $costDetail->currency = $cost['currency'] ?? 'USD';
-                    $costDetail->save();
+                    if (isset($cost['enabled']) && $cost['enabled']) {
+                        $costDetail->cost_id = $cost['cost_id'];
+                        $costDetail->concept = $cost['concept'];
+                        $costDetail->amount = $cost['amount'];
+                        $costTotal += $cost['amount'];
+                        $costDetail->currency = $quotation->currency;
+                        $costDetail->save();
+                    }
                 }
             }
-
             // Process services
             if ($request->has('services')) {
                 foreach ($request->services as $key => $service) {

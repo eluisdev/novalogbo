@@ -13,6 +13,7 @@ use App\Http\Controllers\IncotermController;
 use App\Http\Controllers\OperatorController;
 use App\Http\Controllers\ContinentController;
 use App\Http\Controllers\QuotationController;
+use App\Http\Controllers\BillingNoteController;
 use App\Http\Controllers\UserProfileController;
 use App\Http\Controllers\PasswordChangeController;
 use App\Http\Controllers\QuantityDescriptionController;
@@ -27,8 +28,9 @@ Route::get('/', function () {
     return view('welcome');
 });
 
-Route::post('/', [TestController::class, 'generarCotizacion'])->name('word.generate');
-
+//Route::post('/', [TestController::class, 'generarCotizacion'])->name('billing-note.download');
+//Route::post('/', [BillingNoteController::class, 'download'])->name('billing-note.download');
+Route::post('/', [QuotationController::class, 'generarCotizacion'])->name('billing-note.download');
 //Route::get('/{id}', [QuotationController::class, 'show'])->name('show');
 /*
 |--------------------------------------------------------------------------
@@ -214,6 +216,9 @@ Route::middleware(['auth', 'role:admin,operator'])->group(function () {
         Route::get('/searchLocation', 'searchLocation')->name('searchLocation');
         Route::get('/searchCustomer', 'searchCustomer')->name('searchCustomer');
         Route::get('/searchQuantityDescription', 'searchQuantityDescription')->name('searchQuantityDescription');
+        Route::post('/billingNoteWord', [BillingNoteController::class, 'download'])->name('billing-note.download');
+        Route::post('/generateQuotation', 'generarCotizacion')->name('quotation.generate.download');
+
         Route::get('/create', 'create')->name('create');
         Route::get('/{id}', 'show')->name('show');
         Route::get('/edit/{id}', 'edit')->name('edit');
@@ -226,6 +231,9 @@ Route::middleware(['auth', 'role:admin,operator'])->group(function () {
         //Route::get('/pdf/{id}', 'generatePDF')->name('pdf');
 
     });
+
+
+
 });
 
 /*

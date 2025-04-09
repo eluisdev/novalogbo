@@ -14,10 +14,11 @@ return new class extends Migration
         Schema::create('quotations', function (Blueprint $table) {
             $table->id();
             $table->dateTime('delivery_date');
-            $table->integer('reference_number');
+            $table->string('reference_number');
+            $table->string('reference_customer')->nullable();
             $table->string('currency');
             $table->decimal('exchange_rate', 10, 2);
-            $table->decimal('amount', 10, 2);
+            $table->decimal('amount', 15, 2);
             $table->string('status')->default('pending');
             $table->text('observations')->nullable();
             $table->foreignId('users_id')->constrained('users')->onDelete('cascade');

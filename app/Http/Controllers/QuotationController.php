@@ -37,12 +37,12 @@ class QuotationController extends Controller
         if (Auth::user()->role_id === 1) {
             $quotations = Quotation::with(['customer', 'user'])
                 ->orderBy('created_at', 'desc')
-                ->paginate(10);
+                ->get();
         } else {
             $quotations = Quotation::with(['customer'])
                 ->where('users_id', Auth::id())
                 ->orderBy('created_at', 'desc')
-                ->paginate(10);
+                ->get();
         }
 
         return view('quotations.index', compact('quotations'));
@@ -293,7 +293,8 @@ class QuotationController extends Controller
     {
         $validatedData = $request->validate(
             [
-                'reference_number' => 'required|integer',
+                'reference_customer' => 'nullable|string',
+                'reference_number' => 'nullable|string',
                 'currency' => 'required|string|max:3',
                 'exchange_rate' => 'required|numeric',
                 'NIT' => 'required|exists:customers,NIT',
@@ -311,8 +312,6 @@ class QuotationController extends Controller
                 'services' => 'nullable|array',
             ],
             [
-                'reference_number.required' => 'El número de referencia es obligatorio.',
-                'reference_number.integer' => 'El número de referencia debe ser un número entero.',
                 'currency.required' => 'La moneda es obligatoria.',
                 'currency.string' => 'La moneda debe ser una cadena de texto.',
                 'currency.max' => 'La moneda no puede exceder los 3 caracteres.',
@@ -340,7 +339,11 @@ class QuotationController extends Controller
         try {
             $quotation = new Quotation();
             $quotation->delivery_date = Carbon::now();
-            $quotation->reference_number = $validatedData['reference_number'];
+            $currentYear = Carbon::now()->year;
+            $count = Quotation::whereYear('created_at', $currentYear)->count();
+            $nextNumber = str_pad($count + 1, 3, '0', STR_PAD_LEFT);
+            $quotation->reference_number = "{$nextNumber}/" . substr($currentYear, -2);
+            $quotation->reference_customer = $validatedData['currency'] ?? '';
             $quotation->currency = $validatedData['currency'];
             $quotation->exchange_rate = $validatedData['exchange_rate'];
             $quotation->amount = 0;
@@ -497,8 +500,9 @@ class QuotationController extends Controller
 
         // Estructura base para el formulario de edición
         $formData = [
-            '_token' => csrf_token(), // Token CSRF para el formulario
             'NIT' => $quotation->customer_nit,
+            'reference_number' => $quotation->reference_number,
+            'reference_customer' => $quotation->reference_customer,
             'currency' => $quotation->currency,
             'exchange_rate' => $quotation->exchange_rate,
             'reference_number' => $quotation->reference_number,
@@ -572,7 +576,8 @@ class QuotationController extends Controller
             'NIT' => 'required|exists:customers,NIT',
             'currency' => 'required|string|max:3',
             'exchange_rate' => 'required|numeric',
-            'reference_number' => 'required|string',
+            'reference_customer' => 'nullable|string',
+            'reference_number' => 'nullable|string',
             'products' => 'required|array',
             'products.*.product_name' => 'required|string',
             'products.*.origin_id' => 'required|exists:cities,id',
@@ -600,9 +605,11 @@ class QuotationController extends Controller
             // Actualizar datos básicos de la cotización
             $quotation->update([
                 'customer_nit' => $validatedData['NIT'],
+                'delivery_date' => Carbon::now(),
                 'currency' => $validatedData['currency'],
                 'exchange_rate' => $validatedData['exchange_rate'],
                 'reference_number' => $validatedData['reference_number'],
+                'reference_customer' => $validatedData['reference_number'] ?? '',
                 'amount' => 0 // Se recalculará al final
             ]);
 
@@ -716,77 +723,30 @@ class QuotationController extends Controller
     }
     public function generarCotizacion(Request $request)
     {
+        $validated = $request->validate([
+            'quotation_id' => 'required|integer',
+            'visible' => 'required|boolean'
+        ]);
+        $visible = $validated['visible'] ?? true;
 
-        // // Validar los datos del request
-        // $validated = $request->validate([
-        //     'NIT' => 'required|string',
-        //     'currency' => 'required|string',
-        //     'exchange_rate' => 'required|numeric',
-        //     'reference_number' => 'required|string',
-        //     'products' => 'required|array',
-        //     'services' => 'required|array',
-        //     'logistic_costs' => 'required|array'
-        // ]);
+        // Fetch quotation data from database using the validated quotation_id
+        $quotation = Quotation::findOrFail($validated['quotation_id']);
 
-        $validated =  [
-            'NIT' => '1419568',
-            'currency' => 'USD',
-            'exchange_rate' => '6.96',
-            'reference_number' => '1254125',
-            'delivery_date' => '2023-10-01',
-            'products' => [
-                1 => [
-                    'product_name' => 'Product1',
-                    'origin_id' => '41',
-                    'destination_id' => '64',
-                    'weight' => '45',
-                    'incoterm_id' => '6',
-                    'unit_quantity' => '1',
-                    'quantity' => '40',
-                    'quantity_description' => 'box',
-                    'volume_value' => '55',
-                    'volume_unit' => 'KG'
-                ]
-            ],
-            'services' => [
-                1 => 'include',
-                3 => 'include',
-                7 => 'exclude',
-                9 => 'exclude',
-                13 => 'include',
-                17 => 'include'
-            ],
-            'logistic_costs' => [
-                1 => [
-                    'enabled' => 'on',
-                    'amount' => '550',
-                    'id' => '1'
-                ],
-                2 => [
-                    'enabled' => 'on',
-                    'amount' => '500',
-                    'id' => '2'
-                ]
-            ]
-        ];
-        $simulatedClientData = [
-            'nit' => '1419568',
-            'name' => 'Lucas S.A.',
-            'email' => 'cliente@simulado.com',
-            'phone' => '123456789',
-            'address' => 'Dirección simulada 123'
-        ];
-        $clientData = $simulatedClientData;
-        $productsData = $this->getProductsData($validated['products']);
-        $servicesData = $this->getServicesData($validated['services']);
-        $costsData = $this->getCostsData($validated['logistic_costs']);
+        // Get client data from the quotation
+        $clientData = $this->getClientData($quotation->customer_nit);
+
+        // Get products, services and costs data from the quotation
+        $productsData = $this->getProductsData($quotation->products);
+        $servicesData = $this->getServicesData($quotation->services);
+        $costsData = $this->getCostsData($quotation->costDetails);
 
         $totalCost = array_reduce($costsData, function ($carry, $item) {
             return $carry + floatval(str_replace(',', '', $item['amount']));
         }, 0);
         $totalCostFormatted = number_format($totalCost, 2, ',', '.');
-        $deliveryDate = Carbon::parse($validated['delivery_date'])->locale('es')->isoFormat('D [de] MMMM [de] YYYY');
+        $deliveryDate = Carbon::parse($quotation->delivery_date)->locale('es')->isoFormat('D [de] MMMM [de] YYYY');
 
+        $quotationRef = $quotation->reference_number;
 
         $phpWord = new PhpWord();
         $phpWord->setDefaultFontName('Montserrat');
@@ -800,41 +760,42 @@ class QuotationController extends Controller
 
         $section = $phpWord->addSection([
             'paperSize' => 'Letter',
-            //'headerHeight' => Converter::inchToTwip(1.95), // Altura del header
-            //'footerHeight' => Converter::inchToTwip(1.7)   // Altura del footer
             'marginTop' => Converter::inchToTwip(2.26),
             'marginBottom' => Converter::inchToTwip(1.97),
         ]);
 
-        $header = $section->addHeader();
-        $header->addImage(
-            storage_path('app/templates/Herder.png'),
-            [
-                'width' => $pageWidthPoints,
-                'height' => $headerHeightPoints,
-                'positioning' => 'absolute',
-                'posHorizontal' => \PhpOffice\PhpWord\Style\Image::POSITION_HORIZONTAL_LEFT,
-                'posHorizontalRel' => 'page',
-                'posVerticalRel' => 'page',
-                'marginTop' => 0,
-                'marginLeft' => 0
-            ]
-        );
-        $footer = $section->addFooter();
-        $footer->addImage(
-            storage_path('app/templates/Footer.png'),
-            [
-                'width' => $pageWidthPoints,
-                'height' => $footerHeightPoints,
-                'positioning' => 'absolute',
-                'posHorizontal' => \PhpOffice\PhpWord\Style\Image::POSITION_HORIZONTAL_LEFT,
-                'posHorizontalRel' => 'page',
-                'posVertical' => \PhpOffice\PhpWord\Style\Image::POSITION_VERTICAL_BOTTOM,
-                'posVerticalRel' => 'page',
-                'marginLeft' => 0,
-                'marginBottom' => 0
-            ]
-        );
+        if ($visible) {
+            $header = $section->addHeader();
+            $header->addImage(
+                storage_path('app/templates/Herder.png'),
+                [
+                    'width' => $pageWidthPoints,
+                    'height' => $headerHeightPoints,
+                    'positioning' => 'absolute',
+                    'posHorizontal' => \PhpOffice\PhpWord\Style\Image::POSITION_HORIZONTAL_LEFT,
+                    'posHorizontalRel' => 'page',
+                    'posVerticalRel' => 'page',
+                    'marginTop' => 0,
+                    'marginLeft' => 0
+                ]
+            );
+            $footer = $section->addFooter();
+            $footer->addImage(
+                storage_path('app/templates/Footer.png'),
+                [
+                    'width' => $pageWidthPoints,
+                    'height' => $footerHeightPoints,
+                    'positioning' => 'absolute',
+                    'posHorizontal' => \PhpOffice\PhpWord\Style\Image::POSITION_HORIZONTAL_LEFT,
+                    'posHorizontalRel' => 'page',
+                    'posVertical' => \PhpOffice\PhpWord\Style\Image::POSITION_VERTICAL_BOTTOM,
+                    'posVerticalRel' => 'page',
+                    'marginLeft' => 0,
+                    'marginBottom' => 0
+                ]
+            );
+        }
+
         $section->addText(
             $deliveryDate,
             ['size' => 11],
@@ -856,7 +817,7 @@ class QuotationController extends Controller
             ['spaceAfter' => Converter::pointToTwip(11)]
         );
         $section->addText(
-            'REF: COTIZACION 016/25',
+            'REF: COTIZACIÓN ' . $quotationRef,
             ['size' => 11, 'underline' => 'single', 'bold' => true, 'allCaps' => true],
             ['spaceAfter' => Converter::pointToTwip(11)]
         );
@@ -870,7 +831,7 @@ class QuotationController extends Controller
         $tableStyle = [
             'borderColor' => '000000',
             'cellMarginLeft' => 50,
-            'cellMarginRight' => 50, // Elimina todos los márgenes internos de las celdas
+            'cellMarginRight' => 50,
             'layout' => \PhpOffice\PhpWord\Style\Table::LAYOUT_FIXED
         ];
         $phpWord->addTableStyle('shipmentTable', $tableStyle);
@@ -878,7 +839,7 @@ class QuotationController extends Controller
         $compactParagraphStyle = [
             'spaceBefore' => 0,
             'spaceAfter' => 0,
-            'spacing' => 0, // Interlineado 1
+            'spacing' => 0,
             'lineHeight' => 1.0
         ];
         $table->addRow(Converter::cmToTwip(1.7));
@@ -916,7 +877,7 @@ class QuotationController extends Controller
         $table->addCell(Converter::cmToTwip(7), [
             'valign' => 'center',
             'borderSize' => 1,
-        ])->addText($productsData[0]['origin']['country'], [
+        ])->addText($productsData[0]['origin']['city'] . ', ' . $productsData[0]['origin']['country'], [
             'size' => 11
         ], $compactParagraphStyle);
         $table->addCell(Converter::cmToTwip(0.5), [
@@ -950,10 +911,9 @@ class QuotationController extends Controller
         $table->addCell(Converter::cmToTwip(7), [
             'valign' => 'center',
             'borderSize' => 1,
-        ])->addText($productsData[0]['destination']['country'], [
+        ])->addText($productsData[0]['destination']['city'] . ', ' . $productsData[0]['destination']['country'], [
             'size' => 11
         ], $compactParagraphStyle);
-        // Fila vacía (0.5 cm de ancho) - RESTAURADA
         $table->addCell(Converter::cmToTwip(0.5), [
             'valign' => 'center',
         ]);
@@ -981,47 +941,32 @@ class QuotationController extends Controller
         ])->addText('INCOTERM', [
             'bold' => true,
             'size' => 11
-        ], $compactParagraphStyle, [
-            'spaceBefore' => 0,
-            'spaceAfter' => 0
-        ]);
+        ], $compactParagraphStyle);
         $table->addCell(Converter::cmToTwip(7), [
             'valign' => 'center',
             'borderSize' => 1,
         ])->addText($productsData[0]['incoterm'], [
             'size' => 11
-        ], $compactParagraphStyle, [
-            'spaceBefore' => 0,
-            'spaceAfter' => 0
-        ]);
+        ], $compactParagraphStyle);
 
-        // Fila vacía (0.5 cm de ancho) - RESTAURADA
         $table->addCell(Converter::cmToTwip(0.5), [
             'valign' => 'center',
-        ])->addText('', [
-            'spaceBefore' => 0,
-            'spaceAfter' => 0
-        ]);
+        ])->addText('');
         $table->addCell(Converter::cmToTwip(2), [
             'valign' => 'center',
             'bgColor' => 'bdd6ee',
             'borderSize' => 1,
-        ])->addText('M3', [
+        ])->addText($productsData[0]['volume']['unit'] == 'm3' ? 'M3' : 'KG/VOL', [
             'bold' => true,
             'size' => 11
-        ], $compactParagraphStyle, [
-            'spaceBefore' => 0,
-            'spaceAfter' => 0
-        ]);
+        ], $compactParagraphStyle);
         $table->addCell(Converter::cmToTwip(3), [
             'valign' => 'center',
             'borderSize' => 1,
-        ])->addText($productsData[0]['volume']['value'] . " " . $productsData[0]['volume']['unit'], [
+        ])->addText($productsData[0]['volume']['unit'] == 'm3' ? $productsData[0]['volume']['value'] . " " . 'M3' : $productsData[0]['volume']['value'] . " " . 'KG/VOL', [
             'size' => 11
-        ], $compactParagraphStyle, [
-            'spaceBefore' => 0,
-            'spaceAfter' => 0
-        ]);
+        ], $compactParagraphStyle);
+        //dd($productsData[0]['volume']['value']);
 
         // Texto después de la tabla
         $section->addTextBreak(1);
@@ -1032,8 +977,12 @@ class QuotationController extends Controller
         );
 
         // Opción de pago (en negrita)
+        $textPago = $quotation->currency == 'USD' ?
+            'OPCION 1) PAGO EN EFECTIVO EN USD DE ESTADOS UNIDOS' :
+            'OPCION 1) PAGO EN EFECTIVO EN BS DE BOLIVIA';
+
         $section->addText(
-            'OPCION 1) PAGO EN EFECTIVO EN BS DE EN BOLIVIA',
+            $textPago,
             ['bold' => true, 'size' => 11],
             ['spaceAfter' => Converter::pointToTwip(11)]
         );
@@ -1057,22 +1006,27 @@ class QuotationController extends Controller
         ], [
             'spaceBefore' => 0,
             'spaceAfter' => 0,
-            'spacing' => 0, // Interlineado 1
+            'spacing' => 0,
             'lineHeight' => 1.0,
             'align' => 'center'
         ]);
+
+        $textMonto = $quotation->currency == 'USD' ?
+            'MONTO USD' :
+            'MONTO BS';
+
         $table->addCell(Converter::cmToTwip(3), [
             'valign' => 'center',
             'bgColor' => 'bdd6ee',
             'borderSize' => 1,
-        ])->addText('MONTO USD', [
+        ])->addText($textMonto, [
             'bold' => true,
             'size' => 11,
             'allCaps' => true
         ], [
             'spaceBefore' => 0,
             'spaceAfter' => 0,
-            'spacing' => 0, // Interlineado 1
+            'spacing' => 0,
             'lineHeight' => 1.0,
             'align' => 'right'
         ]);
@@ -1116,7 +1070,7 @@ class QuotationController extends Controller
         ], [
             'spaceBefore' => 0,
             'spaceAfter' => 0,
-            'spacing' => 0, // Interlineado 1
+            'spacing' => 0,
             'lineHeight' => 1.0,
             'align' => 'left'
         ]);
@@ -1129,7 +1083,7 @@ class QuotationController extends Controller
         ], [
             'spaceBefore' => 0,
             'spaceAfter' => 0,
-            'spacing' => 0, // Interlineado 1
+            'spacing' => 0,
             'lineHeight' => 1.0,
             'align' => 'right'
         ]);
@@ -1267,52 +1221,61 @@ class QuotationController extends Controller
             ['size' => 11],
             ['spaceAfter' => Converter::pointToTwip(11)]
         );
+
+        // Get contact information from quotation
+        $contactName = $quotation->contact_name ?? 'Aidee Callisaya.';
+        $contactPosition = $quotation->contact_position ?? 'Responsable Comercial';
+
         $section->addText(
-            'Aidee Callisaya.',
+            $contactName,
             ['size' => 11]
         );
         $section->addText(
-            'Responsable Comercial',
+            $contactPosition,
             [
                 'size' => 11,
                 'bold' => true
             ]
-
         );
-        // Guardar el documento
-        $filename = 'cotizacion_016_CASART2.docx';
+
+        // Create filename using quotation reference
+        $cleanRef = str_replace('/', '_', $quotationRef);
+        $filename = 'cotizacion_' . $cleanRef . '.docx';
+
         $tempFile = tempnam(sys_get_temp_dir(), 'PHPWord');
         $writer = IOFactory::createWriter($phpWord, 'Word2007');
         $writer->save($tempFile);
+
         // Descargar el archivo
         return response()->download($tempFile, $filename)->deleteFileAfterSend(true);
     }
 
-
     private function getClientData($nit)
     {
-        $client = Customer::where('nit', $nit)->firstOrFail();
+        $client = Customer::where('NIT', $nit)->firstOrFail();
 
         return [
-            'nit' => $client->nit,
+            'nit' => $client->NIT,
             'name' => $client->name,
             'email' => $client->email,
             'phone' => $client->phone,
             'address' => $client->address
         ];
     }
+
     private function getProductsData($products)
     {
         $processedProducts = [];
 
         foreach ($products as $product) {
-            $origin = City::with('country')->findOrFail($product['origin_id']);
-            $destination = City::with('country')->findOrFail($product['destination_id']);
-            $incoterm = Incoterm::findOrFail($product['incoterm_id']);
-            //$quantity_descripcion = QuantityDescription::findOrFail($product['quantity_description']);
+            // Suponiendo que estos modelos existen y tienen las relaciones correctas
+            $origin = City::with('country')->findOrFail($product->origin_id);
+            $destination = City::with('country')->findOrFail($product->destination_id);
+            $incoterm = Incoterm::findOrFail($product->incoterm_id);
+            $quantity_descripcion = QuantityDescription::findOrFail($product->quantity_description_id);
 
             $processedProducts[] = [
-                'name' => $product['product_name'],
+                'name' => $product->product_name,
                 'origin' => [
                     'city' => $origin->name,
                     'country' => $origin->country->name
@@ -1321,30 +1284,31 @@ class QuotationController extends Controller
                     'city' => $destination->name,
                     'country' => $destination->country->name
                 ],
-                'weight' => $product['weight'],
+                'weight' => $product->weight,
                 'incoterm' => $incoterm->code,
                 'quantity' => [
-                    'value' => $product['quantity'],
-                    'unit' => $product['quantity_description']
+                    'value' => $product->quantity,
+                    'unit' => $quantity_descripcion->name
                 ],
                 'volume' => [
-                    'value' => $product['volume_value'],
-                    'unit' => $product['volume_unit']
+                    'value' => $product->volume,
+                    'unit' => $product->volume_unit
                 ]
             ];
         }
 
         return $processedProducts;
     }
-    private function getServicesData($services)
+
+    private function getServicesData($quotationServices)
     {
         $included = [];
         $excluded = [];
 
-        foreach ($services as $serviceId => $status) {
-            $service = Service::findOrFail($serviceId);
+        foreach ($quotationServices as $quotationService) {
+            $service = $quotationService->service;
 
-            if ($status === 'include') {
+            if ($quotationService->included) {
                 $included[] = $service->name;
             } else {
                 $excluded[] = $service->name;
@@ -1356,20 +1320,22 @@ class QuotationController extends Controller
             'excluded' => $excluded
         ];
     }
-    private function getCostsData($costs)
+
+    private function getCostsData($costDetails)
     {
         $processedCosts = [];
 
-        foreach ($costs as $cost) {
-            $logisticCost = Cost::findOrFail($cost['id']);
+        foreach ($costDetails as $costDetail) {
+            $cost = $costDetail->cost;
 
             $processedCosts[] = [
-                'name' => $logisticCost->name,
-                'description' => $logisticCost->description,
-                'amount' => $cost['amount'],
-                'currency' => $logisticCost->currency
+                'name' => $cost->name,
+                'description' => $cost->description ?? '',
+                'amount' => $costDetail->amount,
+                'currency' => $costDetail->currency
             ];
         }
+
         return $processedCosts;
     }
 }

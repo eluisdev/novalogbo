@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -13,6 +14,7 @@ class Quotation extends Model
 
     protected $fillable = [
         'reference_number',
+        'reference_customer',
         'currency',
         'delivery_date',
         'amount',
@@ -49,5 +51,10 @@ class Quotation extends Model
 
     public function costDetails(): HasMany{
         return $this->hasMany(CostDetail::class);
+    }
+
+    public function billingNote(): HasOne
+    {
+        return $this->hasOne(BillingNote::class, 'quotation_id');
     }
 }

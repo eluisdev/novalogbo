@@ -6,14 +6,6 @@
 
 @extends($layout)
 @section('dashboard-option')
-    <!-- Template (fuera del formulario) -->
-    <div id="productTemplate" class="hidden">
-        @include('quotations.partials.product-block', [
-            'incoterms' => $incoterms,
-            'index' => '__INDEX__',
-            'isTemplate' => true,
-        ])
-    </div>
     <div class="w-full mx-auto px-4 sm:px-6 lg:px-8">
         <div
             class="flex flex-col sm:flex-row items-center justify-between gap-4 bg-white rounded-xl shadow-sm p-3 mb-6 border border-gray-200">

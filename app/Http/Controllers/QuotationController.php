@@ -54,6 +54,7 @@ class QuotationController extends Controller
         $incoterms = Incoterm::where('is_active', 1)->get();
         $services = Service::where('is_active', 1)->get();
         $countries = Country::whereNull('deleted_at')->get();
+        $cities = City::whereNull('deleted_at')->get();
         $costs = Cost::where('is_active', 1)->get();
         $exchangeRates = ExchangeRate::where('active', 1)->get();
         $customers = Customer::where('active', 1)->get();
@@ -63,6 +64,7 @@ class QuotationController extends Controller
             'incoterms',
             'services',
             'countries',
+            'cities',
             'costs',
             'exchangeRates',
             'customers',
@@ -403,8 +405,11 @@ class QuotationController extends Controller
             return redirect()->route('quotations.show', $quotation->id)
                 ->with('success', 'Cotización creada satisfactoriamente.');
         } catch (\Exception $e) {
+            dd(Customer::find($request->NIT)->name);
             DB::rollBack();
-            return back()->withInput()->with('error', 'Error creating quotation: ' . $e->getMessage());
+            return back()
+            ->withInput()
+            ->with('error', 'Error creating quotation: ' . $e->getMessage());
         }
     }
     public function show($id)

@@ -5,12 +5,11 @@ namespace Database\Seeders;
 use App\Models\User;
 // use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
+use Database\Seeders\ExchangeRateSeeder;
 
 class DatabaseSeeder extends Seeder
 {
-    /**
-     * Seed the application's database.
-     */
+
     public function run(): void
     {
         $this->call([
@@ -21,7 +20,8 @@ class DatabaseSeeder extends Seeder
             ServiceSeeder::class,
             CostSeeder::class,
             CustomerSeeder::class,
-            QuantityDescriptionSeeder::class
+            QuantityDescriptionSeeder::class,
+            ExchangeRateSeeder::class,
         ]);
     }
 }

@@ -631,6 +631,7 @@ class QuotationController extends Controller
             $quotation->products()->delete();
             $quotation->services()->delete();
             $quotation->costDetails()->delete();
+            $quotation->billingNote()->delete();
 
             // Procesar y guardar los nuevos productos
             foreach ($validatedData['products'] as $productData) {
@@ -700,7 +701,7 @@ class QuotationController extends Controller
     public function updateStatus(Request $request, $id)
     {
         $request->validate([
-            'status' => 'required|in:pending,approved,rejected,cancelled'
+            'status' => 'required|in:approved'
         ]);
 
         $quotation = Quotation::findOrFail($id);

@@ -1,11 +1,18 @@
 @props(['quotation' => null, 'incoterms' => null])
 
 @php
-    // Obtenemos los productos del viejo valor o de la cotización
     $oldProducts = old('products', []);
-    $products = $oldProducts ?: $quotation?->products ?? [];
-    // Forzamos al menos un producto si no hay ninguno
-    if (empty($products)) {
+
+    // Check if we have old data from a form submission error
+    if (!empty($oldProducts)) {
+        $products = $oldProducts;
+    }
+    // Otherwise use the data from the backend
+    elseif (isset($quotation_data['formData']['products']) && !empty($quotation_data['formData']['products'])) {
+        $products = $quotation_data['formData']['products'];
+    }
+    // Fallback to empty template
+    else {
         $products = [['origin_id' => '', 'destination_id' => '']];
     }
 @endphp
@@ -20,7 +27,7 @@
                         d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
                 </svg>
             </span>
-            <h3 class="ml-3 text-lg font-semibold text-gray-800">Producto</h3>
+            <h3 class="ml-3 text-lg font-semibold text-gray-800">Producto *</h3>
             <p class="text-sm text-gray-500 sm:ml-4">Cree o edite el producto de la cotización.</p>
         </div>
 
@@ -48,102 +55,67 @@
 </div>
 
 <script>
-    function removeProductBlock(button) {
-        const productBlocks = document.querySelectorAll('.product-block');
-
-        if (productBlocks.length <= 1) {
-            Swal.fire({
-                icon: 'warning',
-                title: 'No se puede eliminar',
-                text: 'Debe haber al menos un producto en la cotización.',
-                confirmButtonText: 'Entendido'
-            });
-            return;
+    // Funciones auxiliares para formatear resultados de Select2
+    function formatLocationResult(item) {
+        if (!item.id) return item.text;
+        if (item.id.toString().startsWith('country_')) {
+            return $('<div class="bg-gray-600 text-white p-2">' + item.text + '</div>');
         }
-
-        const block = button.closest('.product-block');
-        block.style.transition = 'opacity 0.3s';
-        block.style.opacity = '0';
-
-        // Destruir Select2 antes de eliminar
-        $(block).find('.origin-select, .destiny-select').select2('destroy');
-
-        setTimeout(() => {
-            block.remove();
-            // Reindexar los bloques restantes si es necesario
-        }, 300);
+        return $('<div class="city-option hover:font-bold transition-colors duration-500 ease-in">' + item.text +
+            '</div>');
     }
 
-    function addProductBlock() {
-        const $container = $('#productBlocks');
-        const $lastBlock = $container.find('.product-block').last();
-
-        // Destruye Select2 antes de clonar
-        $lastBlock.find('.origin-select, .destiny-select').select2('destroy');
-
-        const lastIndex = parseInt($lastBlock.data('index')) || 0;
-        const newIndex = lastIndex + 1;
-        const uniqueSuffix = '_clone_' + Date.now();
-
-        const $clone = $lastBlock.clone();
-
-        $clone.attr('data-index', newIndex);
-
-        // Actualiza IDs, names y fors
-        $clone.find('[id], [name], [for]').each(function() {
-            if (this.id) this.id = this.id.replace(/\d+(_clone_\d+)?/, newIndex + uniqueSuffix);
-            if (this.name) this.name = this.name.replace(/\[\d+]/, `[${newIndex}]`);
-            if (this.htmlFor) this.htmlFor = this.htmlFor.replace(/\d+(_clone_\d+)?/, newIndex + uniqueSuffix);
-        });
-
-        // Limpia Select2 correctamente
-        $clone.find('.select2').remove();
-        $clone.find('.select2-hidden-accessible').removeClass('select2-hidden-accessible');
-
-        // En lugar de vaciar el select, establece el valor por defecto
-        $clone.find('select[name*="[quantity_description_id]"]').val('1'); // O el valor que prefieras por defecto
-
-        // Remueve cualquier atributo 'selected' existente primero
-        $clone.find('select[name*="[quantity_description_id]"] option').removeAttr('selected');
-        // Luego marca como selected el option con value="1"
-        $clone.find('select[name*="[quantity_description_id]"] option[value="1"]').attr('selected', 'selected');
-
-        $clone.appendTo($container);
-
-        // Reinicia Select2
-        initSelect2ForBlock($clone);
-        initSelect2ForBlock($lastBlock);
+    function formatLocationSelection(item) {
+        return item.text;
     }
 
-    window.addEventListener("DOMContentLoaded", () => {
+    function formatQuantityDescriptionResult(item) {
+        if (!item.id) return item.text;
+        return $('<div class="p-2 hover:bg-gray-100">' + item.text + '</div>');
+    }
 
-        $(document).ready(function() {
-            $('#productBlocks .product-block').each(function() {
-                initSelect2ForBlock($(this));
-            });
-        });
-    })
+    function formatQuantityDescriptionSelection(item) {
+        return item.text || item;
+    }
 
     function initSelect2ForBlock(block) {
-        // Primero verificar si el bloque existe
         if (!block) return;
 
-        // Destruir Select2 de manera segura
-        $(block).find('.origin-select, .destiny-select').each(function() {
-            try {
-                // Verificar si el elemento existe y tiene Select2 inicializado
-                if ($(this).data('select2')) {
-                    $(this).select2('destroy');
-                }
-                // Limpiar cualquier elemento residual de Select2
-                $(this).next('.select2-container').remove();
-                $(this).removeClass('select2-hidden-accessible');
-            } catch (e) {
-                console.warn('Error al limpiar Select2:', e);
-            }
-        });
+        // Configuración para descripciones de cantidad
+        const quantityDescriptionConfig = {
+            theme: 'bootstrap-5',
+            allowClear: true,
+            width: '100%',
+            language: {
+                noResults: () => "No se encontraron descripciones",
+                searching: () => "Buscando...",
+                inputTooShort: () => "Ingrese al menos 1 carácter"
+            },
+            ajax: {
+                url: '/quotations/searchQuantityDescription',
+                dataType: 'json',
+                delay: 300,
+                data: params => ({
+                    search: params.term,
+                }),
+                processResults: function(data, params) {
+                    const items = Array.isArray(data) ? data : (data.data || []);
+                    const results = items.map(item => ({
+                        id: item.id,
+                        text: item.name
+                    }));
 
-        // Configuración común para Select2
+                    return {
+                        results
+                    };
+                }
+            },
+            minimumInputLength: 1,
+            templateResult: formatQuantityDescriptionResult,
+            templateSelection: formatQuantityDescriptionSelection
+        };
+
+        // Configuración común para Select2 (origen y destino)
         const select2Config = {
             theme: 'bootstrap-5',
             allowClear: true,
@@ -194,6 +166,19 @@
             templateSelection: formatLocationSelection
         };
 
+        // Destruir Select2 de manera segura
+        $(block).find('.origin-select, .destiny-select, .quantity-description-select').each(function() {
+            try {
+                if ($(this).data('select2')) {
+                    $(this).select2('destroy');
+                }
+                $(this).next('.select2-container').remove();
+                $(this).removeClass('select2-hidden-accessible');
+            } catch (e) {
+                console.warn('Error al limpiar Select2:', e);
+            }
+        });
+
         // Inicializar Select2 para origen
         $(block).find('.origin-select').select2({
             ...select2Config,
@@ -206,19 +191,73 @@
             placeholder: 'Buscar país de destino...'
         });
 
+        // Inicializar Select2 para descripción de cantidad
+        $(block).find('.quantity-description-select').select2({
+            ...quantityDescriptionConfig,
+            placeholder: 'Descripción de cantidad...'
+        });
+    }
 
-        function formatLocationResult(item) {
-            if (!item.id) return item.text;
-            if (item.id.toString().startsWith('country_')) {
-                return $('<div class="bg-gray-600 text-white p-2">' + item.text + '</div>');
-            }
-            return $('<div class="city-option hover:font-bold transition-colors duration-500 ease-in">' + item.text +
-                '</div>');
+    function removeProductBlock(button) {
+        const productBlocks = document.querySelectorAll('.product-block');
+
+        if (productBlocks.length <= 1) {
+            Swal.fire({
+                icon: 'warning',
+                title: 'No se puede eliminar',
+                text: 'Debe haber al menos un producto en la cotización.',
+                confirmButtonText: 'Entendido'
+            });
+            return;
         }
 
-        function formatLocationSelection(item) {
-            return item.text;
-        }
+        const block = button.closest('.product-block');
+        block.style.transition = 'opacity 0.3s';
+        block.style.opacity = '0';
+
+        // Destruir Select2 antes de eliminar
+        $(block).find('.origin-select, .destiny-select, .quantity-description-select').select2('destroy');
+
+        setTimeout(() => {
+            block.remove();
+        }, 300);
+    }
+
+    function addProductBlock() {
+        const $container = $('#productBlocks');
+        const $lastBlock = $container.find('.product-block').last();
+
+        // Destroy Select2 before cloning
+        $lastBlock.find('.origin-select, .destiny-select, .quantity-description-select').select2('destroy');
+
+        const lastIndex = parseInt($lastBlock.data('index')) || 0;
+        const newIndex = lastIndex + 1;
+        const uniqueSuffix = '_clone_' + Date.now();
+
+        const $clone = $lastBlock.clone();
+
+        $clone.attr('data-index', newIndex);
+
+        // Update IDs, names and for attributes
+        $clone.find('[id], [name], [for]').each(function() {
+            if (this.id) this.id = this.id.replace(/\d+(_clone_\d+)?/, newIndex + uniqueSuffix);
+            if (this.name) this.name = this.name.replace(/\[\d+]/, `[${newIndex}]`);
+            if (this.htmlFor) this.htmlFor = this.htmlFor.replace(/\d+(_clone_\d+)?/, newIndex + uniqueSuffix);
+        });
+
+        // Clear Select2 properly
+        $clone.find('.select2').remove();
+        $clone.find('.select2-hidden-accessible').removeClass('select2-hidden-accessible');
+
+        // Reset values in the clone
+        $clone.find('input[type="text"], input[type="number"], textarea').val('');
+        $clone.find('select').val('').prop('selectedIndex', 0);
+
+        $clone.appendTo($container);
+
+        // Reinitialize Select2
+        initSelect2ForBlock($clone);
+        initSelect2ForBlock($lastBlock);
     }
 
     function updateRealQuantity() {
@@ -231,4 +270,13 @@
             realQuantityInput.value = part1 && part2 ? `${part1} x ${part2}` : '';
         }
     }
+
+    // Inicializar Select2 cuando el DOM esté listo
+    window.addEventListener("DOMContentLoaded", () => {
+        $(document).ready(function() {
+            $('#productBlocks .product-block').each(function() {
+                initSelect2ForBlock($(this));
+            });
+        });
+    });
 </script>

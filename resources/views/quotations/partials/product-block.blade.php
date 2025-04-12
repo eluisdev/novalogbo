@@ -4,13 +4,18 @@
     $useOld = count(old('products', [])) > 0;
     $uniqueSuffix = $isClone ? '_clone_' . uniqid() : '';
 
-    $defaultProductName = $product->product_name ?? '';
+    $defaultProductName = $product->name ?? '';
     $defaultWeight = $product->weight ?? '';
     $defaultIncotermId = $product->incoterm_id ?? '';
     $defaultQuantity = $product->quantity ?? '1 x 40';
     $defaultQuantityDescriptionId = $product->quantity_description_id ?? '1';
     $defaultVolume = $product->volume ?? '';
     $defaultVolumeUnit = $product->volume_unit ?? 'kg_vol';
+
+    $incoterms = isset($quotation_data) ? $quotation_data['formSelects']['incoterms'] : $incoterms;
+
+    $cities = isset($quotation_data['formSelects']['cities']) ? $quotation_data['formSelects']['cities'] : $cities;
+    $quantity_descriptions = isset($quotation_data['formSelects']['QuantityDescriptions'])  ? $quotation_data['formSelects']['QuantityDescriptions'] : $QuantityDescriptions;
 @endphp
 
 <div class="rounded-lg shadow-[0_0_15px_rgba(0,0,0,0.30)] p-6 mb-6 bg-white relative overflow-visible product-block"
@@ -18,14 +23,15 @@
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         <div>
             <label class="block text-sm font-medium text-gray-700 mb-1"
-                for="product_name_{{ $index }}{{ $uniqueSuffix }}">Nombre (Opcional)</label>
-            <input type="text" id="product_name_{{ $index }}{{ $uniqueSuffix }}"
-                name="products[{{ $index }}][product_name]"
-                value="{{ $useOld ? old('products.' . $index . '.product_name') : $defaultProductName }}"
+                for="name_{{ $index }}{{ $uniqueSuffix }}">Nombre (Opcional)</label>
+            <input type="text" id="name_{{ $index }}{{ $uniqueSuffix }}"
+                name="products[{{ $index }}][name]"
+                value="{{ $useOld ? old('products.' . $index . '.name') : $defaultProductName }}"
                 class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
         </div>
         <div>
-            <label for="origin_id_{{ $index }}{{ $uniqueSuffix }}" class="block text-sm font-medium text-gray-700 mb-1">Origen *</label>
+            <label for="origin_id_{{ $index }}{{ $uniqueSuffix }}"
+                class="block text-sm font-medium text-gray-700 mb-1">Origen *</label>
             <select id="origin_id_{{ $index }}{{ $uniqueSuffix }}"
                 name="products[{{ $index }}][origin_id]"
                 class="origin-select w-full border border-gray-300 rounded px-3 py-2">
@@ -33,7 +39,9 @@
                 @if ($useOld)
                     @php
                         $oldOriginId = old("products.{$index}.origin_id", '');
-                        $selectedCity = $oldOriginId ? $cities->firstWhere('id', $oldOriginId) : null;
+                        $selectedCity = $oldOriginId
+                            ? $cities->firstWhere('id', $oldOriginId)
+                            : null;
                     @endphp
                     @if ($selectedCity)
                         <option value="{{ $selectedCity->id }}" selected>{{ $selectedCity->name }} ,
@@ -44,14 +52,16 @@
                         $selectedCity = $cities->firstWhere('id', $product->origin_id);
                     @endphp
                     @if ($selectedCity)
-                        <option value="{{ $selectedCity->id }}" selected>{{ $selectedCity->name }}</option>
+                        <option value="{{ $selectedCity->id }}" selected>{{ $selectedCity->name }} ,
+                            {{ $selectedCity->country->name }}</option>
                     @endif
                 @endif
             </select>
         </div>
 
         <div>
-            <label for="destination_id_{{ $index }}{{ $uniqueSuffix }}" class="block text-sm font-medium text-gray-700 mb-1">Destino *</label>
+            <label for="destination_id_{{ $index }}{{ $uniqueSuffix }}"
+                class="block text-sm font-medium text-gray-700 mb-1">Destino *</label>
             <select id="destination_id_{{ $index }}{{ $uniqueSuffix }}"
                 name="products[{{ $index }}][destination_id]"
                 class="destiny-select w-full border border-gray-300 rounded px-3 py-2">
@@ -59,7 +69,9 @@
                 @if ($useOld)
                     @php
                         $oldDestinationId = old("products.{$index}.destination_id", '');
-                        $selectedCity = $oldDestinationId ? $cities->firstWhere('id', $oldDestinationId) : null;
+                        $selectedCity = $oldDestinationId
+                            ? $cities->firstWhere('id', $oldDestinationId)
+                            : null;
                     @endphp
                     @if ($selectedCity)
                         <option value="{{ $selectedCity->id }}" selected>{{ $selectedCity->name }} ,
@@ -67,10 +79,14 @@
                     @endif
                 @elseif(isset($product) && $product->destination_id)
                     @php
-                        $selectedCity = $cities->firstWhere('id', $product->destination_id);
+                        $selectedCity = $cities->firstWhere(
+                            'id',
+                            $product->destination_id,
+                        );
                     @endphp
                     @if ($selectedCity)
-                        <option value="{{ $selectedCity->id }}" selected>{{ $selectedCity->name }}</option>
+                        <option value="{{ $selectedCity->id }}" selected>{{ $selectedCity->name }} ,
+                            {{ $selectedCity->country->name }}</option>
                     @endif
                 @endif
             </select>
@@ -142,19 +158,34 @@
             <div class="flex gap-2">
                 <select id="quantity_description_id_{{ $index }}{{ $uniqueSuffix }}"
                     name="products[{{ $index }}][quantity_description_id]"
-                    class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
-                    <option value="1"
-                        @if ($useOld) {{ old('products.' . $index . '.quantity_description_id') == '1' ? 'selected' : '' }}
-                        @else {{ $defaultQuantityDescriptionId == '1' ? 'selected' : '' }} @endif>
-                        Caja</option>
-                    <option value="2"
-                        @if ($useOld) {{ old('products.' . $index . '.quantity_description_id') == '2' ? 'selected' : '' }}
-                        @else {{ $defaultQuantityDescriptionId == '2' ? 'selected' : '' }} @endif>
-                        Entero</option>
-                    <option value="3"
-                        @if ($useOld) {{ old('products.' . $index . '.quantity_description_id') == '3' ? 'selected' : '' }}
-                        @else {{ $defaultQuantityDescriptionId == '3' ? 'selected' : '' }} @endif>
-                        Otro</option>
+                    class="quantity-description-select w-full border border-gray-300 rounded px-3 py-2">
+                    <option value="">Seleccionar</option>
+                    @if ($useOld)
+                        @php
+                            $oldQuantityDescriptionId = old("products.{$index}.quantity_description_id", '');
+                            $selectedDescription = $oldQuantityDescriptionId
+                                ? $quantity_descriptions->firstWhere(
+                                    'id',
+                                    $oldQuantityDescriptionId,
+                                )
+                                : null;
+                        @endphp
+                        @if ($selectedDescription)
+                            <option value="{{ $selectedDescription->id }}" selected>{{ $selectedDescription->name }}
+                            </option>
+                        @endif
+                    @elseif(isset($product) && isset($product->quantity_description_id))
+                        @php
+                            $selectedDescription = $quantity_descriptions->firstWhere(
+                                'id',
+                                $product->quantity_description_id,
+                            );
+                        @endphp
+                        @if ($selectedDescription)
+                            <option value="{{ $selectedDescription->id }}" selected>{{ $selectedDescription->name }}
+                            </option>
+                        @endif
+                    @endif
                 </select>
             </div>
         </div>
@@ -186,7 +217,7 @@
         </div>
 
     </div>
-    <input type="hidden" name="products[{{ $index }}][description]" value="sin description">
+    <input type="hidden" name="products[{{ $index }}][description]" value="sin descripcion">
 
     <div class="absolute -top-3 -right-3">
         <button type="button" onclick="removeProductBlock(this)" aria-label="Eliminar producto"

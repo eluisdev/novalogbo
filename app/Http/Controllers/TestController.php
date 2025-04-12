@@ -64,7 +64,7 @@ class TestController extends Controller
             'delivery_date' => '2023-10-01',
             'products' => [
                 1 => [
-                    'product_name' => 'Product1',
+                    'name' => 'Product1',
                     'origin_id' => '41',
                     'destination_id' => '64',
                     'weight' => '45',

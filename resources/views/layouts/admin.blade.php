@@ -51,9 +51,14 @@
                             ],
                             ['route' => 'costs.index', 'text' => 'Costos', 'active' => request()->is('costs*')],
                             [
-                                'route' => '#',
+                                'route' => 'quantity_descriptions.index',
                                 'text' => 'Moneda',
                                 'active' => request()->is('quotation-sectors*'),
+                            ],
+                            [
+                                'route' => 'quantity_descriptions.index',
+                                'text' => 'Descripcion de cantidad',
+                                'active' => request()->is('quantity_descriptions*'),
                             ],
                             ['route' => '#', 'text' => 'Historial', 'active' => request()->is('history*')],
                         ];

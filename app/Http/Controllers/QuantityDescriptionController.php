@@ -10,12 +10,12 @@ class QuantityDescriptionController extends Controller
     public function index()
     {
         $quantityDescriptions = QuantityDescription::all();
-        return view('admin.quantity_descriptions.index', compact('quantityDescriptions'));
+        return view('quantity_descriptions.index', compact('quantityDescriptions'));
     }
 
     public function create()
     {
-        return view('admin.quantity_descriptions.create');
+        return view('quantity_descriptions.create');
     }
 
     public function store(Request $request)
@@ -41,7 +41,7 @@ class QuantityDescriptionController extends Controller
         if (!$quantityDescription) {
             return redirect()->route('quantity_descriptions.index')->with('error', 'Descripción de cantidad no encontrada.');
         }
-        return view('admin.quantity_descriptions.show', compact('quantityDescription'));
+        return view('quantity_descriptions.show', compact('quantityDescription'));
     }
     public function edit($id)
     {
@@ -49,7 +49,7 @@ class QuantityDescriptionController extends Controller
         if (!$quantityDescription) {
             return redirect()->route('quantity_descriptions.index')->with('error', 'Descripción de cantidad no encontrada.');
         }
-        return view('admin.quantity_descriptions.edit', compact('quantityDescription'));
+        return view('quantity_descriptions.edit', compact('quantityDescription'));
     }
     public function update(Request $request, $id)
     {

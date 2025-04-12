@@ -16,10 +16,10 @@
             <select id="NIT" name="NIT"
                 class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 select2">
                 <option value=""></option>
-                @if (old('NIT') || (isset($quotation) && $quotation->NIT))
+                @if (old('NIT') || (isset($quotation_data) && $quotation_data['formData']['NIT']))
                     @php
-                        $nit = old('NIT', isset($quotation) ? $quotation->customer_id : '');
-                        $selectedCustomer = $customers->firstWhere('NIT', $nit);
+                        $nit = old('NIT', isset($quotation_data) ? $quotation_data['formData']['NIT'] : '');
+                        $selectedCustomer = $quotation_data['formSelects']['customers']->firstWhere('NIT', $nit);
                     @endphp
                     @if ($selectedCustomer)
                         <option value="{{ $selectedCustomer->id }}" selected>{{ $selectedCustomer->name }}</option>
@@ -32,25 +32,46 @@
             <label for="currency" class="block text-sm font-medium text-gray-700 mb-1">Moneda *</label>
             <select id="currency" name="currency"
                 class="currency-selector w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
-                <option value="USD" @selected((old('currency') ? old('currency') : $quotation->currency ?? 'USD') == 'USD') data-symbol="$">Dólares (USD)</option>
-                <option value="EUR" @selected((old('currency') ? old('currency') : $quotation->currency ?? 'USD') == 'EUR') data-symbol="€">Euros (EUR)</option>
-                <option value="BOB" @selected((old('currency') ? old('currency') : $quotation->currency ?? 'USD') == 'BOB') data-symbol="Bs">Bolivianos (BOB)</option>
+                <option value="USD" @selected((old('currency') ? old('currency') : $quotation_data['formData']['currency'] ?? 'USD') == 'USD') data-symbol="$">Dólares (USD)</option>
+                <option value="EUR" @selected((old('currency') ? old('currency') : $quotation_data['formData']['currency'] ?? 'EUR') == 'EUR') data-symbol="€">Euros (EUR)</option>
+                <option value="BOB" @selected((old('currency') ? old('currency') : $quotation_data['formData']['currency'] ?? 'BOB') == 'BOB') data-symbol="Bs">Bolivianos (BOB)</option>
             </select>
         </div>
 
         <div>
             <label for="exchange_rate" class="block text-sm font-medium text-gray-700 mb-1">Tipo de Cambio *</label>
             <input type="number" step="0.0001" id="exchange_rate" name="exchange_rate"
-                value="{{ $quotation ? $quotation->exchange_rate : '' }}"
+                value="{{ isset($quotation_data) ? $quotation_data['formData']['exchange_rate'] : '' }}"
                 class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
         </div>
 
         <div>
-            <label for="exchange_rate" class="block text-sm font-medium text-gray-700 mb-1">Referencia *</label>
-            <input type="number" step="0.0001" id="reference_number" name="reference_number"
-                value="{{ old('reference_number', isset($quotation) ? $quotation->exchange_rate : '') }}"
+            <label for="reference_customer" class="block text-sm font-medium text-gray-700 mb-1">Referencia
+                (Opcional)</label>
+            <input type="text" id="reference_customer" name="reference_customer"
+                value="{{ old('reference_customer', isset($quotation_data) ? $quotation_data['formData']['reference_customer'] : '') }}"
                 class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500" />
         </div>
+
+        @if ((isset($quotation_data) && $quotation_data['formData']['reference_number']))
+            <div>
+                <label for="reference_number" class="block text-sm font-medium text-gray-700 mb-1">Numero de
+                    cotizacion</label>
+                <input type="text" id="reference_number" name="reference_number" readonly
+                    value="{{ $quotation_data['formData']['reference_number'] }}"
+                    class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 bg-gray-200">
+            </div>
+        @endif
+
+        {{-- @if ((isset($quotation_data) && $quotation_data['formData']['date_finalization']))
+            <div>
+                <label for="reference_number" class="block text-sm font-medium text-gray-700 mb-1">Numero de
+                    cotizacion</label>
+                <input type="text" id="reference_number" name="reference_number" readonly
+                    value="{{ $quotation_data['formData']['reference_number'] }}"
+                    class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 bg-gray-200">
+            </div>
+        @endif --}}
 
         {{-- <div>
             <label for="valid_until" class="block text-sm font-medium text-gray-700 mb-1">Válido hasta *</label>
@@ -63,7 +84,7 @@
 
 <script>
     document.addEventListener('DOMContentLoaded', function() {
-        // Inicializar Select2 con AJAX
+
         $('#NIT').select2({
             theme: 'bootstrap-5',
             placeholder: 'Buscar cliente...',
@@ -87,7 +108,6 @@
                 data: function(params) {
                     return {
                         search: params.term,
-                        page: params.page || 1
                     };
                 },
                 processResults: function(data, params) {
@@ -97,8 +117,7 @@
                         customer: customer
                     }));
 
-                    if (results.length === 0 && params.term && params.term.length >=
-                        2) {
+                    if (results.length === 0 && params.term && params.term.length >= 2) {
                         results.push({
                             id: 'NEW_' + params.term,
                             text: `+ Crear nuevo cliente: "${params.term}"`,
@@ -109,9 +128,6 @@
 
                     return {
                         results: results,
-                        pagination: {
-                            more: false
-                        }
                     };
                 },
                 cache: true
@@ -119,9 +135,24 @@
             minimumInputLength: 2,
             templateResult: formatCustomerResult,
             templateSelection: formatCustomerSelection
+        }).on('select2:select', function(e) {
+            var data = e.params.data
+            if (data && data.isNew) {
+                const form = document.getElementById('create-customer-quotation-form');
+                form.reset()
+                const nameInput = form.querySelector('input[name="name"]');
+                if (nameInput && data.searchTerm) {
+                    nameInput.value = data.searchTerm;
+                }
+                document.getElementById('create-customer-quotation').classList.remove('hidden');
+                nameInput.focus();
+                $(this).val(null).trigger('change');
+            }
+
+
         });
 
-        @if (old('NIT') || (isset($quotation) && $quotation->NIT))
+        @if (old('NIT') || (isset($quotation_data) && $quotation_data['formData']['NIT']))
             var initialData = {
                 id: "{{ $selectedCustomer->NIT }}",
                 text: "{{ $selectedCustomer->name }}",
@@ -131,7 +162,6 @@
             $('#NIT').append(option).trigger('change');
         @endif
 
-        // Funciones de formateo
         function formatCustomerResult(data) {
             if (data.loading) return data.text;
 
@@ -164,13 +194,12 @@
 
         if (createCustomerForm) {
             createCustomerForm.addEventListener('submit', function(e) {
-                e.preventDefault(); // Evita el envío tradicional del formulario
+                e.preventDefault();
 
                 const formData = new FormData(this);
                 const url = this.getAttribute('action');
                 const method = this.getAttribute('method') || 'POST';
 
-                // Realizar la petición AJAX
                 fetch(url, {
                         method: method,
                         body: formData,
@@ -180,7 +209,6 @@
                     })
                     .then(response => response.json())
                     .then(data => {
-                        // Limpiar errores anteriores
                         const oldErrorContainer = createCustomerForm.querySelector(
                             '.error-container');
                         if (oldErrorContainer) {
@@ -188,7 +216,6 @@
                         }
 
                         if (data.success) {
-                            // Agregar el nuevo cliente al select2 y cerrar modal
                             if (data.customer) {
                                 const newOption = new Option(data.customer.name, data.customer.id,
                                     true, true);
@@ -202,11 +229,8 @@
                                 showConfirmButton: true
                             })
                         } else if (data.errors) {
-                            // Mostrar errores de validación
                             let errorHtml =
                                 '<div class="bg-red-100 text-red-700 p-2 rounded text-sm error-container"><ul class="list-disc pl-4">';
-
-                            // Convertir objeto de errores a array si es necesario
                             const errorArray = Array.isArray(data.errors) ?
                                 data.errors :
                                 Object.values(data.errors).flat();
@@ -215,8 +239,6 @@
                                 errorHtml += `<li>${error}</li>`;
                             });
                             errorHtml += '</ul></div>';
-
-                            // Insertar errores al inicio del formulario
                             createCustomerForm.insertAdjacentHTML('afterbegin', errorHtml);
                         } else if (data.message) {
                             alert(data.message);

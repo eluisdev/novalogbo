@@ -1,3 +1,4 @@
+
 @if (Auth::user()->role_id == '1')
     @php $layout = 'layouts.admin'; @endphp
 @else
@@ -27,25 +28,31 @@
         </div>
 
         <div class="w-full mx-auto px-4 sm:px-6 lg:px-8">
-            @include('quotations.partials.header', ['title' => 'Editar Cotización'])
-
             <div class="bg-white shadow-md rounded-lg overflow-hidden border border-gray-200 mb-6">
-                <form action="{{ route('quotations.update', $quotation->id) }}" method="POST" id="quotationForm">
+                <form action="{{ route('quotations.update', $quotation_data["formData"]["id"]) }}" method="POST" id="quotationForm">
                     @csrf
                     @method('PUT')
-
-                    @include('quotations.partials.basic-info', ['quotation' => $quotation])
-                    @include('quotations.partials.products', ['quotation' => $quotation])
-                    @include('quotations.partials.services', ['quotation' => $quotation])
-                    @include('quotations.partials.costs', ['quotation' => $quotation])
+                    @if ($errors->any())
+                        <div class="bg-red-100 text-red-700 p-4 rounded-md">
+                            <ul class="list-disc pl-5">
+                                @foreach ($errors->all() as $error)
+                                    <li>{{ $error }}</li>
+                                @endforeach
+                            </ul>
+                        </div>
+                    @endif
+                    @csrf
+                    @include('quotations.partials.basic-info')
+                    @include('quotations.partials.products')
+                    @include('quotations.partials.services')
+                    @include('quotations.partials.costs')
                     @include('quotations.partials.actions')
                 </form>
             </div>
         </div>
 
-        <x-product-block :incoterms="$incoterms" />
-
-        @include('quotations.partials.preview-modal')
+        <x-quotations.modal-customer />
+        <x-quotations.modal-preview />
 
     </div>
 @endsection

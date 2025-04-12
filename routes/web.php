@@ -28,10 +28,10 @@ Route::get('/', function () {
     return view('welcome');
 });
 
-//Route::post('/', [TestController::class, 'generarCotizacion'])->name('billing-note.download');
-//Route::post('/', [BillingNoteController::class, 'download'])->name('billing-note.download');
-Route::post('/', [QuotationController::class, 'generarCotizacion'])->name('billing-note.download');
-//Route::get('/{id}', [QuotationController::class, 'show'])->name('show');
+// Route::post('/', [TestController::class, 'generarCotizacion'])->name('billing-note.download');
+// Route::post('/s', [BillingNoteController::class, 'download'])->name('billing-note.download');
+// Route::post('/s', [QuotationController::class, 'generarCotizacion'])->name('billing-note.download');
+// Route::get('/{id}', [QuotationController::class, 'show'])->name('show');
 /*
 |--------------------------------------------------------------------------
 | Autenticación
@@ -171,19 +171,6 @@ Route::middleware(['auth', 'role:admin'])->group(function () {
         Route::delete('/{id}', 'destroy')->name('destroy');
         Route::patch('toggle-status/{id}', 'toggleStatus')->name('toggleStatus');
     });
-
-    // Gestión de descripciones de cantidad
-
-    Route::prefix('quantity_descriptions')->name('quantity_descriptions.')->controller(QuantityDescriptionController::class)->group(function () {
-        Route::get('/', 'index')->name('index');
-        Route::get('/create', 'create')->name('create');
-        Route::post('/', 'store')->name('store');
-        Route::get('/{id}', 'show')->name('show');
-        Route::get('/edit/{id}', 'edit')->name('edit');
-        Route::put('/{id}', 'update')->name('update');
-        Route::delete('/{id}', 'destroy')->name('destroy');
-        Route::patch('toggle-status/{id}', 'toggleStatus')->name('toggleStatus');
-    });
 });
 
 
@@ -217,7 +204,7 @@ Route::middleware(['auth', 'role:admin,operator'])->group(function () {
         Route::get('/searchCustomer', 'searchCustomer')->name('searchCustomer');
         Route::get('/searchQuantityDescription', 'searchQuantityDescription')->name('searchQuantityDescription');
         Route::post('/billingNoteWord', [BillingNoteController::class, 'download'])->name('billing-note.download');
-        Route::post('/generateQuotation', 'generarCotizacion')->name('quotation.generate.download');
+        Route::post('/generateQuotation', 'generarCotizacion')->name('generate.download');
 
         Route::get('/create', 'create')->name('create');
         Route::get('/{id}', 'show')->name('show');
@@ -232,8 +219,18 @@ Route::middleware(['auth', 'role:admin,operator'])->group(function () {
 
     });
 
+    // Gestión de descripciones de cantidad
 
-
+    Route::prefix('quantity_descriptions')->name('quantity_descriptions.')->controller(QuantityDescriptionController::class)->group(function () {
+        Route::get('/', 'index')->name('index');
+        Route::get('/create', 'create')->name('create');
+        Route::post('/', 'store')->name('store');
+        Route::get('/{id}', 'show')->name('show');
+        Route::get('/edit/{id}', 'edit')->name('edit');
+        Route::put('/{id}', 'update')->name('update');
+        Route::delete('/{id}', 'destroy')->name('destroy');
+        Route::patch('toggle-status/{id}', 'toggleStatus')->name('toggleStatus');
+    });
 });
 
 /*

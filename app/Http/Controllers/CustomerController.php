@@ -54,10 +54,12 @@ class CustomerController extends Controller
         ]);
 
         // Crear un nuevo cliente
-        Customer::create($request->all());
+        $customer = Customer::create($request->all());
 
         // Redirigir a la lista de clientes con un mensaje de éxito
-        return redirect()->route('customers.index')->with('success', 'Cliente creado exitosamente.');
+        return redirect()->route('customers.index')
+            ->with('success', 'Cliente creado exitosamente.')
+            ->with('customer', $customer);
     }
 
     public function show($NIT)

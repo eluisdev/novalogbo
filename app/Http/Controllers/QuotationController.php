@@ -291,6 +291,7 @@ class QuotationController extends Controller
 
     public function store(Request $request)
     {
+        // dd($request);
         $validatedData = $request->validate(
             [
                 'reference_customer' => 'nullable|string',
@@ -343,7 +344,7 @@ class QuotationController extends Controller
             $count = Quotation::whereYear('created_at', $currentYear)->count();
             $nextNumber = str_pad($count + 1, 3, '0', STR_PAD_LEFT);
             $quotation->reference_number = "{$nextNumber}/" . substr($currentYear, -2);
-            $quotation->reference_customer = $validatedData['currency'] ?? '';
+            $quotation->reference_customer = $validatedData['reference_customer'] ?? '';
             $quotation->currency = $validatedData['currency'];
             $quotation->exchange_rate = $validatedData['exchange_rate'];
             $quotation->amount = 0;
@@ -358,6 +359,7 @@ class QuotationController extends Controller
                 foreach ($request->products as $product) {
                     $productDetail = new Product();
                     $productDetail->quotation_id = $quotation->id;
+                    $productDetail->name = $product['name'] ?? '';
                     $productDetail->origin_id = $product['origin_id'];
                     $productDetail->destination_id = $product['destination_id'];
                     $productDetail->incoterm_id = $product['incoterm_id'];
@@ -391,11 +393,13 @@ class QuotationController extends Controller
             // Process services
             if ($request->has('services')) {
                 foreach ($request->services as $key => $service) {
-                    $quotationService = new QuotationService();
-                    $quotationService->quotation_id = $quotation->id;
-                    $quotationService->service_id = $key;
-                    $quotationService->included = $service == 'include' ? true : false;
-                    $quotationService->save();
+                    if($service !== 'none') {
+                        $quotationService = new QuotationService();
+                        $quotationService->quotation_id = $quotation->id;
+                        $quotationService->service_id = $key;
+                        $quotationService->included = $service == 'include' ? true : false;
+                        $quotationService->save();
+                    }
                 }
             }
 
@@ -408,11 +412,10 @@ class QuotationController extends Controller
             return redirect()->route('quotations.show', $quotation->id)
                 ->with('success', 'Cotización creada satisfactoriamente.');
         } catch (\Exception $e) {
-            dd(Customer::find($request->NIT)->name);
             DB::rollBack();
             return back()
-            ->withInput()
-            ->with('error', 'Error creating quotation: ' . $e->getMessage());
+                ->withInput()
+                ->with('error', 'Error creating quotation: ' . $e->getMessage());
         }
     }
     public function show($id)
@@ -429,6 +432,7 @@ class QuotationController extends Controller
 
         // Estructura base similar al array de ejemplo
         $response = [
+            'id' => $quotation->id,
             'NIT' => $quotation->customer_nit,
             'currency' => $quotation->currency,
             'exchange_rate' => $quotation->exchange_rate,
@@ -441,7 +445,7 @@ class QuotationController extends Controller
         // Procesar productos
         foreach ($quotation->products as $key => $product) {
             $response['products'][$key + 1] = [
-                'product_name' => $product->description,
+                'name' => $product->name,
                 'origin_id' => (string)$product->origin_id,
                 'destination_id' => (string)$product->destination_id,
                 'weight' => (string)$product->weight,
@@ -500,6 +504,7 @@ class QuotationController extends Controller
 
         // Estructura base para el formulario de edición
         $formData = [
+            'id' => $quotation->id,
             'NIT' => $quotation->customer_nit,
             'reference_number' => $quotation->reference_number,
             'reference_customer' => $quotation->reference_customer,
@@ -514,7 +519,7 @@ class QuotationController extends Controller
         // Procesar productos para edición
         foreach ($quotation->products as $key => $product) {
             $formData['products'][$key + 1] = [
-                'product_name' => $product->description,
+                'name' => $product->name,
                 'origin_id' => (string)$product->origin_id,
                 'destination_id' => (string)$product->destination_id,
                 'weight' => (string)$product->weight,
@@ -553,6 +558,8 @@ class QuotationController extends Controller
         // Obtener listas completas para los selects del formulario
         $formSelects = [
             'incoterms' => Incoterm::where('is_active', 1)->get(),
+            'customers' => Customer::where('active', 1)->get(),
+            'cities' => City::whereNull('deleted_at')->get(),
             'services' => Service::where('is_active', 1)->get(),
             'costs' => Cost::where('is_active', 1)->get(),
             'exchangeRates' => ExchangeRate::where('active', 1)->get(),
@@ -562,15 +569,21 @@ class QuotationController extends Controller
         // Preparar ciudades por país para selects anidados
 
 
-        return view('quotations.show', ['quotation_data' => [
-            'formData' => $formData, // Datos específicos de esta cotización
-            'formSelects' => $formSelects, // Listas completas para selects
-            'quotation_id' => $id // ID de la cotización para el formulario
-        ]]);
+        return view(
+            'quotations.edit',
+            [
+                'quotation_data' => [
+                    'formData' => $formData, // Datos específicos de esta cotización
+                    'formSelects' => $formSelects, // Listas completas para selects
+                    'quotation_id' => $id, // ID de la cotización para el formulario,
+                ],
+            ]
+        );
     }
 
     public function update(Request $request, $id)
     {
+        // dd($request);
         // Validación de los datos de entrada
         $validatedData = $request->validate([
             'NIT' => 'required|exists:customers,NIT',
@@ -579,7 +592,7 @@ class QuotationController extends Controller
             'reference_customer' => 'nullable|string',
             'reference_number' => 'nullable|string',
             'products' => 'required|array',
-            'products.*.product_name' => 'required|string',
+            'products.*.name' => 'required|string',
             'products.*.origin_id' => 'required|exists:cities,id',
             'products.*.destination_id' => 'required|exists:cities,id',
             'products.*.incoterm_id' => 'required|exists:incoterms,id',
@@ -592,7 +605,8 @@ class QuotationController extends Controller
             'services' => 'required|array',
             'costs' => 'required|array',
             'costs.*.cost_id' => 'required|exists:costs,id',
-            'costs.*.amount' => 'required|numeric',
+            // 'costs.*.amount' => 'required|numeric',
+            'costs.*.amount' => 'nullable|numeric',
             'costs.*.concept' => 'nullable|string'
         ]);
 
@@ -622,6 +636,7 @@ class QuotationController extends Controller
             foreach ($validatedData['products'] as $productData) {
                 $product = new Product([
                     'quotation_id' => $quotation->id,
+                    'name' => $productData['name'] ?? null,
                     'origin_id' => $productData['origin_id'],
                     'destination_id' => $productData['destination_id'],
                     'incoterm_id' => $productData['incoterm_id'],
@@ -630,14 +645,15 @@ class QuotationController extends Controller
                     'weight' => $productData['weight'] ?? null,
                     'volume' => $productData['volume'] ?? null,
                     'volume_unit' => $productData['volume_unit'] ?? null,
-                    'description' => $productData['description'] ?? $productData['product_name']
+                    'description' => $productData['description'] ?? $productData['name']
                 ]);
                 $product->save();
             }
 
             // Procesar y guardar los servicios
             foreach ($validatedData['services'] as $serviceId => $status) {
-                if (is_numeric($serviceId)) { // Asegurar que es un ID válido
+                // if (is_numeric($serviceId)) { // Asegurar que es un ID válido
+                if (is_numeric($serviceId) && $status !== 'none') { // Asegurar que es un ID válido
                     $quotationService = new QuotationService([
                         'quotation_id' => $quotation->id,
                         'service_id' => $serviceId,
@@ -646,14 +662,16 @@ class QuotationController extends Controller
                     $quotationService->save();
                 }
             }
-
+            //TODO: Ver por que el enabled desaparece
             // Procesar y guardar los costos
             $totalAmount = 0;
             foreach ($validatedData['costs'] as $costId => $costData) {
-                if (isset($costData['enabled']) && $costData['enabled'] === '1') {
+                // dd($costData);
+                if (isset($costData['amount'])) {
+                // if (isset($costData['enabled'])) {
                     $costDetail = new CostDetail([
                         'quotation_id' => $quotation->id,
-                        'cost_id' => $costId,
+                        'cost_id' => $costData["cost_id"],
                         'amount' => $costData['amount'],
                         'currency' => $validatedData['currency'],
                         'concept' => $costData['concept'] ?? ''
@@ -731,7 +749,6 @@ class QuotationController extends Controller
 
         // Fetch quotation data from database using the validated quotation_id
         $quotation = Quotation::findOrFail($validated['quotation_id']);
-
         // Get client data from the quotation
         $clientData = $this->getClientData($quotation->customer_nit);
 
@@ -1275,7 +1292,7 @@ class QuotationController extends Controller
             $quantity_descripcion = QuantityDescription::findOrFail($product->quantity_description_id);
 
             $processedProducts[] = [
-                'name' => $product->product_name,
+                'name' => $product->name,
                 'origin' => [
                     'city' => $origin->name,
                     'country' => $origin->country->name

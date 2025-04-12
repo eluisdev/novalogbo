@@ -23,9 +23,6 @@ class CustomerObserver
         ]);
     }
 
-    /**
-     * Handle the Customer "updated" event.
-     */
     public function updated(Customer $customer): void
     {
         Audit::create([

@@ -30,4 +30,21 @@ class Audit extends Model
     {
         return $this->belongsTo(User::class);
     }
+
+
+    public function auditable()
+    {
+        return $this->morphTo();
+    }
+
+
+    public function getOldValuesAttribute($value)
+    {
+        return $value ? json_decode($value, true) : [];
+    }
+
+    public function getNewValuesAttribute($value)
+    {
+        return $value ? json_decode($value, true) : [];
+    }
 }

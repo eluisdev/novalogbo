@@ -20,7 +20,7 @@ class BillingNoteController extends Controller
 {
     public function download(Request $request)
     {
-        $validated = $request->validate(
+        $request->validate(
             [
                 'quotation_id' => 'required|integer',
                 'visible' => 'required|boolean'
@@ -65,11 +65,12 @@ class BillingNoteController extends Controller
                     BillingNoteItem::create([
                         'billing_note_id' => $billingNote->id,
                         'cost_id' => $costDetail->cost_id,
-                        'description' => $costDetail->concept != 'sin valor' ? $costDetail->concept : $costDetail->cost->name,
+                        'description' => $costDetail->cost->name,
                         'amount' => $costDetail->amount,
                         'currency' => $costDetail->currency
                     ]);
                 }
+                $billingNote = BillingNote::where('quotation_id', $quotationId)->first();
             }
 
             // Actualizar estado de la cotización
@@ -93,7 +94,7 @@ class BillingNoteController extends Controller
 
         // Establecer propiedades del documento en español
         $properties = $phpWord->getDocInfo();
-        $properties->setTitle('Documento en Español');
+        $properties->setTitle('Documento');
         $properties->setCreator('NOVALOGISTIC BOLIVIA SRL');
         $properties->setCompany('NOVALOGISTIC BOLIVIA SRL');
         $phpWord->setDefaultFontName('Montserrat');
@@ -201,8 +202,11 @@ class BillingNoteController extends Controller
 
         $cell = $row->addCell(5000);
         $textRun = $cell->addTextRun(array_merge($paragraphStyle, ['alignment' => 'right']));
-        $textRun->addText("REF: ", $fontStyle);
-        $textRun->addText($billingNote->quotation->reference_number, $valueStyle);
+
+        if($billingNote->quotation->reference_customer != null){
+            $textRun->addText("REF: ", $fontStyle);
+            $textRun->addText($billingNote->quotation->reference_customer, $valueStyle);
+        }
 
         $tableStyle = [
             'borderColor' => '000000',

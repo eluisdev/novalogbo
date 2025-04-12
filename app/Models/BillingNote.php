@@ -2,12 +2,16 @@
 
 namespace App\Models;
 
+use App\Traits\Auditable;
 use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class BillingNote extends Model
 {
+    use HasFactory, Auditable;
+
     protected $fillable = [
         'op_number',
         'note_number',

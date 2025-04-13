@@ -9,7 +9,7 @@ class AuditController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Audit::with('user');
+        $query = Audit::with('user')->whereNotNull('user_id');
 
         // Filtrar por tipo
         if ($request->has('type')) {
@@ -36,7 +36,7 @@ class AuditController extends Controller
         }
 
         $audits = $query->orderBy('created_at', 'desc')
-                        ->paginate(20);
+                        ->get();
 
         return view('admin.audits.index', compact('audits'));
     }

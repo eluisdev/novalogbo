@@ -14,11 +14,9 @@
             </div>
         </div>
 
-        <!-- Backdrop para sidebar móvil -->
         <div id="sidebar-backdrop" class="fixed inset-0 bg-gray-500/50 bg-opacity-90 z-10 hidden md:hidden"></div>
 
         <section class="flex flex-1 overflow-hidden">
-            <!-- SIDEBAR -->
             <div id="sidebar"
                 class="w-64 bg-white border-r border-gray-200 transform transition-transform duration-300 ease-in-out
                    fixed md:static top-0 left-0 h-full z-30 md:z-10
@@ -78,7 +76,7 @@
                                 'text' => 'Descripcion de cantidad',
                                 'active' => request()->is('quantity_descriptions*'),
                             ],
-                            ['route' => '#', 'text' => 'Historial', 'active' => request()->is('history*')],
+                            ['route' => 'audits.index', 'text' => 'Historial', 'active' => request()->is('history*')],
                         ];
                     @endphp
 

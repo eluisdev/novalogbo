@@ -9,8 +9,6 @@ function initializePage() {
     setupEventListeners();
 }
 
-//TODO arreglar indexacion
-
 function setupEventListeners() {
     document.getElementById('currency').addEventListener('change', window.updateExchangeRate());
     document.querySelectorAll('input[name^="costs"][type="checkbox"]').forEach(checkbox => {

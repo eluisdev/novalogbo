@@ -85,7 +85,7 @@ class InvoiceController extends Controller
                     $invoiceItem->save();
                 }
             }
-
+            
             $invoice = Invoice::where('quotation_id', $quotation->id)->first();
             DB::commit();
 

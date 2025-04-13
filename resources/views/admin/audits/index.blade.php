@@ -163,16 +163,12 @@
                     const role = row.getAttribute('data-role');
                     const entity = row.getAttribute('data-entity');
                     const action = row.getAttribute('data-action');
-                    const oldValues = row.getAttribute('data-old-values');
-                    const newValues = row.getAttribute('data-new-values');
 
                     if (username.includes(searchTerm) ||
                         name.includes(searchTerm) ||
                         role.includes(searchTerm) ||
                         entity.includes(searchTerm) ||
-                        action.includes(searchTerm) ||
-                        oldValues.includes(searchTerm) ||
-                        newValues.includes(searchTerm)) {
+                        action.includes(searchTerm)) {
                         row.style.display = '';
                         hasResults = true;
                     } else {

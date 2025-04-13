@@ -727,7 +727,7 @@ class QuotationController extends Controller
     public function updateStatus(Request $request, $id)
     {
         $request->validate([
-            'status' => 'required|in:approved'
+            'status' => 'required'
         ]);
 
         $quotation = Quotation::findOrFail($id);

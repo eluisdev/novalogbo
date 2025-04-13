@@ -9,8 +9,6 @@ function initializePage() {
     setupEventListeners();
 }
 
-//TODO arreglar indexacion
-
 function setupEventListeners() {
     document.getElementById('currency').addEventListener('change', window.updateExchangeRate());
     document.querySelectorAll('input[name^="costs"][type="checkbox"]').forEach(checkbox => {
@@ -30,36 +28,23 @@ function toggleCostAmount(event) {
 window.updateExchangeRate = function () {
     const currencySelect = document.getElementById('currency');
     const exchangeRateInput = document.getElementById('exchange_rate');
+    const selectedOption = currencySelect.options[currencySelect.selectedIndex];
     const selectedCurrency = currencySelect.value;
-    const exchangeRates = {
-        'USD': 6.96,
-        'EUR': 10.65,
-        'BOB': 1
-    };
-    const currencySymbols = {
-        'USD': { symbol: '$', code: 'USD' },
-        'EUR': { symbol: '€', code: 'EUR' },
-        'BOB': { symbol: 'Bs', code: 'BOB' }
-    };
-    exchangeRateInput.value = exchangeRates[selectedCurrency];
-    const { symbol, code } = currencySymbols[selectedCurrency];
-
+    const rate = selectedOption.getAttribute('data-rate');
+    const symbol = selectedOption.getAttribute('data-symbol');
+    exchangeRateInput.value = rate;
 
     document.querySelectorAll('.currency-symbol').forEach(el => {
         el.textContent = symbol;
     });
 
     document.querySelectorAll('.currency-code').forEach(el => {
-        el.textContent = code;
+        el.textContent = selectedCurrency;
     });
-
-    if (selectedCurrency === 'BOB') {
-        exchangeRateInput.value = '1.0000';
-        exchangeRateInput.disabled = true;
-    } else {
-        exchangeRateInput.disabled = false;
-    }
 };
 
-
+document.addEventListener('DOMContentLoaded', function () {
+    updateExchangeRate();
+    document.getElementById('currency').addEventListener('change', updateExchangeRate);
+});
 

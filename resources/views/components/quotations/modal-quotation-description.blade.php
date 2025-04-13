@@ -1,12 +1,12 @@
-<div id="create-customer-quotation" class="fixed inset-0 z-50 hidden">
-    <div class="fixed inset-0 bg-gray-50/90"></div> <!-- ¡Esta es la sintaxis correcta! -->
+<div id="create-quotation-description" class="fixed inset-0 z-50 hidden">
+    <div class="fixed inset-0 bg-gray-50/90"></div>
 
     <div class="relative z-50 flex items-center justify-center min-h-screen p-4">
         <div class="bg-white rounded-lg shadow-xl w-full max-w-lg p-6">
-            <h1 class="text-center mb-5 font-bold w-full bg-[#0B628D] rounded p-3 text-white">Crear cliente</h1>
-            <form id="create-customer-quotation-form" action="{{ route('quotations.storeCustomer') }}" method="POST">
+            <h1 class="text-center mb-5 font-bold w-full bg-[#0B628D] rounded p-3 text-white">Crear descripcion de campo</h1>
+            <form id="create-quotation-description-form" action="{{ route('quotations.storeQuantityDescripcion') }}"
+                method="POST">
                 @csrf
-
                 @if ($errors->any())
                     <div class="bg-red-100 text-red-700 p-2 rounded text-sm">
                         <ul class="list-disc pl-4">
@@ -16,16 +16,9 @@
                         </ul>
                     </div>
                 @endif
-
                 @php
                     $fields = [
-                        'name' => 'Nombre o Razon social',
-                        'NIT' => 'CI / NIT',
-                        'email' => 'Correo electrónico',
-                        'phone' => 'Teléfono',
-                        'cellphone' => 'Celular',
-                        'address' => 'Dirección',
-                        'department' => 'Lugar de residencia',
+                        'name' => 'Descripcion de cantidad',
                     ];
                 @endphp
 
@@ -44,15 +37,15 @@
                     @endforeach
                 </div>
 
-                <input type="hidden" name="active" class="sr-only peer" value="1">
+                <input type="hidden" name="is_active" class="sr-only peer" value="1">
 
                 <div class="flex gap-3 mt-6">
                     <button type="submit"
                         class="flex-1 py-2 px-4 rounded-md text-sm font-medium text-white bg-gradient-to-r from-blue-600 to-blue-800 hover:from-blue-700 hover:to-blue-900 transition">
-                        <span>{{ isset($customer) ? 'Actualizar datos' : 'Crear cliente' }}</span>
+                        <span>{{ isset($customer) ? 'Actualizar datos' : 'Crear descripcion de campo' }}</span>
                     </button>
 
-                    <button type="button" onclick="closeModalUserQuotation()"
+                    <button type="button" onclick="closeModalDescriptionQuotation()"
                         class="flex-none px-4 py-2 text-sm border rounded-md border-gray-300 bg-white hover:bg-gray-50 transition">
                         Cerrar
                     </button>

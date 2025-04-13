@@ -3,13 +3,13 @@
 @section("dashboard-option")
 <div class="w-full mx-auto px-4 sm:px-6 lg:px-8">
     <div class="flex flex-col sm:flex-row items-center justify-between gap-4 bg-white rounded-xl shadow-sm p-3 mb-6 border border-gray-200">
-        <div class="flex items-center gap-6">
+        <div class="flex items-center gap-6 sm:flex-row flex-col">
             <h2 class="text-xl font-black text-gray-800">
                 <span class="text-[#0B628D]">Continentes</span>
             </h2>
             
             <!-- Campo de búsqueda -->
-            <div class="relative">
+            <div class="relative flex sm:flex-row flex-col">
                 <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                     <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
@@ -21,9 +21,9 @@
             </div>
         </div>
         
-        <div class="flex space-x-2">
+        <div class="flex space-x-2 sm:flex-row flex-col max-sm:gap-2">
             <a href="{{ route('continents.trashed') }}" 
-               class="flex items-center justify-center px-4 py-2 bg-[#0b8d41] hover:bg-[#588498] text-white text-sm font-medium rounded-lg transition-colors duration-200 shadow-sm">
+               class="flex items-center justify-center px-4 py-2 bg-[#0b8d41] hover:bg-[#588498] text-white text-sm font-medium rounded-lg transition-colors duration-200 shadow-sm max-sm:w-full text-center">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99" />
                 </svg>

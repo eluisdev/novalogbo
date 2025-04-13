@@ -9,7 +9,7 @@ class AuditController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Audit::with('user');
+        $query = Audit::with('user')->whereNotNull('user_id');
 
         // Filtrar por tipo
         if ($request->has('type')) {

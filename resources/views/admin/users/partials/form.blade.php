@@ -73,7 +73,7 @@
 
     <div class="mb-4">
         <label class="block font-semibold text-gray-700 mb-2">Rol del usuario</label>
-        <div class="flex justify-around">
+        <div class="flex sm:flex-row flex-col justify-around">
             @foreach (['1' => 'Administrador', '2' => 'Operario'] as $value => $label)
                 <label class="inline-flex items-center">
                     <input type="radio" id="role_id" name="role_id" value="{{ $value }}"

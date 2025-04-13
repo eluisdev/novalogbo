@@ -1,4 +1,3 @@
-
 @if (Auth::user()->role_id == '1')
     @php $layout = 'layouts.admin'; @endphp
 @else
@@ -12,10 +11,10 @@
         <div
             class="flex flex-col sm:flex-row items-center justify-between gap-4 bg-white rounded-xl shadow-sm p-3 mb-6 border border-gray-200">
             <h2 class="text-xl font-black text-gray-800">
-                <span class="text-[#0B628D]">Editar cliente</span>
+                <span class="text-[#0B628D]">Editar cotizacion</span>
             </h2>
             <div class="flex space-x-2">
-                <a href="{{ route('customers.index') }}"
+                <a href="{{ route('quotations.index') }}"
                     class="flex items-center justify-center px-4 py-2 bg-[#0B628D] hover:bg-[#19262c] text-white text-sm font-medium rounded-lg transition-colors duration-200 shadow-sm">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24"
                         stroke="currentColor">
@@ -27,9 +26,10 @@
             </div>
         </div>
 
-        <div class="w-full mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="w-full mx-auto">
             <div class="bg-white shadow-md rounded-lg overflow-hidden border border-gray-200 mb-6">
-                <form action="{{ route('quotations.update', $quotation_data["formData"]["id"]) }}" method="POST" id="quotationForm">
+                <form action="{{ route('quotations.update', $quotation_data['formData']['id']) }}" method="POST"
+                    id="quotationForm">
                     @csrf
                     @method('PUT')
                     @if ($errors->any())
@@ -52,7 +52,7 @@
         </div>
 
         <x-quotations.modal-customer />
+        <x-quotations.modal-quotation-description />
         <x-quotations.modal-preview />
-
     </div>
 @endsection

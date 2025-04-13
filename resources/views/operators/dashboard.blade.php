@@ -1,12 +1,11 @@
 @extends('layouts.app')
 
 @section('content')
-    <div class="h-dvh flex flex-col bg-gradient-to-t from-[#052f43] to-[#032c40]">
+    <div class="min-h-dvh flex flex-col bg-gradient-to-t from-[#052f43] to-[#032c40]">
         <x-navbar user-name="{{ Auth::user()->username }}" user-role="Operador" logo-path="images/logoNova.png" />
 
         <h1 class="text-4xl font-extrabold text-center my-32 text-amber-200">Aplicaciones</h1>
         <ul class="flex gap-10 justify-center items-center max-w-6xl mx-auto flex-wrap">
-
 
             <li
                 class="p-6 rounded-full hover:bg-[#131f24] transition-colors duration-150 ease-in text-white hover:text-amber-500">
@@ -23,7 +22,7 @@
 
             <li
                 class="p-6 rounded-full hover:bg-[#131f24] transition-colors duration-150 ease-in text-white hover:text-amber-500">
-                <a href="" class="flex flex-col items-center">
+                <a href="{{ route('quotations.index') }}" class="flex flex-col items-center">
                     <div class="p-4 rounded-full mb-2">
                         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" class="h-12 w-12">
                             <path fill="currentColor"
@@ -34,19 +33,6 @@
                 </a>
             </li>
 
-
-            <li
-                class="p-6 rounded-full hover:bg-[#131f24] transition-colors duration-150 ease-in text-white hover:text-amber-500">
-                <a href="#" class="flex flex-col items-center">
-                    <div class="p-4 rounded-full mb-2">
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" class="h-12 w-12">
-                            <path fill="currentColor"
-                                d="M75 75L41 41C25.9 25.9 0 36.6 0 57.9L0 168c0 13.3 10.7 24 24 24l110.1 0c21.4 0 32.1-25.9 17-41l-30.8-30.8C155 85.5 203 64 256 64c106 0 192 86 192 192s-86 192-192 192c-40.8 0-78.6-12.7-109.7-34.4c-14.5-10.1-34.4-6.6-44.6 7.9s-6.6 34.4 7.9 44.6C151.2 495 201.7 512 256 512c141.4 0 256-114.6 256-256S397.4 0 256 0C185.3 0 121.3 28.7 75 75zm181 53c-13.3 0-24 10.7-24 24l0 104c0 6.4 2.5 12.5 7 17l72 72c9.4 9.4 24.6 9.4 33.9 0s9.4-24.6 0-33.9l-65-65 0-94.1c0-13.3-10.7-24-24-24z" />
-                        </svg>
-                    </div>
-                    <p class="text-center font-medium">Historial</p>
-                </a>
-            </li>
         </ul>
     </div>
 @endsection

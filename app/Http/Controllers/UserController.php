@@ -154,6 +154,7 @@ class UserController extends Controller
         if (!$user) {
             return redirect()->route('admin.users.index')->with('error', 'Usuario no encontrado.');
         }
+        //TODO: traer los datos de cotizaciones
         return view('admin.users.show', compact('user'));
     }
 

@@ -19,7 +19,7 @@
 
 <div class="p-6 border-b-2 border-blue-600">
     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
-        <div class="flex items-center">
+        <div class="flex items-center sm:flex-row flex-col">
             <span class="inline-flex items-center justify-center p-3 rounded-full bg-blue-50 text-blue-600">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
                     stroke="currentColor">
@@ -27,8 +27,8 @@
                         d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
                 </svg>
             </span>
-            <h3 class="ml-3 text-lg font-semibold text-gray-800">Producto *</h3>
-            <p class="text-sm text-gray-500 sm:ml-4">Cree o edite el producto de la cotización.</p>
+            <h3 class="ml-3 text-lg font-semibold text-gray-800">Productos *</h3>
+            <p class="text-sm text-gray-500 sm:ml-4">Crea o edita los productos de la cotización.</p>
         </div>
 
         <button type="button" onclick="addProductBlock()"
@@ -55,13 +55,13 @@
 </div>
 
 <script>
-    // Funciones auxiliares para formatear resultados de Select2
     function formatLocationResult(item) {
         if (!item.id) return item.text;
         if (item.id.toString().startsWith('country_')) {
             return $('<div class="bg-gray-600 text-white p-2">' + item.text + '</div>');
         }
-        return $('<div class="city-option hover:font-bold transition-colors duration-500 ease-in">' + item.text +
+        return $('<div class="city-option hover:font-bold transition-colors duration-500 ease-in">' + item
+            .text +
             '</div>');
     }
 
@@ -105,6 +105,15 @@
                         text: item.name
                     }));
 
+                    if (results.length === 0 && params.term && params.term.length >= 2) {
+                        results.push({
+                            id: 'NEW_' + params.term,
+                            text: `+ Crear nuevo: "${params.term}"`,
+                            isNew: true,
+                            searchTerm: params.term
+                        });
+                    }
+
                     return {
                         results
                     };
@@ -115,7 +124,6 @@
             templateSelection: formatQuantityDescriptionSelection
         };
 
-        // Configuración común para Select2 (origen y destino)
         const select2Config = {
             theme: 'bootstrap-5',
             allowClear: true,
@@ -195,8 +203,24 @@
         $(block).find('.quantity-description-select').select2({
             ...quantityDescriptionConfig,
             placeholder: 'Descripción de cantidad...'
+        }).on('select2:select', function(e) {
+            var data = e.params.data
+            if (data && data.isNew) {
+                const form = document.getElementById('create-quotation-description-form');
+                form.reset()
+                const nameInput = form.querySelector('input[name="name"]');
+                if (nameInput && data.searchTerm) {
+                    nameInput.value = data.searchTerm;
+                }
+                document.getElementById('create-quotation-description').classList.remove('hidden');
+                nameInput.focus();
+                $(this).val(null).trigger('change');
+            }
         });
     }
+
+
+
 
     function removeProductBlock(button) {
         const productBlocks = document.querySelectorAll('.product-block');
@@ -242,7 +266,8 @@
         $clone.find('[id], [name], [for]').each(function() {
             if (this.id) this.id = this.id.replace(/\d+(_clone_\d+)?/, newIndex + uniqueSuffix);
             if (this.name) this.name = this.name.replace(/\[\d+]/, `[${newIndex}]`);
-            if (this.htmlFor) this.htmlFor = this.htmlFor.replace(/\d+(_clone_\d+)?/, newIndex + uniqueSuffix);
+            if (this.htmlFor) this.htmlFor = this.htmlFor.replace(/\d+(_clone_\d+)?/, newIndex +
+                uniqueSuffix);
         });
 
         // Clear Select2 properly
@@ -278,5 +303,74 @@
                 initSelect2ForBlock($(this));
             });
         });
+
+        const createQuantityDescriptionForm = document.getElementById('create-quotation-description-form');
+
+        if (createQuantityDescriptionForm) {
+            createQuantityDescriptionForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+
+                const formData = new FormData(this);
+                const url = this.getAttribute('action');
+                const method = this.getAttribute('method') || 'POST';
+
+                fetch(url, {
+                        method: method,
+                        body: formData,
+                        headers: {
+                            'X-Requested-With': 'XMLHttpRequest'
+                        }
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        const oldErrorContainer = createQuantityDescriptionForm.querySelector(
+                            '.error-container');
+                        if (oldErrorContainer) {
+                            oldErrorContainer.remove();
+                        }
+
+                        if (data.success) {
+                            if (data.quantityDescription) {
+                                const newOption = new Option(data.quantityDescription.name, data
+                                    .quantityDescription.id,
+                                    true, true);
+                                $('.quantity-description-select').append(newOption).trigger(
+                                    'change');
+                            }
+                            window.closeModalDescriptionQuotation();
+                            Swal.fire({
+                                icon: 'success',
+                                title: 'Éxito',
+                                text: data.message || 'Description creada correctamente',
+                                showConfirmButton: true
+                            })
+                        } else if (data.errors) {
+                            let errorHtml =
+                                '<div class="bg-red-100 text-red-700 p-2 rounded text-sm error-container"><ul class="list-disc pl-4">';
+                            const errorArray = Array.isArray(data.errors) ?
+                                data.errors :
+                                Object.values(data.errors).flat();
+
+                            errorArray.forEach(error => {
+                                errorHtml += `<li>${error}</li>`;
+                            });
+                            errorHtml += '</ul></div>';
+                            createQuantityDescriptionForm.insertAdjacentHTML('afterbegin',
+                                errorHtml);
+                        } else if (data.message) {
+                            alert(data.message);
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        alert('Ocurrió un error al procesar la solicitud');
+                    });
+            });
+        }
     });
+
+    window.closeModalDescriptionQuotation = function() {
+        document.getElementById('create-quotation-description').classList.add('hidden');
+        document.querySelector('form#create-quotation-description')?.reset();
+    }
 </script>

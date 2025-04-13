@@ -1,6 +1,7 @@
 @extends('layouts.admin')
 
 @section('dashboard-option')
+
 <div class="w-full mx-auto px-4 sm:px-6 lg:px-8">
 
     <div class="flex flex-col sm:flex-row items-center justify-between gap-4 bg-white rounded-xl shadow-sm p-4 mb-6 border border-gray-200">
@@ -68,20 +69,6 @@
                     <p class="text-sm font-medium text-gray-500">Última Actualización</p>
                     <p class="text-gray-700">{{ $user->updated_at->translatedFormat('l, j F Y - H:i') }}</p>
                 </div>
-            </div>
-        </div>
-    </div>
-
-    <div class="bg-white shadow-md rounded-lg overflow-hidden border border-gray-200">
-        <div class="px-6 py-4 border-b border-gray-200">
-            <h3 class="text-lg font-medium text-gray-900">Cotizaciones Relacionadas</h3>
-        </div>
-        <div class="p-6">
-            <div class="flex flex-col items-center justify-center py-8">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 text-gray-400 mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                </svg>
-                <p class="text-gray-500 text-center">No hay cotizaciones registradas para este usuario</p>
             </div>
         </div>
     </div>

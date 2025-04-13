@@ -46,7 +46,7 @@
     @endforeach
 
     <div class="flex items-center justify-between mt-4">
-        <span class="font-semibold text-gray-700">Estado del tipo de cabmio</span>
+        <span class="font-semibold text-gray-700">Estado del tipo de cambio</span>
         <label class="relative inline-flex items-center cursor-pointer">
             <input type="hidden" name="active" value="0">
             <input type="checkbox" name="active" class="sr-only peer" value="1"

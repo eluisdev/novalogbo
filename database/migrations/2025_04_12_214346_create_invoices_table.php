@@ -18,7 +18,7 @@ return new class extends Migration
             $table->decimal('subtotal', 12, 2);
             $table->decimal('tax_amount', 12, 2);
             $table->decimal('total_amount', 12, 2);
-            $table->string('currency', 3);
+            $table->string('currency', 10);
             $table->decimal('exchange_rate', 10, 4);
             $table->enum('status', ['draft', 'issued', 'paid', 'cancelled'])->default('draft');
             $table->date('due_date');

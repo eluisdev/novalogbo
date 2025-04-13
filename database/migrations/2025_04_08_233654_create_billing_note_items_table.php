@@ -17,7 +17,7 @@ return new class extends Migration
             $table->foreignId('cost_id')->constrained()->onDelete('restrict');
             $table->string('description');
             $table->decimal('amount', 12, 2);
-            $table->string('currency', 3);
+            $table->string('currency', 10);
             $table->timestamps(); // Para auditoría
             $table->index('billing_note_id'); // Mejora rendimiento en consultas
         });

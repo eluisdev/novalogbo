@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Customer;
+use App\Models\Quotation;
 use Illuminate\Http\Request;
 
 
@@ -10,7 +11,7 @@ class CustomerController extends Controller
 {
     public function index()
     {
-        $customers = Customer::with('role')->latest()->paginate(10);
+        $customers = Customer::with('role')->latest()->get();
 
         // Retornar la vista con los clientes
         return view('customers.index', compact('customers'));
@@ -149,6 +150,10 @@ class CustomerController extends Controller
             return redirect()
                 ->route('customers.index')
                 ->with('error', 'El cliente no existe o ya fue eliminado.');
+        }
+        $quotation = Quotation::with('customer')->where('customer_nit', $NIT)->first();
+        if($quotation){
+            return redirect()->route('customers.index')->with('error', 'Existe una cotización asociado a este Cliente');
         }
 
         // Si existe, eliminarlo

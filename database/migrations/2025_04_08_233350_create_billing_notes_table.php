@@ -17,7 +17,7 @@ return new class extends Migration
             $table->string('note_number')->unique()->comment('Formato No-001-25');
             $table->date('emission_date');
             $table->decimal('total_amount', 12, 2);
-            $table->string('currency', 3);
+            $table->string('currency', 10);
             $table->decimal('exchange_rate', 10, 4);
             $table->foreignId('user_id')->constrained()->onDelete('cascade');
             $table->foreignId('quotation_id')->constrained()->onDelete('cascade');

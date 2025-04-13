@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Cost;
+use App\Models\CostDetail;
 use Illuminate\Http\Request;
 
 class CostController extends Controller
@@ -42,7 +43,7 @@ class CostController extends Controller
     public function edit($id)
     {
         $cost = Cost::findOrFail($id);
-        if (!$cost) {
+        if(!$cost) {
             return redirect()->route('costs.index')->with('error', 'Costo no encontrado.');
         }
 
@@ -52,7 +53,7 @@ class CostController extends Controller
     public function show($id)
     {
         $cost = Cost::findOrFail($id);
-        if (!$cost) {
+        if(!$cost) {
             return redirect()->route('costs.index')->with('error', 'Costo no encontrado..');
         }
 
@@ -61,7 +62,7 @@ class CostController extends Controller
     public function update(Request $request, $id)
     {
         $cost = Cost::findOrFail($id);
-        if (!$cost) {
+        if(!$cost) {
             return redirect()->route('costs.index')->with('error', 'Costo no encontrado..');
         }
 
@@ -86,17 +87,20 @@ class CostController extends Controller
     public function destroy($id)
     {
         $cost = Cost::findOrFail($id);
-        if (!$cost) {
+        if(!$cost) {
             return redirect()->route('costs.index')->with('error', 'Costo no encontrado.');
         }
-
+        $quotation = CostDetail::with('costs')->where('cost_id',$id)->first();
+        if($quotation){
+            return redirect()->route('costs.index')->with('error', 'Este costo esta asociado a una cotización.');
+        }
         $cost->delete();
 
         return redirect()->route('costs.index')->with('success', 'Costo actualizado correctamente.');
     }
     public function toggleStatus($id){
         $cost = Cost::findOrFail($id);
-        if (!$cost) {
+        if(!$cost) {
             return redirect()->route('costs.index')->with('error', 'Costo no encontrado..');
         }
 

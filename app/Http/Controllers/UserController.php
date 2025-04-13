@@ -119,7 +119,7 @@ class UserController extends Controller
             'password.min' => 'La contraseña debe tener al menos 8 caracteres.',
         ]);
 
-        $user = User::find($id);
+        $user = User::findOrFail($id);
         if (!$user) {
             return redirect()->route('users.index')->with('error', 'Usuario no encontrado.');
         }
@@ -138,7 +138,7 @@ class UserController extends Controller
     public function destroy($id)
     {
 
-        $user = User::find($id);
+        $user = User::findOrFail($id);
         if (!$user) {
             return redirect()->route('users.index')->with('error', 'Usuario no encontrado.');
         }
@@ -150,7 +150,13 @@ class UserController extends Controller
 
     public function show($id)
     {
-        $user = User::find($id);
+        $user = User::with(['quotations' => function ($query) use ($id) {
+            $query->where('users_id', $id)
+                ->orderBy('created_at', 'desc');
+        }])
+            ->where('id', $id)
+            ->first(); // Usar first() en lugar de get() si esperas un solo usuario
+
         if (!$user) {
             return redirect()->route('admin.users.index')->with('error', 'Usuario no encontrado.');
         }
@@ -158,8 +164,9 @@ class UserController extends Controller
         return view('admin.users.show', compact('user'));
     }
 
-    public function toggleStatus($id){
-        $user = User::find($id);
+    public function toggleStatus($id)
+    {
+        $user = User::findOrFail($id);
         if (!$user) {
             return redirect()->route('users.index')->with('error', 'Usuario no encontrado.');
         }

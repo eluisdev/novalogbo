@@ -9,7 +9,7 @@ class AuditController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Audit::with('user')->whereNotNull('user_id');
+        $query = Audit::with(['user', 'user.role'])->whereNotNull('user_id');
 
         // Filtrar por tipo
         if ($request->has('type')) {
@@ -36,23 +36,18 @@ class AuditController extends Controller
         }
 
         $audits = $query->orderBy('created_at', 'desc')
-                        ->get();
+                        ->paginate(10)
+                        ->withQueryString(); // Mantener los parámetros de búsqueda en la paginación
 
         return view('admin.audits.index', compact('audits'));
     }
 
-    /**
-     * Muestra un registro específico.
-     */
     public function show($id)
     {
         $audit = Audit::findOrFail($id);
         return view('admin.audits.show', compact('audit'));
     }
 
-    /**
-     * Muestra la historia de auditoría para un modelo específico.
-     */
     public function history(Request $request, $type, $id)
     {
         $className = 'App\\Models\\' . ucfirst($type);

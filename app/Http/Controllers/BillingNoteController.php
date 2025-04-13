@@ -102,9 +102,6 @@ class BillingNoteController extends Controller
                 $billingNote = BillingNote::where('quotation_id', $quotationId)->first();
             }
 
-            // Actualizar estado de la cotización
-            $quotation->update(['status' => 'completed']);
-
             DB::commit();
 
             // Generar y descargar el documento Word
@@ -144,7 +141,7 @@ class BillingNoteController extends Controller
         if ($visible) {
             $header = $section->addHeader();
             $header->addImage(
-                storage_path('app/templates/Herder.png'),
+                public_path('images/Header.png'),
                 [
                     'width' => $pageWidthPoints,
                     'height' => $headerHeightPoints,
@@ -158,7 +155,7 @@ class BillingNoteController extends Controller
             );
             $footer = $section->addFooter();
             $footer->addImage(
-                storage_path('app/templates/Footer.png'),
+                public_path('images/Footer.png'),
                 [
                     'width' => $pageWidthPoints,
                     'height' => $footerHeightPoints,
@@ -435,6 +432,19 @@ class BillingNoteController extends Controller
         $totalInWordsForeign = NumberToWordsConverter::convertToWords(
             $billingNote->total_amount,
             strtoupper($billingNote->currency == 'USD' ? 'DÓLARES AMERICANOS' : 'EUROS')
+        );
+
+        if ($billingNote->currency == 'USD') {
+            $currencyInWords = 'DÓLARES AMERICANOS';
+        } elseif ($billingNote->currency == 'EUR') {
+            $currencyInWords = 'EUROS';
+        } else {
+            $currencyInWords = strtoupper($billingNote->currency);
+        }
+
+        $totalInWordsForeign = NumberToWordsConverter::convertToWords(
+            $billingNote->total_amount,
+            $currencyInWords
         );
 
         $totalInWordsBs = NumberToWordsConverter::convertToWords(

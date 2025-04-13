@@ -9,7 +9,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class BillingNoteItem extends Model
 {
-    use HasFactory, Auditable;
+    use HasFactory;
 
     protected $fillable = [
         'billing_note_id',

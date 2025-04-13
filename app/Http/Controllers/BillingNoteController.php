@@ -37,7 +37,6 @@ class BillingNoteController extends Controller
             $billingNote = BillingNote::where('quotation_id', $quotationId)->first();
 
             if (!$billingNote) {
-                // Generar números de nota
                 $year = Carbon::now()->format('y');
                 $sequence = BillingNote::whereYear('created_at', Carbon::now()->year)->count() + 1;
                 $sequenceFormatted = str_pad($sequence, 3, '0', STR_PAD_LEFT);
@@ -47,6 +46,36 @@ class BillingNoteController extends Controller
                     'note_number' => "No-{$sequenceFormatted}-{$year}"
                 ];
 
+                // Función para verificar la unicidad de un número
+                $checkUnique = function ($number, $field) use ($year) {
+                    return !BillingNote::where($field, $number)
+                        ->whereYear('created_at', Carbon::now()->year)
+                        ->exists();
+                };
+
+                // Verificar y generar nuevos números si no son únicos
+                $maxAttempts = 100; // Para evitar bucles infinitos en casos extremos
+                $attempts = 0;
+
+                while (!$checkUnique($numbers['op_number'], 'op_number') || !$checkUnique($numbers['note_number'], 'note_number')) {
+                    $sequence++;
+                    $sequenceFormatted = str_pad($sequence, 3, '0', STR_PAD_LEFT);
+                    $numbers['op_number'] = "OP-{$sequenceFormatted}-{$year}";
+                    $numbers['note_number'] = "No-{$sequenceFormatted}-{$year}";
+
+                    $attempts++;
+                    if ($attempts > $maxAttempts) {
+                        // Log de un error o lanzar una excepción si se excede el número de intentos
+                        error_log("Error al generar números de nota únicos después de {$maxAttempts} intentos.");
+                        // Puedes devolver un valor por defecto o lanzar una excepción aquí
+                        $numbers = [
+                            'op_number' => null,
+                            'note_number' => null
+                        ];
+                        break;
+                    }
+                }
+
                 // Crear nueva nota de cobranza
                 $billingNote = BillingNote::create([
                     'op_number' => $numbers['op_number'],
@@ -54,7 +83,7 @@ class BillingNoteController extends Controller
                     'emission_date' => Carbon::now(),
                     'total_amount' => $quotation->costDetails->sum('amount'),
                     'currency' => $quotation->currency,
-                    'exchange_rate' => ExchangeRate::latest()->first()?->rate ?? 1,
+                    'exchange_rate' => $quotation->exchange_rate,
                     'user_id' => Auth::id(),
                     'quotation_id' => $quotation->id,
                     'customer_nit' => $quotation->customer_nit,
@@ -99,8 +128,8 @@ class BillingNoteController extends Controller
         $properties->setCompany('NOVALOGISTIC BOLIVIA SRL');
         $phpWord->setDefaultFontName('Montserrat');
         $pageWidthInches = 8.52;
-        $headerHeightInches = 2.26; // Altura deseada para la imagen del encabezado en pulgadas
-        $footerHeightInches = 1.83; // Altura deseada para la imagen del pie de página en pulgadas
+        $headerHeightInches = 2.26;
+        $footerHeightInches = 1.83;
 
         $pageWidthPoints = $pageWidthInches * 72;
         $headerHeightPoints = $headerHeightInches * 72;
@@ -108,8 +137,6 @@ class BillingNoteController extends Controller
 
         $section = $phpWord->addSection([
             'paperSize' => 'Letter',
-            //'headerHeight' => Converter::inchToTwip(1.95), // Altura del header
-            //'footerHeight' => Converter::inchToTwip(1.7)   // Altura del footer
             'marginTop' => Converter::inchToTwip(2.26),
             'marginBottom' => Converter::inchToTwip(1.97),
         ]);
@@ -145,7 +172,6 @@ class BillingNoteController extends Controller
                 ]
             );
         }
-
 
         // Números de documento
         $section->addText(
@@ -198,12 +224,12 @@ class BillingNoteController extends Controller
         $cell = $row->addCell(5000);
         $textRun = $cell->addTextRun($paragraphStyle);
         $textRun->addText("TC: ", $fontStyle);
-        $textRun->addText("\t\t" . $billingNote->exchange_rate, $valueStyle);
+        $textRun->addText("\t\t" . number_format($billingNote->exchange_rate, 2), $valueStyle);
 
         $cell = $row->addCell(5000);
         $textRun = $cell->addTextRun(array_merge($paragraphStyle, ['alignment' => 'right']));
 
-        if($billingNote->quotation->reference_customer != null){
+        if ($billingNote->quotation->reference_customer != null) {
             $textRun->addText("REF: ", $fontStyle);
             $textRun->addText($billingNote->quotation->reference_customer, $valueStyle);
         }
@@ -211,8 +237,7 @@ class BillingNoteController extends Controller
         $tableStyle = [
             'borderColor' => '000000',
             'cellMarginLeft' => 50,
-            'cellMarginRight' => 50, // Elimina todos los márgenes internos de las celdas
-            //'layout' => \PhpOffice\PhpWord\Style\Table::LAYOUT_FIXED,
+            'cellMarginRight' => 50,
             'width' => 100,
         ];
 
@@ -231,7 +256,7 @@ class BillingNoteController extends Controller
         ], [
             'spaceBefore' => 0,
             'spaceAfter' => 0,
-            'spacing' => 0, // Interlineado 1
+            'spacing' => 0,
             'lineHeight' => 1.0,
             'align' => 'center'
         ]);
@@ -245,27 +270,26 @@ class BillingNoteController extends Controller
         ], [
             'spaceBefore' => 0,
             'spaceAfter' => 0,
-            'spacing' => 0, // Interlineado 1
+            'spacing' => 0,
             'lineHeight' => 1.0,
             'align' => 'center'
         ]);
         $table->addCell(Converter::cmToTwip(4), [
             'valign' => 'center',
             'borderSize' => 10,
-        ])->addText('MONTO USD', [
+        ])->addText('MONTO ' . $billingNote->currency, [
             'bold' => true,
             'size' => 11,
             'allCaps' => true
         ], [
             'spaceBefore' => 0,
             'spaceAfter' => 0,
-            'spacing' => 0, // Interlineado 1
+            'spacing' => 0,
             'lineHeight' => 1.0,
             'align' => 'center'
         ]);
 
         // Conceptos
-        //dd($billingNote->items, $billingNote);
         foreach ($billingNote->items as $item) {
             $table->addRow();
             $table->addCell(Converter::cmToTwip(10), [
@@ -311,7 +335,9 @@ class BillingNoteController extends Controller
                 ]
             );
         }
-        $rowsToAdd = max(0, 18 - count($billingNote->items));
+
+        // Rellenar filas vacías si es necesario
+        $rowsToAdd = max(0, 16 - count($billingNote->items));
         for ($i = 0; $i < $rowsToAdd; $i++) {
             $table->addRow();
             $table->addCell(Converter::cmToTwip(10), [
@@ -377,7 +403,7 @@ class BillingNoteController extends Controller
             [
                 'spaceBefore' => 0,
                 'spaceAfter' => 0,
-                'spacing' => 0, // Interlineado 1
+                'spacing' => 0,
                 'lineHeight' => 1.0,
                 'align' => 'right'
             ]
@@ -388,7 +414,7 @@ class BillingNoteController extends Controller
             [
                 'spaceBefore' => 0,
                 'spaceAfter' => 0,
-                'spacing' => 0, // Interlineado 1
+                'spacing' => 0,
                 'lineHeight' => 1.0,
                 'align' => 'right'
             ]
@@ -399,39 +425,62 @@ class BillingNoteController extends Controller
             [
                 'spaceBefore' => 0,
                 'spaceAfter' => 0,
-                'spacing' => 0, // Interlineado 1
+                'spacing' => 0,
                 'lineHeight' => 1.0,
                 'align' => 'right'
             ]
         );
 
-        $totalInWords = NumberToWordsConverter::convertToWords(
+        // Literal del total en ambas monedas
+        $totalInWordsForeign = NumberToWordsConverter::convertToWords(
             $billingNote->total_amount,
-            'DÓLARES AMERICANOS'
+            strtoupper($billingNote->currency == 'USD' ? 'DÓLARES AMERICANOS' : 'EUROS')
         );
 
+        $totalInWordsBs = NumberToWordsConverter::convertToWords(
+            $totalBs,
+            'BOLIVIANOS'
+        );
 
         $row = $table->addRow();
         $cell = $row->addCell(5000, [
             'valign' => 'center',
             'gridSpan' => 3,
-            'valign' => 'center',
             'borderSize' => 10,
         ]);
         $textRun = $cell->addTextRun($paragraphStyle);
         $textRun->addText("Son: ", $fontStyle);
-        $textRun->addText("" . $totalInWords, [
+        $textRun->addText($totalInWordsForeign, [
             'size' => 11,
             'allCaps' => true
         ], [
             'spaceBefore' => 0,
             'spaceAfter' => 0,
-            'spacing' => 0, // Interlineado 1
+            'spacing' => 0,
             'lineHeight' => 1.0,
             'align' => 'left'
         ]);
 
+        $row = $table->addRow();
+        $cell = $row->addCell(5000, [
+            'valign' => 'center',
+            'gridSpan' => 3,
+            'borderSize' => 10,
+        ]);
+        $textRun = $cell->addTextRun($paragraphStyle);
+        $textRun->addText("Equivalente a: ", $fontStyle);
+        $textRun->addText($totalInWordsBs, [
+            'size' => 11,
+            'allCaps' => true
+        ], [
+            'spaceBefore' => 0,
+            'spaceAfter' => 0,
+            'spacing' => 0,
+            'lineHeight' => 1.0,
+            'align' => 'left'
+        ]);
 
+        // Información de la empresa
         $section->addText(
             'NOVALOGBO SRL',
             [
@@ -487,6 +536,7 @@ class BillingNoteController extends Controller
                 'spaceBefore' => 0,
             ]
         );
+
         // Guardar y descargar el documento
         $filename = "Nota_Cobranza_{$billingNote->note_number}.docx";
         $tempFile = tempnam(sys_get_temp_dir(), 'PHPWord');

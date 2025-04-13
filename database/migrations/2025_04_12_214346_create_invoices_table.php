@@ -13,9 +13,24 @@ return new class extends Migration
     {
         Schema::create('invoices', function (Blueprint $table) {
             $table->id();
-            $table->string('invoce_number')->unique();
+            $table->string('invoice_number')->unique()->comment('Format INV-001-25');
             $table->date('invoice_date');
-            $table->decimal('total', 15,2);
+            $table->decimal('subtotal', 12, 2);
+            $table->decimal('tax_amount', 12, 2);
+            $table->decimal('total_amount', 12, 2);
+            $table->string('currency', 3);
+            $table->decimal('exchange_rate', 10, 4);
+            $table->enum('status', ['draft', 'issued', 'paid', 'cancelled'])->default('draft');
+            $table->date('due_date');
+            $table->text('notes')->nullable();
+
+            // Foreign keys
+            $table->foreignId('user_id')->constrained('users')->onDelete('cascade');
+            $table->integer('customer_nit');
+            $table->foreign('customer_nit')->references('NIT')->on('customers')->onDelete('cascade');
+            // Añadir relación con quotation
+            $table->foreignId('quotation_id')->constrained('quotations')->onDelete('restrict');
+
             $table->timestamps();
         });
     }

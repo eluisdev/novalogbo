@@ -38,7 +38,7 @@ class QuantityDescriptionController extends Controller
     public function show($id)
     {
         $quantityDescription = QuantityDescription::findOrFail($id);
-        if (!$quantityDescription) {
+        if(!$quantityDescription) {
             return redirect()->route('quantity_descriptions.index')->with('error', 'Descripción de cantidad no encontrada.');
         }
         return view('quantity_descriptions.show', compact('quantityDescription'));
@@ -46,7 +46,7 @@ class QuantityDescriptionController extends Controller
     public function edit($id)
     {
         $quantityDescription = QuantityDescription::findOrFail($id);
-        if (!$quantityDescription) {
+        if(!$quantityDescription) {
             return redirect()->route('quantity_descriptions.index')->with('error', 'Descripción de cantidad no encontrada.');
         }
         return view('quantity_descriptions.edit', compact('quantityDescription'));
@@ -54,7 +54,7 @@ class QuantityDescriptionController extends Controller
     public function update(Request $request, $id)
     {
         $quantityDescription = QuantityDescription::findOrFail($id);
-        if (!$quantityDescription) {
+        if(!$quantityDescription) {
             return redirect()->route('quantity_descriptions.index')->with('error', 'Descripción de cantidad no encontrada.');
         }
         $request->validate(
@@ -75,7 +75,7 @@ class QuantityDescriptionController extends Controller
     public function destroy($id)
     {
         $quantityDescription = QuantityDescription::findOrFail($id);
-        if (!$quantityDescription) {
+        if(!$quantityDescription) {
             return redirect()->route('quantity_descriptions.index')->with('error', 'Descripción de cantidad no encontrada.');
         }
         $quantityDescription->delete();
@@ -84,7 +84,7 @@ class QuantityDescriptionController extends Controller
     public function toggleStatus($id)
     {
         $quantityDescription = QuantityDescription::findOrFail($id);
-        if (!$quantityDescription) {
+        if(!$quantityDescription) {
             return redirect()->route('quantity_descriptions.index')->with('error', 'Descripción de cantidad no encontrada.');
         }
         $quantityDescription->is_active = !$quantityDescription->is_active;

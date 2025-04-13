@@ -35,7 +35,6 @@ class InvoiceController extends Controller
             $existingInvoice = Invoice::where('quotation_id', $quotationId)->first();
             if (!$existingInvoice) {
                 $rateValue = $quotation->exchange_rate;
-
                 $subtotal = 0;
                 $taxRate = 0.13; // IVA de Bolivia (13%)
 
@@ -362,11 +361,19 @@ class InvoiceController extends Controller
 
         $section->addTextBreak(1);
 
-        // Literal del total en ambas monedas
+        if ($invoice->currency == 'USD') {
+            $currencyInWords = 'DÓLARES AMERICANOS';
+        } elseif ($invoice->currency == 'EUR') {
+            $currencyInWords = 'EUROS';
+        } else {
+            $currencyInWords = strtoupper($invoice->currency);
+        }
+
         $totalInWordsForeign = NumberToWordsConverter::convertToWords(
             $totalForeign,
-            strtoupper($invoice->currency == 'USD' ? 'DÓLARES AMERICANOS' : 'EUROS')
+            $currencyInWords
         );
+
 
         $totalInWordsBs = NumberToWordsConverter::convertToWords(
             $totalBs,

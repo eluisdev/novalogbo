@@ -42,7 +42,7 @@ class CostController extends Controller
     public function edit($id)
     {
         $cost = Cost::findOrFail($id);
-        if (!$cost) {
+        if(!$cost) {
             return redirect()->route('costs.index')->with('error', 'Costo no encontrado.');
         }
 
@@ -52,7 +52,7 @@ class CostController extends Controller
     public function show($id)
     {
         $cost = Cost::findOrFail($id);
-        if (!$cost) {
+        if(!$cost) {
             return redirect()->route('costs.index')->with('error', 'Costo no encontrado..');
         }
 
@@ -61,7 +61,7 @@ class CostController extends Controller
     public function update(Request $request, $id)
     {
         $cost = Cost::findOrFail($id);
-        if (!$cost) {
+        if(!$cost) {
             return redirect()->route('costs.index')->with('error', 'Costo no encontrado..');
         }
 
@@ -86,7 +86,7 @@ class CostController extends Controller
     public function destroy($id)
     {
         $cost = Cost::findOrFail($id);
-        if (!$cost) {
+        if(!$cost) {
             return redirect()->route('costs.index')->with('error', 'Costo no encontrado.');
         }
 
@@ -96,7 +96,7 @@ class CostController extends Controller
     }
     public function toggleStatus($id){
         $cost = Cost::findOrFail($id);
-        if (!$cost) {
+        if(!$cost) {
             return redirect()->route('costs.index')->with('error', 'Costo no encontrado..');
         }
 

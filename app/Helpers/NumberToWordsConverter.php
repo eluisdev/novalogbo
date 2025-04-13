@@ -10,7 +10,8 @@ class NumberToWordsConverter
     ];
 
     private static $DECENAS = [
-        'VEINTI', 'TREINTA ', 'CUARENTA ', 'CINCUENTA ', 'SESENTA ', 'SETENTA ', 'OCHENTA ', 'NOVENTA '
+        'VEINTE ', 'TREINTA ', 'CUARENTA ', 'CINCUENTA ', 'SESENTA ', 'SETENTA ', 'OCHENTA ', 'NOVENTA ',
+        'VEINTI' // Este es especial para números 21-29
     ];
 
     private static $CENTENAS = [
@@ -73,17 +74,25 @@ class NumberToWordsConverter
 
         if ($n == 100) return 'CIEN ';
 
+        // Centenas
         if ($n >= 100) {
             $output = self::$CENTENAS[floor($n / 100) - 1];
             $n %= 100;
         }
 
-        if ($n >= 20 && $n < 30) {
-            $output .= self::$DECENAS[0] . self::$UNIDADES[$n % 10];
+        // Decenas y unidades
+        if ($n >= 21 && $n < 30) {
+            // Caso especial para 21-29 (veintiuno, veintidós, etc.)
+            $output .= self::$DECENAS[8]; // 'VEINTI'
+            $output .= self::$UNIDADES[$n % 10];
         } elseif ($n >= 30) {
-            $output .= self::$DECENAS[floor($n / 10) - 1];
-            if ($n % 10 > 0) $output .= 'Y ' . self::$UNIDADES[$n % 10];
+            // 30-99
+            $output .= self::$DECENAS[floor($n / 10) - 2]; // Restamos 2 porque 'VEINTE' está en posición 0
+            if ($n % 10 > 0) {
+                $output .= 'Y ' . self::$UNIDADES[$n % 10];
+            }
         } else {
+            // 0-20
             $output .= self::$UNIDADES[$n];
         }
 

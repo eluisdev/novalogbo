@@ -38,7 +38,7 @@ class CityController extends Controller
     public function show($id)
     {
         $city = City::with('country')->findOrFail($id);
-        if (!$city) {
+        if(!$city) {
             return redirect()->route('cities.index')->with('error', 'Ciudad no encontrada.');
         }
         return view('admin.cities.show', compact('city'));
@@ -46,7 +46,7 @@ class CityController extends Controller
     public function edit($id)
     {
         $city = City::findOrFail($id);
-        if (!$city) {
+        if(!$city) {
             return redirect()->route('cities.index')->with('error', 'Ciudad no encontrada.');
         }
         $countries = Country::orderBy('name')->get();
@@ -74,7 +74,7 @@ class CityController extends Controller
     public function destroy($id)
     {
         $city = City::findOrFail($id);
-        if (!$city) {
+        if(!$city) {
             return redirect()->route('cities.index')->with('error', 'Ciudad no encontrada.');
         }
         $city->delete();
@@ -84,7 +84,7 @@ class CityController extends Controller
     public function restore($id)
     {
         $city = City::withTrashed()->findOrFail($id);
-        if (!$city) {
+        if(!$city) {
             return redirect()->route('cities.index')->with('error', 'Ciudad no encontrada.');
         }
         $city->restore();
@@ -100,7 +100,7 @@ class CityController extends Controller
     public function forceDelete($id)
     {
         $city = City::withTrashed()->findOrFail($id);
-        if (!$city) {
+        if(!$city) {
             return redirect()->route('cities.index')->with('error', 'Ciudad no encontrada.');
         }
         $city->forceDelete();

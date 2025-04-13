@@ -22,7 +22,7 @@ return new class extends Migration
             $table->decimal('tax_amount', 12, 2);
             $table->decimal('subtotal', 12, 2);
             $table->decimal('total', 12, 2);
-            $table->string('currency', 3);
+            $table->string('currency', 10);
             $table->timestamps();
         });
     }

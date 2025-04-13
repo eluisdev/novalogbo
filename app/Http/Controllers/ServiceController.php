@@ -37,7 +37,7 @@ class ServiceController extends Controller
     public function show($id)
     {
         $service = Service::findOrFail($id);
-        if (!$service) {
+        if(!$service) {
             return redirect()->route('services.index')->with('error', 'Servicio no encontrado.');
         }
         return view('admin.services.show', compact('service'));
@@ -45,7 +45,7 @@ class ServiceController extends Controller
     public function edit($id)
     {
         $service = Service::findOrFail($id);
-        if (!$service) {
+        if(!$service) {
             return redirect()->route('services.index')->with('error', 'Servicio no encontrado.');
         }
         return view('admin.services.edit', compact('service'));
@@ -76,7 +76,7 @@ class ServiceController extends Controller
     public function destroy($id)
     {
         $service = Service::findOrFail($id);
-        if (!$service) {
+        if(!$service) {
             return redirect()->route('services.index')->with('error', 'Servicio no encontrado.');
         }
         $service->delete();
@@ -85,7 +85,7 @@ class ServiceController extends Controller
     public function toggleStatus($id)
     {
         $service = Service::findOrFail($id);
-        if (!$service) {
+        if(!$service) {
             return redirect()->route('services.index')->with('error', 'Servicio no encontrado.');
         }
         $service->is_active = !$service->is_active;

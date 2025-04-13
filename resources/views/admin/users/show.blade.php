@@ -1,6 +1,7 @@
 @extends('layouts.admin')
 
 @section('dashboard-option')
+
 <div class="w-full mx-auto px-4 sm:px-6 lg:px-8">
 
     <div class="flex flex-col sm:flex-row items-center justify-between gap-4 bg-white rounded-xl shadow-sm p-4 mb-6 border border-gray-200">
@@ -72,18 +73,88 @@
         </div>
     </div>
 
-    <div class="bg-white shadow-md rounded-lg overflow-hidden border border-gray-200">
+    {{-- <div class="bg-white shadow-md rounded-lg overflow-hidden border border-gray-200">
         <div class="px-6 py-4 border-b border-gray-200">
             <h3 class="text-lg font-medium text-gray-900">Cotizaciones Relacionadas</h3>
         </div>
         <div class="p-6">
-            <div class="flex flex-col items-center justify-center py-8">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 text-gray-400 mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                </svg>
-                <p class="text-gray-500 text-center">No hay cotizaciones registradas para este usuario</p>
-            </div>
+            @if ($user->quotations->count() > 0)
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th scope="col"
+                                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    N° Referencia</th>
+                                <th scope="col"
+                                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Fecha de Creacion</th>
+                                <th scope="col"
+                                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Moneda</th>
+                                <th scope="col"
+                                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Monto</th>
+                                <th scope="col"
+                                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Estado</th>
+                                <th scope="col"
+                                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200">
+                            @foreach ($user->quotations as $quotation)
+                                <tr>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                                        {{ $quotation->reference_number }}</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                        {{ \Carbon\Carbon::parse($quotation->delivery_date)->format('d/m/Y') }}</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                        {{ $quotation->currency }}</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                        {{ number_format($quotation->amount, 2) }}</td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        @php
+                                            $statusClasses = [
+                                                'pending' => 'bg-yellow-100 text-yellow-800',
+                                                'approved' => 'bg-green-100 text-green-800',
+                                                'rejected' => 'bg-red-100 text-red-800',
+                                                'expired' => 'bg-gray-100 text-gray-800',
+                                            ];
+                                            $statusText = [
+                                                'pending' => 'Pendiente',
+                                                'approved' => 'Aprobado',
+                                                'rejected' => 'Rechazado',
+                                                'expired' => 'Expirado',
+                                            ];
+                                        @endphp
+                                        <span
+                                            class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full {{ $statusClasses[$quotation->status] ?? 'bg-gray-100 text-gray-800' }}">
+                                            {{ $statusText[$quotation->status] ?? $quotation->status }}
+                                        </span>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                        <a href="{{ route('quotations.show', $quotation->id) }}"
+                                            class="text-[#0B628D] hover:text-[#19262c]">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none"
+                                                viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                    d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                    d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                            </svg>
+                                        </a>
+                                    </td>
+                                </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
+            @else
+                <p class="text-gray-500 text-center py-8">No hay cotizaciones registradas para este cliente</p>
+            @endif
         </div>
-    </div>
+    </div> --}}
 </div>
 @endsection

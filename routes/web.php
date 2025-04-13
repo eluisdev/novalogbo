@@ -5,7 +5,6 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\CityController;
 use App\Http\Controllers\CostController;
-use App\Http\Controllers\TestController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\CountryController;
 use App\Http\Controllers\ServiceController;
@@ -15,6 +14,7 @@ use App\Http\Controllers\OperatorController;
 use App\Http\Controllers\ContinentController;
 use App\Http\Controllers\QuotationController;
 use App\Http\Controllers\BillingNoteController;
+use App\Http\Controllers\ExchangeRateController;
 use App\Http\Controllers\UserProfileController;
 use App\Http\Controllers\PasswordChangeController;
 use App\Http\Controllers\QuantityDescriptionController;
@@ -83,8 +83,7 @@ Route::middleware(['auth', 'role:admin'])->group(function () {
     })->name('admin.dashboard');
 
 
-    Route::prefix('audits')->name('audits.')->controller(AuditController::class)->group
-    (function () {
+    Route::prefix('audits')->name('audits.')->controller(AuditController::class)->group(function () {
         Route::get('/', 'index')->name('index');
         Route::get('/{id}', 'show')->name('show');
         Route::get('/history/{type}/{id}', 'history')->name('history');
@@ -170,6 +169,18 @@ Route::middleware(['auth', 'role:admin'])->group(function () {
 
     // Gestión de costos
     Route::prefix('costs')->name('costs.')->controller(CostController::class)->group(function () {
+        Route::get('/', 'index')->name('index');
+        Route::get('/create', 'create')->name('create');
+        Route::post('/', 'store')->name('store');
+        Route::get('/{id}', 'show')->name('show');
+        Route::get('/edit/{id}', 'edit')->name('edit');
+        Route::put('/{id}', 'update')->name('update');
+        Route::delete('/{id}', 'destroy')->name('destroy');
+        Route::patch('toggle-status/{id}', 'toggleStatus')->name('toggleStatus');
+    });
+
+    //ExchangeRates
+    Route::prefix('exchange-rates')->name('exchange-rates.')->controller(ExchangeRateController::class)->group(function () {
         Route::get('/', 'index')->name('index');
         Route::get('/create', 'create')->name('create');
         Route::post('/', 'store')->name('store');

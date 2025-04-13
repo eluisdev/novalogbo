@@ -277,7 +277,7 @@ class QuotationController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => 'Cliente creado exitosamente',
+                'message' => 'Descripcion de cantidad creada exitosamente',
                 'quantityDescription' => $quantityDescription,
             ], 201);
         } catch (\Exception $e) {
@@ -429,7 +429,7 @@ class QuotationController extends Controller
             'services.service',
             'costDetails.cost'
         ])->findOrFail($id);
-
+            
         // Estructura base similar al array de ejemplo
         $response = [
             'id' => $quotation->id,
@@ -437,6 +437,7 @@ class QuotationController extends Controller
             'currency' => $quotation->currency,
             'exchange_rate' => $quotation->exchange_rate,
             'reference_number' => $quotation->reference_number,
+            'status' => $quotation->status,
             'products' => [],
             'services' => [],
             'costs' => []

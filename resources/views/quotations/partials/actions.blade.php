@@ -1,6 +1,6 @@
 <div class="px-6 py-4 bg-gray-50 text-right">
     <button type="button" onclick="openPreviewModal()"
-        class="fixed z-50 right-6 bottom-6 px-5 py-3 bg-gradient-to-r from-purple-500 to-purple-600 text-white rounded-full shadow-xl hover:from-purple-600 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-400 focus:ring-offset-2 transition-all duration-200 transform hover:scale-105 flex items-center">
+        class="fixed z-10 right-6 bottom-6 px-5 py-3 bg-gradient-to-r from-purple-500 to-purple-600 text-white rounded-full shadow-xl hover:from-purple-600 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-400 focus:ring-offset-2 transition-all duration-200 transform hover:scale-105 flex items-center">
         <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mr-2" fill="none" viewBox="0 0 24 24"
             stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
@@ -10,16 +10,6 @@
         <span class="font-semibold">Previsualizar</span>
     </button>
     <div class="flex flex-wrap gap-3 mt-6">
-        <button type="button" onclick="generateInternalQuote()"
-            class="flex-1 sm:flex-none px-5 py-2.5 bg-gradient-to-r from-yellow-500 to-yellow-600 text-white rounded-lg text-sm font-semibold hover:from-yellow-600 hover:to-yellow-700 focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:ring-offset-2 transition-all duration-200 shadow-md hover:shadow-lg">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 inline mr-2" fill="none" viewBox="0 0 24 24"
-                stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                    d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-            </svg>
-            Generar Cotización Interna (Excel)
-        </button>
-
         <button type="submit"
             class="flex-1 sm:flex-none px-5 py-2.5 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-lg text-sm font-semibold hover:from-blue-600 hover:to-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 transition-all duration-200 shadow-md hover:shadow-lg">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 inline mr-2" fill="none" viewBox="0 0 24 24"
@@ -27,7 +17,7 @@
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                     d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
-            Guardar y Generar Cotización Final (Word)
+            {{ isset($quotation_data) ? 'Guardar cambios' : 'Guardar Cotizacion' }}
         </button>
     </div>
 </div>
@@ -60,7 +50,7 @@
                 <h4 class="font-medium my-2">Señores</h4>
                 <p class="uppercase mb-2 font-bold">${previewData.basicInfo.clientName}</p>
                 <p>Presente.-</p>
-                <span class="font-bold block my-2 underline">REF: COTIZACION 016/25</span>
+                <span class="font-bold block my-2 underline">REF: ${previewData.basicInfo.referenceNumber ? `COTIZACION ${previewData.basicInfo.referenceNumber}` : 'Sin numero de cotizacion'}</span>
                 <p>Estimado cliente, por medio la presente tenemos el agrado de enviarle nuestra cotización de acuerdo con su requerimiento e información proporcionada.</p>
                 </div>
             </div>
@@ -97,7 +87,7 @@
                                         </div>
                                     
                                         <div class="border-l flex-grow">
-                                            <div class="p-3 border-b ">${product.unitQuantity} X ${product.quantity}</div>
+                                            <div class="p-3 border-b ">${product.quantity}</div>
                                             <div class="p-3 border-b ">${product.weight || '0'} KG</div>
                                             <div class="p-3 uppercase">${product.volume} ${product.volumeUnit}</div>
                                         </div>
@@ -188,10 +178,10 @@
         // Recolectar información básica
         const basicInfo = {
             client: document.getElementById('NIT').value,
+            referenceNumber: document.getElementById('reference_number')?.value,
             clientName: document.querySelector('#NIT option:checked').textContent,
             currency: document.getElementById('currency').value,
             exchangeRate: document.getElementById('exchange_rate').value,
-            referenceNumber: document.getElementById('reference_number').value
         };
 
         // Recolectar costos logísticos
@@ -217,33 +207,36 @@
 
         // Recolectar detalles de productos/servicios
         const products = [];
-        document.querySelectorAll('.detail-block:not(.detail-template)').forEach(detailBlock => {
-            const index = detailBlock.dataset.index || 0;
-            const detailName = detailBlock.querySelector('[name^="details["][name$="[detail_name]"]').value;
-            const origin = detailBlock.querySelector('[name^="details["][name$="[origin_id]"] option:checked')
-                .textContent;
-            const destination = detailBlock.querySelector(
-                '[name^="details["][name$="[destination_id]"] option:checked').textContent;
-            const weight = detailBlock.querySelector('[name^="details["][name$="[weight]"]').value;
-            const incoterm = detailBlock.querySelector(
-                '[name^="details["][name$="[incoterm_id]"] option:checked').textContent;
-            const quantity = detailBlock.querySelector('[name^="details["][name$="[quantity]"]').value;
-            const unitQuantity = detailBlock.querySelector('[name^="details["][name$="[unit_quantity]"]').value;
-            const quantityDescription = detailBlock.querySelector(
-                '[name^="details["][name$="[quantity_description]"] option:checked').textContent;
-            const volume = detailBlock.querySelector('[name^="details["][name$="[volume]"]').value;
-            const volumeUnit = detailBlock.querySelector(
-                '[name^="details["][name$="[volume_unit]"] option:checked').textContent;
+        document.querySelectorAll('.product-block').forEach(productBlock => {
+            const index = productBlock.dataset.index || 0;
+            const productName = productBlock.querySelector(`[name="products[${index}][name]"]`).value;
+            const originSelect = productBlock.querySelector(`[name="products[${index}][origin_id]"]`);
+            const origin = originSelect ? originSelect.options[originSelect.selectedIndex]?.textContent : '';
+            const destinationSelect = productBlock.querySelector(`[name="products[${index}][destination_id]"]`);
+            const destination = destinationSelect ? destinationSelect.options[destinationSelect.selectedIndex]
+                ?.textContent : '';
+            const weight = productBlock.querySelector(`[name="products[${index}][weight]"]`).value;
+            const incotermSelect = productBlock.querySelector(`[name="products[${index}][incoterm_id]"]`);
+            const incoterm = incotermSelect ? incotermSelect.options[incotermSelect.selectedIndex]
+                ?.textContent : '';
+            const quantity = productBlock.querySelector(`[name="products[${index}][quantity]"]`).value;
+            const quantityDescriptionSelect = productBlock.querySelector(
+                `[name="products[${index}][quantity_description_id]"]`);
+            const quantityDescription = quantityDescriptionSelect ? quantityDescriptionSelect.options[
+                quantityDescriptionSelect.selectedIndex]?.textContent : '';
+            const volume = productBlock.querySelector(`[name="products[${index}][volume]"]`).value;
+            const volumeUnitSelect = productBlock.querySelector(`[name="products[${index}][volume_unit]"]`);
+            const volumeUnit = volumeUnitSelect ? volumeUnitSelect.options[volumeUnitSelect.selectedIndex]
+                ?.textContent : '';
 
             products.push({
                 index: index,
-                detailName: detailName,
+                productName: productName,
                 origin: origin,
                 destination: destination,
                 weight: weight,
                 incoterm: incoterm,
                 quantity: quantity,
-                unitQuantity: unitQuantity,
                 quantityDescription: quantityDescription,
                 volume: volume,
                 volumeUnit: volumeUnit
@@ -256,18 +249,22 @@
         };
 
         document.querySelectorAll('input[name^="services["]:checked').forEach(radio => {
-            const card = radio.closest('.relative.bg-white');
-            const serviceData = {
-                id: radio.name.match(/\[(\d+)\]/)[1],
-                name: card.querySelector('h4').textContent.trim(),
-                description: card.querySelector('p.text-xs')?.textContent.trim() || '',
-                price: parseFloat(card.dataset.price) || 0 // Nuevo campo
-            };
-
-            services[radio.value === "include" ? "included" : "excluded"].push(serviceData);
+            const card = radio.closest('div[data-service-id]');
+            const serviceId = card.dataset.serviceId;
+            const serviceName = card.querySelector('h4').textContent.trim();
+            if (radio.value === "include") {
+                services.included.push({
+                    id: serviceId,
+                    name: serviceName,
+                });
+            } else if (radio.value === "exclude") {
+                services.excluded.push({
+                    id: serviceId,
+                    name: serviceName,
+                });
+            }
         });
 
-        // Estructurar los datos para la previsualización
         const previewData = {
             basicInfo: basicInfo,
             costs: costs,

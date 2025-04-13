@@ -10,12 +10,11 @@
     <div class="w-full mx-auto px-4 sm:px-6 lg:px-8">
         <div
             class="flex flex-col sm:flex-row items-center justify-between gap-4 bg-white rounded-xl shadow-sm p-3 mb-6 border border-gray-200">
-            <div class="flex items-center gap-6">
+            <div class="flex sm:flex-row flex-col items-center gap-6">
                 <h2 class="text-xl font-black text-gray-800">
                     <span class="text-[#0B628D]">Cotizaciones</span>
                 </h2>
 
-                <!-- Campo de búsqueda -->
                 <div class="relative">
                     <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                         <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -29,7 +28,13 @@
                 </div>
             </div>
 
-            <div class="flex space-x-2">
+            <div class="flex sm:flex-row flex-col items-center gap-6 max-sm:justify-center">
+                <div class="flex items-center">
+                    <input id="filterPending" type="checkbox"
+                        class="h-4 w-4 text-[#0B628D] focus:ring-[#0B628D] border-gray-300 rounded">
+                    <label for="filterPending" class="ml-2 text-sm text-gray-700">Mostrar solo pendientes</label>
+                </div>
+
                 <a href="{{ route('quotations.create') }}"
                     class="flex items-center justify-center px-4 py-2 bg-[#0B628D] hover:bg-[#19262c] text-white text-sm font-medium rounded-lg transition-colors duration-200 shadow-sm">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24"
@@ -60,11 +65,15 @@
                             </th>
                             <th scope="col"
                                 class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                Moneda
+                                Costo total
                             </th>
                             <th scope="col"
                                 class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                Costo total
+                                Fecha de creacion
+                            </th>
+                            <th scope="col"
+                                class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Estado
                             </th>
                             <th scope="col"
                                 class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -75,18 +84,19 @@
                     <tbody id="quotationsTableBody" class="bg-white divide-y divide-gray-200">
                         @if (count($quotations) === 0)
                             <tr>
-                                <td colspan="6" class="px-6 py-4 text-center text-sm text-gray-500">
+                                <td colspan="7" class="px-6 py-4 text-center text-sm text-gray-500">
                                     No hay cotizaciones registradas
                                 </td>
                             </tr>
                         @else
-                            @foreach ($quotations as $quotation)   
-                            <tr class="quotation-row hover:bg-gray-50 transition-colors duration-150"
+                            @foreach ($quotations as $quotation)
+                                <tr class="quotation-row hover:bg-gray-50 transition-colors duration-150"
                                     data-customer="{{ strtolower($quotation->customer->name) }}"
                                     data-ci="{{ strtolower($quotation->customer->NIT) }}"
                                     data-reference="{{ strtolower($quotation->reference_number) }}"
                                     data-currency="{{ strtolower($quotation->currency) }}"
-                                    data-amount="{{ strtolower($quotation->amount) }}">
+                                    data-amount="{{ strtolower($quotation->amount) }}"
+                                    data-status="{{ strtolower($quotation->status) }}">
                                     <td class="px-6 py-4 whitespace-nowrap">
                                         <div class="text-sm font-medium text-gray-900">{{ $quotation->customer->name }}
                                         </div>
@@ -98,10 +108,24 @@
                                         <div class="text-sm text-gray-900">{{ $quotation->reference_number }}</div>
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap">
-                                        <div class="text-sm text-gray-900">{{ $quotation->currency }}</div>
+                                        <div class="text-sm text-gray-900">{{ $quotation->amount }}
+                                            {{ $quotation->currency }}</div>
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap">
-                                        <div class="text-sm text-gray-900">{{ $quotation->amount }}</div>
+                                        <div class="text-sm text-gray-900">{{ $quotation->delivery_date }}</div>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        @if (strtolower($quotation->status) == 'pending')
+                                            <div
+                                                class="text-sm text-white bg-red-500 rounded-full px-3 py-1 inline-flex items-center justify-center">
+                                                <span class="mr-1 font-bold">•</span> Pendiente
+                                            </div>
+                                        @else
+                                            <div
+                                                class="text-sm text-white bg-green-500 rounded-full px-3 py-1 inline-flex items-center justify-center">
+                                                <span class="mr-1 font-bold">•</span> Finalizado
+                                            </div>
+                                        @endif
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                         <div class="flex justify-center space-x-2">
@@ -121,7 +145,8 @@
                                                 title="Editar">
                                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none"
                                                     viewBox="0 0 24 24" stroke="currentColor">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                                        stroke-width="1.5"
                                                         d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                                                 </svg>
                                             </a>
@@ -140,13 +165,15 @@
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             const searchInput = document.getElementById('searchInput');
+            const filterPendingCheckbox = document.getElementById('filterPending');
             const quotationRows = document.querySelectorAll('.quotation-row');
             const noResultsRow = document.createElement('tr');
             noResultsRow.innerHTML =
-                '<td colspan="6" class="px-6 py-4 text-center text-sm text-gray-500">No se encontraron resultados</td>';
+                '<td colspan="7" class="px-6 py-4 text-center text-sm text-gray-500">No se encontraron resultados</td>';
 
-            searchInput.addEventListener('input', function() {
-                const searchTerm = this.value.toLowerCase();
+            function filterQuotations() {
+                const searchTerm = searchInput.value.toLowerCase();
+                const showOnlyPending = filterPendingCheckbox.checked;
                 let hasResults = false;
 
                 quotationRows.forEach(row => {
@@ -155,12 +182,18 @@
                     const reference = row.getAttribute('data-reference');
                     const currency = row.getAttribute('data-currency');
                     const amount = row.getAttribute('data-amount');
+                    const status = row.getAttribute('data-status');
 
-                    if (customer.includes(searchTerm) ||
+                    const statusMatch = !showOnlyPending || status === 'pending';
+
+                    const searchMatch = searchTerm === '' ||
+                        customer.includes(searchTerm) ||
                         ci.includes(searchTerm) ||
                         reference.includes(searchTerm) ||
                         currency.includes(searchTerm) ||
-                        amount.includes(searchTerm)) {
+                        amount.includes(searchTerm);
+
+                    if (statusMatch && searchMatch) {
                         row.style.display = '';
                         hasResults = true;
                     } else {
@@ -168,7 +201,6 @@
                     }
                 });
 
-                // Mostrar mensaje si no hay resultados
                 const tableBody = document.getElementById('quotationsTableBody');
                 const existingNoResults = tableBody.querySelector('.no-results');
 
@@ -182,7 +214,10 @@
                         tableBody.removeChild(existingNoResults);
                     }
                 }
-            });
+            }
+
+            searchInput.addEventListener('input', filterQuotations);
+            filterPendingCheckbox.addEventListener('change', filterQuotations);
         });
     </script>
 @endsection

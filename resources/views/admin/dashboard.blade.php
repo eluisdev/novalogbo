@@ -1,7 +1,7 @@
 @extends('layouts.app')
 
 @section('content')
-    <div class="h-dvh flex flex-col bg-gradient-to-t from-[#052f43] to-[#032c40]">
+    <div class="min-h-dvh flex flex-col bg-gradient-to-t from-[#052f43] to-[#032c40]">
         <x-navbar user-name="{{ Auth::user()->username }}" user-role="Administrador" logo-path="images/logoNova.png" />
 
         <h1 class="text-4xl font-extrabold text-center my-24 text-amber-300">Aplicaciones</h1>
@@ -117,7 +117,7 @@
 
             <li
                 class="p-6 rounded-full hover:bg-[#131f24] transition-colors duration-150 ease-in text-white hover:text-amber-500">
-                <a href="{{ route('quantity_descriptions.index') }}" class="flex flex-col items-center">
+                <a href="{{ route('exchange-rates.index') }}" class="flex flex-col items-center">
                     <div class="p-4 rounded-full mb-2">
                         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" class="h-12 w-12">
                             <path fill="currentColor"

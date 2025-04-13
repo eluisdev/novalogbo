@@ -15,7 +15,9 @@
     $incoterms = isset($quotation_data) ? $quotation_data['formSelects']['incoterms'] : $incoterms;
 
     $cities = isset($quotation_data['formSelects']['cities']) ? $quotation_data['formSelects']['cities'] : $cities;
-    $quantity_descriptions = isset($quotation_data['formSelects']['QuantityDescriptions'])  ? $quotation_data['formSelects']['QuantityDescriptions'] : $QuantityDescriptions;
+    $quantity_descriptions = isset($quotation_data['formSelects']['QuantityDescriptions'])
+        ? $quotation_data['formSelects']['QuantityDescriptions']
+        : $QuantityDescriptions;
 @endphp
 
 <div class="rounded-lg shadow-[0_0_15px_rgba(0,0,0,0.30)] p-6 mb-6 bg-white relative overflow-visible product-block"
@@ -39,9 +41,7 @@
                 @if ($useOld)
                     @php
                         $oldOriginId = old("products.{$index}.origin_id", '');
-                        $selectedCity = $oldOriginId
-                            ? $cities->firstWhere('id', $oldOriginId)
-                            : null;
+                        $selectedCity = $oldOriginId ? $cities->firstWhere('id', $oldOriginId) : null;
                     @endphp
                     @if ($selectedCity)
                         <option value="{{ $selectedCity->id }}" selected>{{ $selectedCity->name }} ,
@@ -69,9 +69,7 @@
                 @if ($useOld)
                     @php
                         $oldDestinationId = old("products.{$index}.destination_id", '');
-                        $selectedCity = $oldDestinationId
-                            ? $cities->firstWhere('id', $oldDestinationId)
-                            : null;
+                        $selectedCity = $oldDestinationId ? $cities->firstWhere('id', $oldDestinationId) : null;
                     @endphp
                     @if ($selectedCity)
                         <option value="{{ $selectedCity->id }}" selected>{{ $selectedCity->name }} ,
@@ -79,10 +77,7 @@
                     @endif
                 @elseif(isset($product) && $product->destination_id)
                     @php
-                        $selectedCity = $cities->firstWhere(
-                            'id',
-                            $product->destination_id,
-                        );
+                        $selectedCity = $cities->firstWhere('id', $product->destination_id);
                     @endphp
                     @if ($selectedCity)
                         <option value="{{ $selectedCity->id }}" selected>{{ $selectedCity->name }} ,
@@ -133,18 +128,18 @@
                         $quantityParts = explode(' x ', $defaultQuantity);
                     }
                 @endphp
-                <!-- Primer número (1) -->
+
                 <input type="number" id="quantity_part1_{{ $index }}{{ $uniqueSuffix }}"
                     value="{{ $quantityParts[0] ?? 1 }}"
                     class="w-16 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 quantity-input"
-                    data-index="{{ $index }}" min="1">
+                    data-index="{{ $index }}{{ $uniqueSuffix }}" min="1">
 
                 <span class="text-gray-600">X</span>
 
                 <input type="number" id="quantity_part2_{{ $index }}{{ $uniqueSuffix }}"
                     value="{{ $quantityParts[1] ?? 40 }}"
                     class="w-16 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 quantity-input"
-                    data-index="{{ $index }}" min="1">
+                    data-index="{{ $index }}{{ $uniqueSuffix }}" min="1">
 
                 <input type="hidden" name="products[{{ $index }}][quantity]"
                     id="real_quantity_{{ $index }}{{ $uniqueSuffix }}"
@@ -164,10 +159,7 @@
                         @php
                             $oldQuantityDescriptionId = old("products.{$index}.quantity_description_id", '');
                             $selectedDescription = $oldQuantityDescriptionId
-                                ? $quantity_descriptions->firstWhere(
-                                    'id',
-                                    $oldQuantityDescriptionId,
-                                )
+                                ? $quantity_descriptions->firstWhere('id', $oldQuantityDescriptionId)
                                 : null;
                         @endphp
                         @if ($selectedDescription)
@@ -231,3 +223,34 @@
     </div>
 
 </div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Función para actualizar el valor del campo oculto
+        function updateRealQuantity(index) {
+            const part1 = document.getElementById('quantity_part1_' + index).value;
+            const part2 = document.getElementById('quantity_part2_' + index).value;
+            document.getElementById('real_quantity_' + index).value = part1 + ' x ' + part2;
+        }
+
+        // Delegación de eventos para manejar inputs dinámicos
+        document.addEventListener('input', function(e) {
+            if (e.target.classList.contains('quantity-input')) {
+                const index = e.target.dataset.index;
+                updateRealQuantity(index);
+            }
+        });
+
+        // Inicializar los valores para cada bloque de producto existente
+        document.querySelectorAll('.product-block').forEach(block => {
+            const index = block.dataset.index;
+            updateRealQuantity(index);
+        });
+    });
+
+    // Función para eliminar un bloque de producto (si es necesario)
+    function removeProductBlock(button) {
+        const block = button.closest('.product-block');
+        block.remove();
+    }
+</script>

@@ -1,13 +1,15 @@
 <?php
 
-use App\Http\Controllers\AuditController;
+use App\Models\ExchangeRate;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\CityController;
 use App\Http\Controllers\CostController;
 use App\Http\Controllers\TestController;
 use App\Http\Controllers\UserController;
+use App\Http\Controllers\AuditController;
 use App\Http\Controllers\CountryController;
+use App\Http\Controllers\InvoiceController;
 use App\Http\Controllers\ServiceController;
 use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\IncotermController;
@@ -17,6 +19,7 @@ use App\Http\Controllers\QuotationController;
 use App\Http\Controllers\BillingNoteController;
 use App\Http\Controllers\UserProfileController;
 use App\Http\Controllers\PasswordChangeController;
+use App\Http\Controllers\Admin\ExchangeRateController;
 use App\Http\Controllers\QuantityDescriptionController;
 
 /*
@@ -24,15 +27,14 @@ use App\Http\Controllers\QuantityDescriptionController;
 | Rutas Públicas
 |--------------------------------------------------------------------------
 */
+// Route::get('/', function () {
+//     return redirect('https://www.novalogisticsrl.com/');
+// });
 
 Route::get('/', function () {
     return view('welcome');
 });
 
-// Route::post('/', [TestController::class, 'generarCotizacion'])->name('billing-note.download');
-// Route::post('/s', [BillingNoteController::class, 'download'])->name('billing-note.download');
-// Route::post('/s', [QuotationController::class, 'generarCotizacion'])->name('billing-note.download');
-// Route::get('/{id}', [QuotationController::class, 'show'])->name('show');
 /*
 |--------------------------------------------------------------------------
 | Autenticación
@@ -83,12 +85,11 @@ Route::middleware(['auth', 'role:admin'])->group(function () {
     })->name('admin.dashboard');
 
 
-    Route::prefix('audits')->name('audits.')->controller(AuditController::class)->group
-    (function () {
-        Route::get('/', 'index')->name('index');
-        Route::get('/{id}', 'show')->name('show');
-        Route::get('/history/{type}/{id}', 'history')->name('history');
-    });
+    Route::prefix('audits')->name('audits.')->controller(AuditController::class)->group(function () {
+            Route::get('/', 'index')->name('index');
+            Route::get('/{id}', 'show')->name('show');
+            Route::get('/history/{type}/{id}', 'history')->name('history');
+        });
     // Gestión de usuarios
     Route::prefix('users')->name('users.')->controller(UserController::class)->group(function () {
         Route::get('/', 'index')->name('index');
@@ -212,6 +213,8 @@ Route::middleware(['auth', 'role:admin,operator'])->group(function () {
         Route::get('/searchCustomer', 'searchCustomer')->name('searchCustomer');
         Route::get('/searchQuantityDescription', 'searchQuantityDescription')->name('searchQuantityDescription');
         Route::post('/billingNoteWord', [BillingNoteController::class, 'download'])->name('billing-note.download');
+        Route::post('/invoiceWord', [InvoiceController::class, 'download'])->name('invoice.download');
+        Route::post('/generateInternalQuotation', [QuotationController::class, 'generateExcel'])->name('generate.excel.download');
         Route::post('/generateQuotation', 'generarCotizacion')->name('generate.download');
 
         Route::get('/create', 'create')->name('create');
@@ -230,6 +233,17 @@ Route::middleware(['auth', 'role:admin,operator'])->group(function () {
     // Gestión de descripciones de cantidad
 
     Route::prefix('quantity_descriptions')->name('quantity_descriptions.')->controller(QuantityDescriptionController::class)->group(function () {
+        Route::get('/', 'index')->name('index');
+        Route::get('/create', 'create')->name('create');
+        Route::post('/', 'store')->name('store');
+        Route::get('/{id}', 'show')->name('show');
+        Route::get('/edit/{id}', 'edit')->name('edit');
+        Route::put('/{id}', 'update')->name('update');
+        Route::delete('/{id}', 'destroy')->name('destroy');
+        Route::patch('toggle-status/{id}', 'toggleStatus')->name('toggleStatus');
+    });
+
+    Route::prefix('exchange-rates')->name('exchange-rates.')->controller(ExchangeRateController::class)->group(function () {
         Route::get('/', 'index')->name('index');
         Route::get('/create', 'create')->name('create');
         Route::post('/', 'store')->name('store');

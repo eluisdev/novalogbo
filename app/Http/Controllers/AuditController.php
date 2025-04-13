@@ -36,7 +36,7 @@ class AuditController extends Controller
         }
 
         $audits = $query->orderBy('created_at', 'desc')
-                        ->paginate(20);
+                        ->get();
 
         return view('admin.audits.index', compact('audits'));
     }

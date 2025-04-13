@@ -60,9 +60,9 @@
             <button type="submit">Enviar</button>
         </form>
     </div>
-    
+
     <button id="btn-agregar" class="btn-clonar">Agregar otro elemento</button>
-    
+
     <script>
         $(document).ready(function() {
             // Datos que podrían venir de una API o ser definidos aquí
@@ -87,19 +87,19 @@
             inicializarSelect2($('.select-pais'));
 
             let contador = 1;
-            
+
             $('#btn-agregar').click(function() {
                 contador++;
-                
+
                 let nuevoElemento = $('.clonable-container:first').clone();
                 nuevoElemento.attr('data-id', contador);
                 nuevoElemento.find('.contador').text(contador);
-                
+
                 // Limpiamos el select clonado (por si acaso)
                 let select = nuevoElemento.find('.select-pais').html('');
-                
+
                 $('#contenedor-principal').append(nuevoElemento);
-                
+
                 // Inicializamos Select2 con los datos
                 inicializarSelect2(select);
             });

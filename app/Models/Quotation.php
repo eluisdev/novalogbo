@@ -58,4 +58,8 @@ class Quotation extends Model
     {
         return $this->hasOne(BillingNote::class, 'quotation_id');
     }
+
+    public function invoices(): HasOne{
+        return $this->hasOne(Invoice::class);
+    }
 }

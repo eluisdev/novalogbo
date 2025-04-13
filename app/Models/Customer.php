@@ -55,9 +55,7 @@ class Customer extends Model
      *
      * @var array<int, string>
      */
-    protected $hidden = [
-
-    ];
+    protected $hidden = [];
 
     /**
      * The attributes that should be cast.
@@ -92,9 +90,13 @@ class Customer extends Model
         return $this->hasMany(Quotation::class, 'customer_nit', 'NIT');
     }
 
-     // Relación con BillingNotes
-     public function billingNotes(): HasMany
-     {
-         return $this->hasMany(BillingNote::class, 'customer_nit', 'NIT');
-     }
+    // Relación con BillingNotes
+    public function billingNotes(): HasMany
+    {
+        return $this->hasMany(BillingNote::class, 'customer_nit', 'NIT');
+    }
+    public function invoices(): HasMany
+    {
+        return $this->hasMany(Invoice::class, 'customer_nit', 'NIT');
+    }
 }

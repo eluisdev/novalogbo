@@ -41,7 +41,7 @@ class ContinentController extends Controller
     public function show($id)
     {
         $continent = Continent::findOrFail($id);
-        if (!$continent) {
+        if(!$continent) {
             return redirect()->route('continents.index')->with('error', 'Continente no encontrado.');
         }
         return view('admin.continents.show', compact('continent'));
@@ -49,7 +49,7 @@ class ContinentController extends Controller
     public function edit($id)
     {
         $continent = Continent::findOrFail($id);
-        if (!$continent) {
+        if(!$continent) {
             return redirect()->route('continents.index')->with('error', 'Continente no encontrado.');
         }
         return view('admin.continents.edit', compact('continent'));
@@ -83,7 +83,7 @@ class ContinentController extends Controller
     public function destroy($id)
     {
         $continent = Continent::findOrFail($id);
-        if (!$continent) {
+        if(!$continent) {
             return redirect()->route('continents.index')->with('error', 'Continente no encontrado.');
         }
         $continent->delete();
@@ -99,7 +99,7 @@ class ContinentController extends Controller
     public function restore($id)
     {
         $continent = Continent::withTrashed()->findOrFail($id);
-        if (!$continent) {
+        if(!$continent) {
             return redirect()->route('continents.trashed')->with('error', 'Continente no encontrado.');
         }
         $continent->restore();
@@ -110,7 +110,7 @@ class ContinentController extends Controller
     public function forceDelete($id)
     {
         $continent = Continent::withTrashed()->findOrFail($id);
-        if (!$continent) {
+        if(!$continent) {
             return redirect()->route('continents.trashed')->with('error', 'Continente no encontrado.');
         }
         $continent->forceDelete();

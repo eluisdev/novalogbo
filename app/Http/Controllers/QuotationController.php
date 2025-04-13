@@ -303,7 +303,7 @@ class QuotationController extends Controller
             [
                 'reference_customer' => 'nullable|string',
                 'reference_number' => 'nullable|string',
-                'currency' => 'required|string|max:3',
+                'currency' => 'required|string|max:10',
                 'exchange_rate' => 'required|numeric',
                 'NIT' => 'required|exists:customers,NIT',
                 'products' => 'nullable|array',
@@ -323,7 +323,7 @@ class QuotationController extends Controller
             [
                 'currency.required' => 'La moneda es obligatoria.',
                 'currency.string' => 'La moneda debe ser una cadena de texto.',
-                'currency.max' => 'La moneda no puede exceder los 3 caracteres.',
+                'currency.max' => 'La moneda no puede exceder los 10 caracteres.',
                 'exchange_rate.required' => 'El tipo de cambio es obligatorio.',
                 'exchange_rate.numeric' => 'El tipo de cambio debe ser un número.',
                 'NIT.required' => 'El NIT es obligatorio.',
@@ -452,7 +452,7 @@ class QuotationController extends Controller
             'services.service',
             'costDetails.cost'
         ])->findOrFail($id);
-            
+
         // Estructura base similar al array de ejemplo
         $response = [
             'id' => $quotation->id,
@@ -611,7 +611,7 @@ class QuotationController extends Controller
         // Validación de los datos de entrada
         $validatedData = $request->validate([
             'NIT' => 'required|exists:customers,NIT',
-            'currency' => 'required|string|max:3',
+            'currency' => 'required|string|max:10',
             'exchange_rate' => 'required|numeric',
             'reference_customer' => 'nullable|string',
             'reference_number' => 'nullable|string',
@@ -647,7 +647,7 @@ class QuotationController extends Controller
                 'currency' => $validatedData['currency'],
                 'exchange_rate' => $validatedData['exchange_rate'],
                 'reference_number' => $validatedData['reference_number'],
-                'reference_customer' => $validatedData['reference_number'] ?? '',
+                'reference_customer' => $validatedData['reference_customer'] ?? '',
                 'amount' => 0 // Se recalculará al final
             ]);
 
@@ -727,10 +727,11 @@ class QuotationController extends Controller
     public function updateStatus(Request $request, $id)
     {
         $request->validate([
-            'status' => 'required|in:approved'
+            'status' => 'required'
         ]);
 
         $quotation = Quotation::findOrFail($id);
+        $quotation->delivery_date = Carbon::now();
         $quotation->status = $request->status;
         $quotation->save();
 

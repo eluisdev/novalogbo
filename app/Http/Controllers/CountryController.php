@@ -47,7 +47,7 @@ class CountryController extends Controller
     public function show($id)
     {
         $country = Country::with('continent')->findOrFail($id);
-        if (!$country) {
+        if(!$country) {
             return redirect()->route('countries.index')->with('error', 'País no encontrado.');
         }
         return view('admin.countries.show', compact('country'));
@@ -56,7 +56,7 @@ class CountryController extends Controller
     public function edit($id)
     {
         $country = Country::findOrFail($id);
-        if (!$country) {
+        if(!$country) {
             return redirect()->route('countries.index')->with('error', 'País no encontrado.');
         }
         $continents = Continent::orderBy('name')->get();
@@ -94,7 +94,7 @@ class CountryController extends Controller
     public function destroy($id)
     {
         $country = Country::findOrFail($id);
-        if (!$country) {
+        if(!$country) {
             return redirect()->route('countries.index')->with('error', 'País no encontrado.');
         }
         $country->delete();
@@ -124,7 +124,7 @@ class CountryController extends Controller
     public function forceDelete($id)
     {
         $country = Country::withTrashed()->findOrFail($id);
-        if (!$country) {
+        if(!$country) {
             return redirect()->route('countries.trashed')->with('error', 'País no encontrado.');
         }
         $country->forceDelete();

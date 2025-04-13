@@ -10,7 +10,7 @@ class CustomerController extends Controller
 {
     public function index()
     {
-        $customers = Customer::with('role')->latest()->paginate(10);
+        $customers = Customer::with('role')->latest()->get();
 
         // Retornar la vista con los clientes
         return view('customers.index', compact('customers'));

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Product;
 use Illuminate\Http\Request;
 use App\Models\QuantityDescription;
 
@@ -78,6 +79,11 @@ class QuantityDescriptionController extends Controller
         if(!$quantityDescription) {
             return redirect()->route('quantity_descriptions.index')->with('error', 'Descripción de cantidad no encontrada.');
         }
+        $product= Product::with('quantityDescription')->where('quantity_description_id', $id)->first();
+        if($product){
+            return redirect()->route('quantity_descriptions.index')->with('error', 'La Descripción esta asociada a un producto.');
+        }
+
         $quantityDescription->delete();
         return redirect()->route('quantity_descriptions.index')->with('success', 'Descripción de cantidad eliminada exitosamente.');
     }

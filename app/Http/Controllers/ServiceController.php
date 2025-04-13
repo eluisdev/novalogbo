@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\Service;
+use App\Models\Quotation;
+use App\Models\QuotationService;
 use Illuminate\Http\Request;
 
 class ServiceController extends Controller
@@ -78,6 +80,10 @@ class ServiceController extends Controller
         $service = Service::findOrFail($id);
         if(!$service) {
             return redirect()->route('services.index')->with('error', 'Servicio no encontrado.');
+        }
+        $quotation = QuotationService::with('services')->where('service_id',$id)->first();
+        if($quotation){
+            return redirect()->route('services.index')->with('error', 'Este servicio esta asociado a una cotización.');
         }
         $service->delete();
         return redirect()->route('services.index')->with('success', 'Servicio eliminado exitosamente.');

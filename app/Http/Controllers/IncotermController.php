@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Product;
 use App\Models\Incoterm;
 use Illuminate\Http\Request;
 
@@ -85,7 +86,10 @@ class IncotermController extends Controller
         if(!$incoterm) {
             return redirect()->route('incoterms.index')->with('error', 'Incoterm no encontrado.');
         }
-        //TODO: Arreglar clave foranea con quatiation al eliminar un incoterm
+        $product = Product::with('incoterm')->where('incoterm_id', $id)->first();
+        if($product){
+            return redirect()->route('incoterms.index')->with('error', 'Existe un producto asociado a este Incoterm');
+        }
         $incoterm->delete();
         return redirect()->route('incoterms.index')->with('success', 'Incoterm eliminado exitosamente.');
     }

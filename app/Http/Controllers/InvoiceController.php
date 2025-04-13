@@ -84,7 +84,7 @@ class InvoiceController extends Controller
                     $invoiceItem->save();
                 }
             }
-            
+
             $invoice = Invoice::where('quotation_id', $quotation->id)->first();
             DB::commit();
 
@@ -131,7 +131,7 @@ class InvoiceController extends Controller
         if ($visible) {
             $header = $section->addHeader();
             $header->addImage(
-                storage_path('app/templates/Herder.png'),
+                public_path('images/Header.png'),
                 [
                     'width' => $pageWidthPoints,
                     'height' => $headerHeightPoints,
@@ -145,7 +145,7 @@ class InvoiceController extends Controller
             );
             $footer = $section->addFooter();
             $footer->addImage(
-                storage_path('app/templates/Footer.png'),
+                public_path('images/Footer.png'),
                 [
                     'width' => $pageWidthPoints,
                     'height' => $footerHeightPoints,

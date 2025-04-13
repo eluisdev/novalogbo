@@ -34,7 +34,7 @@
                     </div>
                 </div>
 
-                <nav class="flex-1 p-4 space-y-2">
+                <nav class="flex-1 p-4 py-5 space-y-2">
                     @php
                         $menuItems = [
                             ['route' => 'users.index', 'text' => 'Usuarios', 'active' => request()->is('users*')],
@@ -91,7 +91,7 @@
             </div>
 
             <!-- CONTENIDO PRINCIPAL -->
-            <div class="flex-1 bg-gradient-to-b from-[#29617a] to-[#163a54] py-6 overflow-auto min-h-screen">
+            <div class="flex-1 bg-gradient-to-b from-[#29617a] to-[#163a54] py-6 overflow-y-auto h-[calc(100vh-4.1rem)]">
                 <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     @yield('dashboard-option')
                 </div>

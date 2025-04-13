@@ -13,12 +13,12 @@ class ExchangeRateController extends Controller
     public function index()
     {
         $exchangeRates = ExchangeRate::orderBy('date', 'desc')->get();
-        return view('exchange-rates.index', compact('exchangeRates'));
+        return view('admin.exchange-rates.index', compact('exchangeRates'));
     }
 
     public function create()
     {
-        return view('exchange-rates.create');
+        return view('admin.exchange-rates.create');
     }
     public function store(Request $request)
     {
@@ -65,7 +65,7 @@ class ExchangeRateController extends Controller
         if (!$exchangeRate) {
             return redirect()->route('exchange-rates.index')->with('error', 'Tipo de cambio no encontrada.');
         }
-        return view('exchange-rates.show', compact('exchangeRate'));
+        return view('admin.exchange-rates.show', compact('exchangeRate'));
     }
 
     public function edit($id)
@@ -74,7 +74,7 @@ class ExchangeRateController extends Controller
         if (!$exchangeRate) {
             return redirect()->route('exchange-rates.index')->with('error', 'Tipo de cambio no encontrada.');
         }
-        return view('exchange-rates.edit', compact('exchangeRate'));
+        return view('admin.exchange-rates.edit', compact('exchangeRate'));
     }
 
     public function update(Request $request,  $id)

@@ -22,7 +22,7 @@
             <!-- SIDEBAR -->
             <div id="sidebar"
                 class="w-64 bg-white border-r border-gray-200 transform transition-transform duration-300 ease-in-out
-                       fixed md:static top-0 left-0 h-full z-30 md:z-10
+                       fixed md:static top-0 left-0 min-h-full z-30 md:z-10
                        -translate-x-full md:translate-x-0 overflow-y-auto shadow-lg">
                 <div class="p-4 border-b border-gray-200">
                     <div class="flex items-center gap-3 text-gray-700">
@@ -37,7 +37,7 @@
                     </div>
                 </div>
 
-                <nav class="flex-1 p-4 space-y-2">
+                <nav class="flex-1 p-4 py-5 space-y-2">
                     @php
                         $menuItems = [
                             [
@@ -45,7 +45,11 @@
                                 'text' => 'Clientes',
                                 'active' => request()->is('customers*'),
                             ],
-                            ['route' => 'quotations.index', 'text' => 'Cotizaciones', 'active' => request()->is('quotes*')],
+                            [
+                                'route' => 'quotations.index',
+                                'text' => 'Cotizaciones',
+                                'active' => request()->is('quotes*'),
+                            ],
                         ];
                     @endphp
 
@@ -59,7 +63,7 @@
                 </nav>
             </div>
 
-            <div class="flex-1 bg-gradient-to-b from-[#29617a] to-[#163a54] py-6 overflow-y-auto min-h-screen">
+            <div class="flex-1 bg-gradient-to-b from-[#29617a] to-[#163a54] py-6 overflow-y-auto h-[calc(100vh-4.1rem)]">
                 <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     @yield('dashboard-option')
                 </div>

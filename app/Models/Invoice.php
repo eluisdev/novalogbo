@@ -36,7 +36,7 @@ class Invoice extends Model
 
     public function customer(): BelongsTo
     {
-        return $this->belongsTo(Customer::class, 'customer_nit', 'NIT');
+        return $this->belongsTo(Customer::class, 'customer_nit');
     }
 
     public function user(): BelongsTo

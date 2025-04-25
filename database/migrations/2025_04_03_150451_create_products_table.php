@@ -18,12 +18,13 @@ return new class extends Migration
             $table->foreignId('origin_id')->constrained('cities');
             $table->foreignId('destination_id')->constrained('cities');
             $table->foreignId('incoterm_id')->constrained('incoterms');
-            $table->foreignId('quantity_description_id')->constrained('quantity_descriptions');
+            $table->foreignId('quantity_description_id')->nullable()->constrained('quantity_descriptions');
             $table->string('quantity',20);
             $table->decimal('weight', 10, 2);
             $table->decimal('volume', 10, 2);
             $table->enum('volume_unit', ['kg_vol', 'm3']);
             $table->string('description')->nullable();
+            $table->boolean('is_container')->default(false);
             $table->timestamps();
         });
     }

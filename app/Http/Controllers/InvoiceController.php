@@ -19,8 +19,60 @@ use App\Helpers\NumberToWordsConverter;
 
 class InvoiceController extends Controller
 {
-    // ... (métodos index, create, show se mantienen igual)
+    public function view()
+    {
+        return view('invoices.view');
+    }
+    public function create()
+    {
+        $customers = Customer::all();
+        $quotations = Quotation::all();
+        return view('invoices.create', compact('customers', 'quotations'));
+    }
+    public function store(Request $request)
+    {
+        $validatedData = $request->validate([
+            'customer_id' => 'required|exists:customers,id',
+            'quotation_id' => 'required|exists:quotations,id',
+            'visible' => 'required|boolean'
+        ]);
 
+        $customerId = $validatedData['customer_id'];
+        $quotationId = $validatedData['quotation_id'];
+        $visible = $validatedData['visible'];
+
+        // Aquí puedes agregar la lógica para crear la factura
+        // ...
+
+        return redirect()->route('invoices.view')->with('success', 'Factura creada exitosamente.');
+    }
+    public function show($id)
+    {
+        $invoice = Invoice::with(['customer', 'items.cost', 'quotation.products'])->findOrFail($id);
+        return view('invoices.show', compact('invoice'));
+    }
+    public function edit($id)
+    {
+        $invoice = Invoice::with(['customer', 'items.cost', 'quotation.products'])->findOrFail($id);
+        $customers = Customer::all();
+        $quotations = Quotation::all();
+        return view('invoices.edit', compact('invoice', 'customers', 'quotations'));
+    }
+    public function delete($id)
+    {
+        $invoice = Invoice::findOrFail($id);
+        $invoice->delete();
+        return redirect()->route('invoices.view')->with('success', 'Factura eliminada exitosamente.');
+    }
+    public function toggleStatus(Request $request, $id){
+        $request->validate([
+            'status' => 'required|string'
+        ]);
+        $invoice = Invoice::findOrFail($id);
+        $invoice->status = $request->status;
+        $invoice->save();
+        return redirect()->route('invoices.view')->with('success', 'Estado de la factura actualizado exitosamente.');
+    }
     public function download(Request $request)
     {
         $validatedData = $request->validate([

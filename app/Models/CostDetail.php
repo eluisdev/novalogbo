@@ -17,7 +17,8 @@ class CostDetail extends Model
         'cost_id',
         'amount',
         'currency',
-        'concept'
+        'concept',
+        'amount_parallel'
     ];
 
     public function quotation():BelongsTo

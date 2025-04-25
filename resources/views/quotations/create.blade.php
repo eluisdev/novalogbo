@@ -51,6 +51,4 @@
     <x-quotations.modal-preview />
 @endsection
 
-@push('scripts')
-    @vite(['resources/js/quotations.js'])
-@endpush
+

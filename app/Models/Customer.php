@@ -87,16 +87,15 @@ class Customer extends Model
 
     public function quotations(): HasMany
     {
-        return $this->hasMany(Quotation::class, 'customer_nit', 'NIT');
+        return $this->hasMany(Quotation::class, 'customer_nit');
     }
 
-    // Relación con BillingNotes
     public function billingNotes(): HasMany
     {
-        return $this->hasMany(BillingNote::class, 'customer_nit', 'NIT');
+        return $this->hasMany(BillingNote::class, 'customer_nit');
     }
     public function invoices(): HasMany
     {
-        return $this->hasMany(Invoice::class, 'customer_nit', 'NIT');
+        return $this->hasMany(Invoice::class, 'customer_nit');
     }
 }

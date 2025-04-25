@@ -66,6 +66,6 @@ class User extends Authenticatable
 
     public function quotations()
     {
-        return $this->hasMany(Quotation::class, 'users_id'); // Especifica la clave foránea
+        return $this->hasMany(Quotation::class, 'users_id', 'id');
     }
 }

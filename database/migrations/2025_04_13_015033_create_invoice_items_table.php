@@ -16,12 +16,12 @@ return new class extends Migration
             $table->foreignId('invoice_id')->constrained()->onDelete('cascade');
             $table->foreignId('cost_id')->constrained('costs')->onDelete('restrict');
             $table->string('description');
-            $table->decimal('quantity', 10, 2)->default(1);
-            $table->decimal('unit_price', 12, 2);
-            $table->decimal('tax_rate', 5, 2)->default(0);
-            $table->decimal('tax_amount', 12, 2);
-            $table->decimal('subtotal', 12, 2);
-            $table->decimal('total', 12, 2);
+            $table->decimal('quantity', 15, 2)->default(1);
+            $table->decimal('unit_price', 15, 2);
+            $table->decimal('tax_rate', 15, 2)->default(0);
+            $table->decimal('tax_amount', 15, 2);
+            $table->decimal('subtotal', 15, 2);
+            $table->decimal('total', 15, 2);
             $table->string('currency', 10);
             $table->timestamps();
         });

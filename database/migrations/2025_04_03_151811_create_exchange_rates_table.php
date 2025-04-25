@@ -15,7 +15,7 @@ return new class extends Migration
             $table->id();
             $table->string('source_currency', 10);
             $table->string('target_currency', 10);
-            $table->decimal('rate', 15, 8);
+            $table->decimal('rate', 15, 2);
             $table->date('date');
             $table->boolean('active')->default(true);
             $table->timestamps();

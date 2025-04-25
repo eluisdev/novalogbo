@@ -88,10 +88,10 @@
                                         <div class="text-sm text-gray-900">{{ $customer->NIT }}</div>
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap">
-                                        <div class="text-sm text-gray-900">{{ $customer->email }}</div>
+                                        <div class="text-sm text-gray-900 truncate max-w-[180px]">{{ $customer->email }}</div>
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap">
-                                        <div class="text-sm text-gray-900">{{ $customer->address }}</div>
+                                        <div class="text-sm text-gray-900 truncate max-w-[220px]">{{ $customer->address }}</div>
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                         <div class="flex justify-center space-x-2">

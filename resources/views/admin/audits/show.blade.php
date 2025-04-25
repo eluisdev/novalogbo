@@ -5,7 +5,7 @@
         // Traducciones
         $modelTranslations = [
             'Cost' => 'Costo',
-            'QuantityDescription' => 'Descripción de cantidad',
+            'QuantityDescription' => 'Unidad de cantidad',
             'Customer' => 'Cliente',
             'User' => 'Usuario',
             'City' => 'Ciudad',

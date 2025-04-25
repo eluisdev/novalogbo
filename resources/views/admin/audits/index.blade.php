@@ -6,7 +6,7 @@
         // Mapeo de modelos a traducciones (puede extenderse fácilmente)
         $modelTranslations = [
             'Cost' => 'Costo',
-            'QuantityDescription' => 'Descripción de cantidad',
+            'QuantityDescription' => 'Unidad de cantidad',
             'Customer' => 'Cliente',
             'User' => 'Usuario',
             'City' => 'Ciudad',

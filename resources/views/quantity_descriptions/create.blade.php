@@ -11,7 +11,7 @@
         <div
             class="flex flex-col sm:flex-row items-center justify-between gap-4 bg-white rounded-xl shadow-sm p-3 mb-6 border border-gray-200">
             <h2 class="text-xl font-black text-gray-800">
-                <span class="text-[#0B628D]">Crear descripción de cantidad</span>
+                <span class="text-[#0B628D]">Crear unidad de cantidad</span>
             </h2>
             <div class="flex space-x-2">
                 <a href="{{ route('quantity_descriptions.index') }}"

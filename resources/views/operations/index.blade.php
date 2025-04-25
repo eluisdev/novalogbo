@@ -12,7 +12,7 @@
             class="flex flex-col sm:flex-row items-center justify-between gap-4 bg-white rounded-xl shadow-sm p-3 mb-6 border border-gray-200">
             <div class="flex sm:flex-row flex-col items-center gap-6">
                 <h2 class="text-xl font-black text-gray-800">
-                    <span class="text-[#0B628D]">Cotizaciones</span>
+                    <span class="text-[#0B628D]">Operaciones</span>
                 </h2>
 
                 <div class="relative">
@@ -29,19 +29,13 @@
             </div>
 
             <div class="flex sm:flex-row flex-col items-center gap-6 max-sm:justify-center">
-                <div class="flex items-center">
-                    <input id="filterPending" type="checkbox"
-                        class="h-4 w-4 text-[#0B628D] focus:ring-[#0B628D] border-gray-300 rounded">
-                    <label for="filterPending" class="ml-2 text-sm text-gray-700">Mostrar solo pendientes</label>
-                </div>
-
-                <a href="{{ route('quotations.create') }}"
+                <a href="{{ route('operations.previewCreate') }}"
                     class="flex items-center justify-center px-4 py-2 bg-[#0B628D] hover:bg-[#19262c] text-white text-sm font-medium rounded-lg transition-colors duration-200 shadow-sm">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24"
                         stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
                     </svg>
-                    Crear cotización
+                    Crear operacion
                 </a>
             </div>
         </div>
@@ -81,47 +75,47 @@
                             </th>
                         </tr>
                     </thead>
-                    <tbody id="quotationsTableBody" class="bg-white divide-y divide-gray-200">
-                        @if (count($quotations) === 0)
+                    {{-- TODO: Crear buscador de operaciones --}}
+                    <tbody id="operationsTableBody" class="bg-white divide-y divide-gray-200">
+                        @if (count($operations) === 0)
                             <tr>
                                 <td colspan="7" class="px-6 py-4 text-center text-sm text-gray-500">
-                                    No hay cotizaciones registradas
+                                    No hay operaciones registradas.
                                 </td>
                             </tr>
                         @else
-                            @foreach ($quotations as $quotation)
-                                <tr class="quotation-row hover:bg-gray-50 transition-colors duration-150"
-                                    data-customer="{{ strtolower($quotation->customer->name) }}"
-                                    data-ci="{{ strtolower($quotation->customer->NIT) }}"
-                                    data-reference="{{ strtolower($quotation->reference_number) }}"
-                                    data-currency="{{ strtolower($quotation->currency) }}"
-                                    data-amount="{{ strtolower($quotation->amount) }}"
-                                    data-status="{{ strtolower($quotation->status) }}">
+                            @foreach ($operations as $operation)
+                                <tr class="operation-row hover:bg-gray-50 transition-colors duration-150"
+                                    data-customer="{{ strtolower($operation->customer) }}"
+                                    data-ci="{{ strtolower($operation->customer->NIT) }}"
+                                    data-reference="{{ strtolower($operation->reference_number) }}"
+                                    data-currency="{{ strtolower($operation->currency) }}"
+                                    data-amount="{{ strtolower($operation->amount) }}"
+                                    data-status="{{ strtolower($operation->status) }}">
                                     <td class="px-6 py-4 whitespace-nowrap">
-                                        <div class="text-sm font-medium text-gray-900">{{ $quotation->customer->name }}
+                                        <div class="text-sm font-medium text-gray-900">{{ $operation->customer }}
                                         </div>
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap">
-                                        <div class="text-sm text-gray-900">{{ $quotation->customer->NIT }}</div>
+                                        <div class="text-sm text-gray-900">{{ $operation->customer->NIT }}</div>
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap">
-                                        <div class="text-sm text-gray-900">{{ $quotation->reference_number }}</div>
+                                        <div class="text-sm text-gray-900">{{ $operation->reference_number }}</div>
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap">
-                                        <div class="text-sm text-gray-900">{{ $quotation->amount }}
-                                            {{ $quotation->currency }}</div>
+                                        <div class="text-sm text-gray-900">{{ $operation->amount }}
+                                            {{ $operation->currency }}</div>
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap">
-                                        <div class="text-sm text-gray-900">{{ $quotation->delivery_date }}</div>
+                                        <div class="text-sm text-gray-900">{{ $operation->delivery_date }}</div>
                                     </td>
-                                    {{-- TODO: Revisar estados de cotizaciones --}}
                                     <td class="px-6 py-4 whitespace-nowrap">
-                                        @if (strtolower($quotation->status) == 'pending')
+                                        @if (strtolower($operation->status) == 'pending')
                                             <div
                                                 class="text-sm text-white bg-red-500 rounded-full px-3 py-1 inline-flex items-center justify-center">
                                                 <span class="mr-1 font-bold">•</span> Pendiente de respuesta
                                             </div>
-                                        @elseif (strtolower($quotation->status) == 'approved')
+                                        @elseif (strtolower($operation->status) == 'approved')
                                             <div
                                                 class="text-sm text-white bg-green-500 rounded-full px-3 py-1 inline-flex items-center justify-center">
                                                 <span class="mr-1 font-bold">•</span> Confirmada
@@ -135,7 +129,7 @@
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                         <div class="flex justify-center space-x-2">
-                                            <a href="{{ route('quotations.show', $quotation->id) }}"
+                                            <a href="{{ route('operations.show', $operation->id) }}"
                                                 class="text-blue-600 hover:text-blue-900 p-1 rounded-full hover:bg-blue-50 transition-colors duration-200"
                                                 title="Ver detalle">
                                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none"
@@ -146,7 +140,7 @@
                                                         d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
                                                 </svg>
                                             </a>
-                                            <a href="{{ route('quotations.edit', $quotation->id) }}"
+                                            <a href="{{ route('operations.edit', $operation->id) }}"
                                                 class="text-yellow-600 hover:text-yellow-900 p-1 rounded-full hover:bg-yellow-50 transition-colors duration-200"
                                                 title="Editar">
                                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none"
@@ -156,7 +150,7 @@
                                                         d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                                                 </svg>
                                             </a>
-                                            <x-delete-button route="quotations.destroy" :id="$quotation->id" />
+                                            <x-delete-button route="operations.destroy" :id="$operation->id" />
                                         </div>
                                     </td>
                                 </tr>
@@ -172,17 +166,17 @@
         document.addEventListener('DOMContentLoaded', function() {
             const searchInput = document.getElementById('searchInput');
             const filterPendingCheckbox = document.getElementById('filterPending');
-            const quotationRows = document.querySelectorAll('.quotation-row');
+            const operationRows = document.querySelectorAll('.operation-row');
             const noResultsRow = document.createElement('tr');
             noResultsRow.innerHTML =
                 '<td colspan="7" class="px-6 py-4 text-center text-sm text-gray-500">No se encontraron resultados</td>';
 
-            function filterQuotations() {
+            function filteroperations() {
                 const searchTerm = searchInput.value.toLowerCase();
                 const showOnlyPending = filterPendingCheckbox.checked;
                 let hasResults = false;
 
-                quotationRows.forEach(row => {
+                operationRows.forEach(row => {
                     const customer = row.getAttribute('data-customer');
                     const ci = row.getAttribute('data-ci');
                     const reference = row.getAttribute('data-reference');
@@ -207,10 +201,10 @@
                     }
                 });
 
-                const tableBody = document.getElementById('quotationsTableBody');
+                const tableBody = document.getElementById('operationsTableBody');
                 const existingNoResults = tableBody.querySelector('.no-results');
 
-                if (!hasResults && quotationRows.length > 0) {
+                if (!hasResults && operationRows.length > 0) {
                     if (!existingNoResults) {
                         noResultsRow.classList.add('no-results');
                         tableBody.appendChild(noResultsRow);
@@ -222,8 +216,8 @@
                 }
             }
 
-            searchInput.addEventListener('input', filterQuotations);
-            filterPendingCheckbox.addEventListener('change', filterQuotations);
+            searchInput.addEventListener('input', filteroperations);
+            filterPendingCheckbox.addEventListener('change', filteroperations);
         });
     </script>
 @endsection

@@ -10,38 +10,18 @@
     <div class="w-full mx-auto px-4 sm:px-6 lg:px-8">
         <div
             class="flex flex-col sm:flex-row items-center justify-between gap-4 bg-white rounded-xl shadow-sm p-3 mb-6 border border-gray-200">
-            <div class="flex sm:flex-row flex-col items-center gap-6">
-                <h2 class="text-xl font-black text-gray-800">
-                    <span class="text-[#0B628D]">Cotizaciones</span>
-                </h2>
-
-                <div class="relative">
-                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                        <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
-                        </svg>
-                    </div>
-                    <input type="text" id="searchInput"
-                        class="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:ring-[#0B628D] focus:border-[#0B628D] sm:text-sm"
-                        placeholder="Buscar cotización...">
-                </div>
-            </div>
-
-            <div class="flex sm:flex-row flex-col items-center gap-6 max-sm:justify-center">
-                <div class="flex items-center">
-                    <input id="filterPending" type="checkbox"
-                        class="h-4 w-4 text-[#0B628D] focus:ring-[#0B628D] border-gray-300 rounded">
-                    <label for="filterPending" class="ml-2 text-sm text-gray-700">Mostrar solo pendientes</label>
-                </div>
-
-                <a href="{{ route('quotations.create') }}"
+            <h2 class="text-xl font-black text-gray-800">
+                <span class="text-[#0B628D]">Crear operacion</span>
+            </h2>
+            <div class="flex space-x-2">
+                <a href="{{ route('operations.index') }}"
                     class="flex items-center justify-center px-4 py-2 bg-[#0B628D] hover:bg-[#19262c] text-white text-sm font-medium rounded-lg transition-colors duration-200 shadow-sm">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24"
                         stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M10 19l-7-7m0 0l7-7m-7 7h18" />
                     </svg>
-                    Crear cotización
+                    Volver a la lista
                 </a>
             </div>
         </div>
@@ -135,8 +115,8 @@
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                         <div class="flex justify-center space-x-2">
-                                            <a href="{{ route('quotations.show', $quotation->id) }}"
-                                                class="text-blue-600 hover:text-blue-900 p-1 rounded-full hover:bg-blue-50 transition-colors duration-200"
+                                            <a href="{{ route('operations.showQuotation', $quotation->id) }}"
+                                                class="text-blue-600 hover:text-blue-900 p-1 rounded-full hover:bg-blue-50 transition-colors duration-200 my-auto"
                                                 title="Ver detalle">
                                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none"
                                                     viewBox="0 0 24 24" stroke="currentColor">
@@ -146,17 +126,11 @@
                                                         d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
                                                 </svg>
                                             </a>
-                                            <a href="{{ route('quotations.edit', $quotation->id) }}"
-                                                class="text-yellow-600 hover:text-yellow-900 p-1 rounded-full hover:bg-yellow-50 transition-colors duration-200"
-                                                title="Editar">
-                                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none"
-                                                    viewBox="0 0 24 24" stroke="currentColor">
-                                                    <path stroke-linecap="round" stroke-linejoin="round"
-                                                        stroke-width="1.5"
-                                                        d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                                                </svg>
+                                            <a href="{{ route('quotations.show', $quotation->id) }}"
+                                                class="text-white bg-blue-400 hover:bg-blue-500 p-1 rounded-full transition-colors duration-200"
+                                                title="Ver detalle">
+                                                <p>Crear operacion</p>
                                             </a>
-                                            <x-delete-button route="quotations.destroy" :id="$quotation->id" />
                                         </div>
                                     </td>
                                 </tr>
@@ -168,62 +142,5 @@
         </div>
     </div>
 
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            const searchInput = document.getElementById('searchInput');
-            const filterPendingCheckbox = document.getElementById('filterPending');
-            const quotationRows = document.querySelectorAll('.quotation-row');
-            const noResultsRow = document.createElement('tr');
-            noResultsRow.innerHTML =
-                '<td colspan="7" class="px-6 py-4 text-center text-sm text-gray-500">No se encontraron resultados</td>';
 
-            function filterQuotations() {
-                const searchTerm = searchInput.value.toLowerCase();
-                const showOnlyPending = filterPendingCheckbox.checked;
-                let hasResults = false;
-
-                quotationRows.forEach(row => {
-                    const customer = row.getAttribute('data-customer');
-                    const ci = row.getAttribute('data-ci');
-                    const reference = row.getAttribute('data-reference');
-                    const currency = row.getAttribute('data-currency');
-                    const amount = row.getAttribute('data-amount');
-                    const status = row.getAttribute('data-status');
-
-                    const statusMatch = !showOnlyPending || status === 'pending';
-
-                    const searchMatch = searchTerm === '' ||
-                        customer.includes(searchTerm) ||
-                        ci.includes(searchTerm) ||
-                        reference.includes(searchTerm) ||
-                        currency.includes(searchTerm) ||
-                        amount.includes(searchTerm);
-
-                    if (statusMatch && searchMatch) {
-                        row.style.display = '';
-                        hasResults = true;
-                    } else {
-                        row.style.display = 'none';
-                    }
-                });
-
-                const tableBody = document.getElementById('quotationsTableBody');
-                const existingNoResults = tableBody.querySelector('.no-results');
-
-                if (!hasResults && quotationRows.length > 0) {
-                    if (!existingNoResults) {
-                        noResultsRow.classList.add('no-results');
-                        tableBody.appendChild(noResultsRow);
-                    }
-                } else {
-                    if (existingNoResults) {
-                        tableBody.removeChild(existingNoResults);
-                    }
-                }
-            }
-
-            searchInput.addEventListener('input', filterQuotations);
-            filterPendingCheckbox.addEventListener('change', filterQuotations);
-        });
-    </script>
 @endsection

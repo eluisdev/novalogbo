@@ -17,6 +17,7 @@ use App\Http\Controllers\ContinentController;
 use App\Http\Controllers\QuotationController;
 use App\Http\Controllers\BillingNoteController;
 use App\Http\Controllers\ExchangeRateController;
+use App\Http\Controllers\OperationsController;
 use App\Http\Controllers\UserProfileController;
 use App\Http\Controllers\PasswordChangeController;
 use App\Http\Controllers\QuantityDescriptionController;
@@ -252,6 +253,13 @@ Route::middleware(['auth', 'role:admin,operator'])->group(function () {
         Route::put('/{id}', 'update')->name('update');
         Route::delete('/{id}', 'destroy')->name('destroy');
         Route::patch('toggle-status/{id}', 'toggleStatus')->name('toggleStatus');
+    });
+
+    Route::prefix('operations')->name('operations.')->controller(OperationsController::class)->group(function () {
+        Route::get('/', 'index')->name('index');
+        Route::get('/preview-create', 'previewCreate')->name('previewCreate');
+        Route::get('/create/{id}', 'create')->name('create');
+        Route::get('/show-quotation/{id}', 'showQuotation')->name('showQuotation');
     });
 });
 

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Product;
 use App\Models\Incoterm;
 use Illuminate\Http\Request;
 
@@ -43,7 +44,7 @@ class IncotermController extends Controller
     public function show($id)
     {
         $incoterm = Incoterm::findOrFail($id);
-        if (!$incoterm) {
+        if(!$incoterm) {
             return redirect()->route('incoterms.index')->with('error', 'Incoterm no encontrado.');
         }
         return view('admin.incoterms.show', compact('incoterm'));
@@ -52,7 +53,7 @@ class IncotermController extends Controller
     public function edit($id)
     {
         $incoterm = Incoterm::findOrFail($id);
-        if (!$incoterm) {
+        if(!$incoterm) {
             return redirect()->route('incoterms.index')->with('error', 'Incoterm no encontrado.');
         }
         return view('admin.incoterms.edit', compact('incoterm'));
@@ -82,11 +83,14 @@ class IncotermController extends Controller
     public function destroy($id)
     {
         $incoterm = Incoterm::findOrFail($id);
-        if (!$incoterm) {
+        if(!$incoterm) {
             return redirect()->route('incoterms.index')->with('error', 'Incoterm no encontrado.');
         }
-        //TODO: Arreglar clave foranea con quatiation al eliminar un incoterm
-        $incoterm->delete(); 
+        $product = Product::with('incoterm')->where('incoterm_id', $id)->first();
+        if($product){
+            return redirect()->route('incoterms.index')->with('error', 'Existe un producto asociado a este Incoterm');
+        }
+        $incoterm->delete();
         return redirect()->route('incoterms.index')->with('success', 'Incoterm eliminado exitosamente.');
     }
     public function toggleStatus($id)

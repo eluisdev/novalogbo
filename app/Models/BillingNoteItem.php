@@ -9,14 +9,15 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class BillingNoteItem extends Model
 {
-    use HasFactory, Auditable;
+    use HasFactory;
 
     protected $fillable = [
         'billing_note_id',
-        'cost_id',
+        'type',
         'description',
         'amount',
-        'currency'
+        'currency',
+        'exchange_rate',
     ];
 
     public function billingNote(): BelongsTo
@@ -24,8 +25,5 @@ class BillingNoteItem extends Model
         return $this->belongsTo(BillingNote::class);
     }
 
-    public function cost(): BelongsTo
-    {
-        return $this->belongsTo(Cost::class);
-    }
+
 }

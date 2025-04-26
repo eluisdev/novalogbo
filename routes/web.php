@@ -7,6 +7,7 @@ use App\Http\Controllers\CityController;
 use App\Http\Controllers\CostController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\AuditController;
+use App\Http\Controllers\ReportController;
 use App\Http\Controllers\CountryController;
 use App\Http\Controllers\InvoiceController;
 use App\Http\Controllers\ServiceController;
@@ -14,11 +15,12 @@ use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\IncotermController;
 use App\Http\Controllers\OperatorController;
 use App\Http\Controllers\ContinentController;
+use App\Http\Controllers\OperationController;
 use App\Http\Controllers\QuotationController;
 use App\Http\Controllers\BillingNoteController;
-use App\Http\Controllers\ExchangeRateController;
-use App\Http\Controllers\OperationsController;
+use App\Http\Controllers\CommercialController;
 use App\Http\Controllers\UserProfileController;
+use App\Http\Controllers\ExchangeRateController;
 use App\Http\Controllers\PasswordChangeController;
 use App\Http\Controllers\QuantityDescriptionController;
 
@@ -30,10 +32,13 @@ use App\Http\Controllers\QuantityDescriptionController;
 // Route::get('/', function () {
 //     return redirect('https://www.novalogisticsrl.com/');
 // });
-
 Route::get('/', function () {
-    return view('welcome');
+    return redirect('/auth/login');
 });
+
+// Route::get('/', function () {
+//     return view('welcome');
+// });
 
 /*
 |--------------------------------------------------------------------------
@@ -192,57 +197,6 @@ Route::middleware(['auth', 'role:admin'])->group(function () {
         Route::delete('/{id}', 'destroy')->name('destroy');
         Route::patch('toggle-status/{id}', 'toggleStatus')->name('toggleStatus');
     });
-});
-
-
-/*
-|--------------------------------------------------------------------------
-| Rutas para Operadores y Administradores
-|--------------------------------------------------------------------------
-*/
-Route::middleware(['auth', 'role:admin,operator'])->group(function () {
-    // Gestión de clientes
-    Route::prefix('customers')->name('customers.')->controller(CustomerController::class)->group(function () {
-        Route::get('/', 'index')->name('index');
-        Route::post('/', 'store')->name('store');
-        Route::get('/create', 'create')->name('create');
-        Route::get('/edit/{NIT}', 'edit')->name('edit');
-        Route::get('/{NIT}', 'show')->name('show');
-        Route::put('/{NIT}', 'update')->name('update');
-        Route::delete('/{NIT}', 'destroy')->name('destroy');
-
-        // POR VERSE
-    });
-
-
-    // Gestión de cotizaciones
-    Route::prefix('quotations')->name('quotations.')->controller(QuotationController::class)->group(function () {
-        Route::get('/', 'index')->name('index');
-        Route::post('/', 'store')->name('store');
-        Route::post('/storeCustomer', 'storeCustomer')->name('storeCustomer');
-        Route::post('/storeQuantityDescripcion', 'storeQuantityDescripcion')->name('storeQuantityDescripcion');
-        Route::get('/searchLocation', 'searchLocation')->name('searchLocation');
-        Route::get('/searchCustomer', 'searchCustomer')->name('searchCustomer');
-        Route::get('/searchQuantityDescription', 'searchQuantityDescription')->name('searchQuantityDescription');
-        Route::post('/billingNoteWord', [BillingNoteController::class, 'download'])->name('billing-note.download');
-        Route::post('/invoiceWord', [InvoiceController::class, 'download'])->name('invoice.download');
-        Route::post('/generateInternalQuotation', [QuotationController::class, 'generateExcel'])->name('generate.excel.download');
-        Route::post('/generateQuotation', 'generarCotizacion')->name('generate.download');
-
-        Route::get('/create', 'create')->name('create');
-        Route::get('/{id}', 'show')->name('show');
-        Route::get('/edit/{id}', 'edit')->name('edit');
-        Route::put('/{id}', 'update')->name('update');
-        Route::delete('/{id}', 'destroy')->name('destroy');
-        Route::patch('updateStatus/{id}', 'updateStatus')->name('updateStatus');
-        Route::post('/customers/ajax-store', 'storeCustomer')
-            ->name('customers.ajax-store');
-        // PDF
-        //Route::get('/pdf/{id}', 'generatePDF')->name('pdf');
-
-    });
-
-    // Gestión de descripciones de cantidad
 
     Route::prefix('quantity_descriptions')->name('quantity_descriptions.')->controller(QuantityDescriptionController::class)->group(function () {
         Route::get('/', 'index')->name('index');
@@ -255,14 +209,99 @@ Route::middleware(['auth', 'role:admin,operator'])->group(function () {
         Route::patch('toggle-status/{id}', 'toggleStatus')->name('toggleStatus');
     });
 
-    Route::prefix('operations')->name('operations.')->controller(OperationsController::class)->group(function () {
+    Route::prefix('reports')->name('reports.')->controller(ReportController::class)->group(function () {
         Route::get('/', 'index')->name('index');
-        Route::get('/preview-create', 'previewCreate')->name('previewCreate');
-        Route::get('/create/{id}', 'create')->name('create');
-        Route::get('/show-quotation/{id}', 'showQuotation')->name('showQuotation');
+        Route::get('/create', 'create')->name('create');
     });
 });
 
+
+/*
+|--------------------------------------------------------------------------
+| Rutas para Comerciales, Operadores y Administradores
+|--------------------------------------------------------------------------
+*/
+Route::middleware(['auth', 'role:admin,operator,commercial'])->group(function () {
+    // Gestión de clientes
+    Route::prefix('customers')->name('customers.')->controller(CustomerController::class)->group(function () {
+        Route::get('/', 'index')->name('index');
+        Route::post('/', 'store')->name('store');
+        Route::get('/create', 'create')->name('create');
+        Route::get('/edit/{NIT}', 'edit')->name('edit');
+        Route::get('/{NIT}', 'show')->name('show');
+        Route::put('/{NIT}', 'update')->name('update');
+        Route::delete('/{NIT}', 'destroy')->name('destroy');
+    });
+
+    // Gestión de cotizaciones
+    Route::prefix('quotations')->name('quotations.')->controller(QuotationController::class)->group(function () {
+        Route::get('/', 'index')->name('index');
+        Route::post('/', 'store')->name('store');
+        Route::post('/storeCustomer', 'storeCustomer')->name('storeCustomer');
+        Route::post('/storeQuantityDescripcion', 'storeQuantityDescripcion')->name('storeQuantityDescripcion');
+        Route::get('/searchLocation', 'searchLocation')->name('searchLocation');
+        Route::get('/searchCustomer', 'searchCustomer')->name('searchCustomer');
+        Route::get('/searchQuantityDescription', 'searchQuantityDescription')->name('searchQuantityDescription');
+
+        // TODO: ELIMINAR ESTO POR QUE NO PERTENECE A COMERCIAL
+        Route::post('/billingNoteWord', [BillingNoteController::class, 'download'])->name('billing-note.download');
+        Route::post('/invoiceWord', [InvoiceController::class, 'download'])->name('invoice.download');
+
+
+        Route::post('/generateInternalQuotation', 'generateExcel')->name('generate.excel.download');
+        Route::post('/generateQuotation', 'generarCotizacion')->name('generate.download');
+
+        Route::get('/create', 'create')->name('create');
+        Route::get('/{id}', 'show')->name('show');
+        Route::get('/edit/{id}', 'edit')->name('edit');
+        Route::put('/{id}', 'update')->name('update');
+        Route::delete('/{id}', 'destroy')->name('destroy');
+        Route::patch('updateStatus/{id}', 'updateStatus')->name('updateStatus');
+        Route::post('/customers/ajax-store', 'storeCustomer')
+            ->name('customers.ajax-store');
+    });
+});
+
+/*
+|--------------------------------------------------------------------------
+| Rutas para Operadores y Administradores
+|--------------------------------------------------------------------------
+*/
+Route::middleware(['auth', 'role:admin,operator'])->group(function () {
+
+    // Gestión de facturas
+    // Route::prefix('invoices')->name('invoices.')->controller(InvoiceController::class)->group(function () {
+    //     Route::get('/', 'index')->name('index');
+    //     Route::get('/create', 'create')->name('create');
+    //     Route::post('/', 'store')->name('store');
+    //     Route::post('/invoiceWord', 'download')->name('invoice.download');
+    //     Route::get('/{id}', 'show')->name('show');
+    //     Route::get('/edit/{id}', 'edit')->name('edit');
+    //     Route::put('/{id}', 'update')->name('update');
+    //     Route::delete('/{id}', 'destroy')->name('destroy');
+    //     Route::patch('toggle-status/{id}', 'toggleStatus')->name('toggleStatus');
+    // });
+
+    Route::prefix('operations')->group(function () {
+        Route::get('/', [OperationController::class, 'index'])->name('operations.index');
+        Route::get('/create', [OperationController::class, 'create'])->name('operations.create');
+        Route::get('/searchQuotations', [OperationController::class, 'searchQuotations'])->name('operations.searchQuotations');
+        Route::get('/show-quotation/{id}', [OperationController::class, 'showQuotation'])->name('operations.showQuotation');
+        Route::get('/create/quotation/{id}', [OperationController::class, 'showCreateFromQuotation'])
+            ->name('operations.store-from-quotation');
+        Route::post('/create/quotation/{id}', [OperationController::class, 'storeFromQuotation'])
+            ->name('operations.store-from-quotation');
+
+        // Route::get('/{id}', [OperationController::class, 'show'])->name('operations.show');
+        Route::get('/show/{id}', [OperationController::class, 'showPrueba'])->name('operations.showPrueba');
+        // Route::get('/edit/{id}', [OperationController::class, 'edit'])->name('operations.edit');
+        Route::get('/edit/{id}', [OperationController::class, 'editPrueba'])->name('operations.editPrueba');
+        Route::delete('/{id}', [OperationController::class, 'destroy'])->name('operations.destroy');
+        Route::post('/toggleStatus/{id}', [OperationController::class, 'toggleStatus'])
+            ->name('operations.toggle-status');
+        Route::post('/download/{id}', [OperationController::class, 'download'])->name('operations.download');
+    });
+});
 /*
 |--------------------------------------------------------------------------
 | Rutas para Operadores
@@ -271,4 +310,15 @@ Route::middleware(['auth', 'role:admin,operator'])->group(function () {
 Route::middleware(['auth', 'role:operator'])->group(function () {
     // Dashboard
     Route::get("/operator", [OperatorController::class, "index"])->name("operator.dashboard");
+});
+
+/*
+|--------------------------------------------------------------------------
+| Rutas para Comerciales
+|--------------------------------------------------------------------------
+*/
+
+Route::middleware(['auth', 'role:commercial'])->group(function () {
+    // Dashboard
+    Route::get("/commercial", [CommercialController::class, "index"])->name("commercial.dashboard");
 });

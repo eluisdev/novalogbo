@@ -11,6 +11,18 @@
     $defaultQuantityDescriptionId = $product->quantity_description_id ?? '1';
     $defaultVolume = $product->volume ?? '';
     $defaultVolumeUnit = $product->volume_unit ?? 'kg_vol';
+    $defaultIsContainer = ($useOld
+            ? old("products.{$index}.is_container", 1) == 1
+            : isset($product) && property_exists($product, 'is_container'))
+        ? $product->is_container
+        : true;
+
+    // Para evitar errores con cantidad por defecto
+    if ($useOld) {
+        $quantityParts = explode(' x ', old('products.' . $index . '.quantity', '1 x 40'));
+    } else {
+        $quantityParts = explode(' x ', $defaultQuantity);
+    }
 
     $incoterms = isset($quotation_data) ? $quotation_data['formSelects']['incoterms'] : $incoterms;
 
@@ -144,7 +156,7 @@
         </div>
 
 
-        <div class="flex gap-2 md:flex-row flex-col max-sm:mx-auto">
+        {{-- <div class="flex gap-2 md:flex-row flex-col max-sm:mx-auto">
             <!-- Tipo de carga -->
             <div class="mr-4">
                 <label class="block text-sm font-medium text-gray-700">Tipo de carga - cantidad *</label>
@@ -153,8 +165,8 @@
                         <input type="radio" name="products[{{ $index }}][is_container]" value="1"
                             class="product-type-radio" data-index="{{ $index }}{{ $uniqueSuffix }}"
                             @if ($useOld) {{ old("products.{$index}.is_container", isset($product) && property_exists($product, 'is_container') ? ($product->is_container ? '1' : '0') : '1') == '1' ? 'checked' : '' }}
-                   @else
-                       {{ isset($product) && property_exists($product, 'is_container') ? ($product->is_container ? 'checked' : '') : 'checked' }} @endif>
+                            @else
+                            {{ isset($product) && property_exists($product, 'is_container') ? ($product->is_container ? 'checked' : '') : 'checked' }} @endif>
                         <span class="ml-1">Contenedor</span>
                     </label>
                     <label class="inline-flex items-center mt-2.5">
@@ -237,7 +249,93 @@
             <input type="hidden" name="products[{{ $index }}][quantity]"
                 id="real_quantity_{{ $index }}{{ $uniqueSuffix }}"
                 value="{{ $useOld ? old('products.' . $index . '.quantity') : $defaultQuantity }}">
+        </div> --}}
+        <div class="flex gap-2 md:flex-row flex-col max-sm:mx-auto">
+            <!-- Tipo de carga -->
+            <div class="mr-4">
+                <label class="block text-sm font-medium text-gray-700">Tipo de carga - cantidad *</label>
+                <div class="flex items-center gap-2">
+                    <label class="inline-flex items-center mt-2.5">
+                        <input type="radio" name="products[{{ $index }}][is_container]" value="1"
+                            class="product-type-radio" data-index="{{ $index }}{{ $uniqueSuffix }}"
+                            {{ $defaultIsContainer ? 'checked' : '' }}>
+                        <span class="ml-1">Contenedor</span>
+                    </label>
+                    <label class="inline-flex items-center mt-2.5">
+                        <input type="radio" name="products[{{ $index }}][is_container]" value="0"
+                            class="product-type-radio" data-index="{{ $index }}{{ $uniqueSuffix }}"
+                            {{ !$defaultIsContainer ? 'checked' : '' }}>
+                        <span class="ml-1">Carga suelta</span>
+                    </label>
+                </div>
+            </div>
+
+            <!-- Campos para Contenedor -->
+            <div id="container_fields_{{ $index }}{{ $uniqueSuffix }}"
+                class="{{ $defaultIsContainer ? '' : 'hidden' }}">
+                <div class="flex items-center gap-2 md:mt-5.5 justify-center">
+                    <input type="number" id="quantity_part1_{{ $index }}{{ $uniqueSuffix }}"
+                        value="{{ $quantityParts[0] ?? 1 }}"
+                        class="w-16 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 quantity-input"
+                        data-index="{{ $index }}{{ $uniqueSuffix }}" min="1">
+
+                    <span class="text-gray-600">X</span>
+
+                    <input type="number" id="quantity_part2_{{ $index }}{{ $uniqueSuffix }}"
+                        value="{{ $quantityParts[1] ?? 40 }}"
+                        class="w-16 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 quantity-input"
+                        data-index="{{ $index }}{{ $uniqueSuffix }}" min="1">
+                </div>
+            </div>
+
+            <!-- Campos para Carga suelta -->
+            <div id="loose_fields_{{ $index }}{{ $uniqueSuffix }}"
+                class="{{ !$defaultIsContainer ? '' : 'hidden' }}">
+                <div class="flex gap-2 items-center md:mt-5.5 sm:flex-row flex-col">
+                    <input type="number" id="loose_quantity_{{ $index }}{{ $uniqueSuffix }}"
+                        value="{{ $useOld ? old('products.' . $index . '.loose_quantity', 1) : (isset($product) && property_exists($product, 'loose_quantity') ? $product->loose_quantity : 1) }}"
+                        class="w-16 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 quantity-input"
+                        min="1" data-index="{{ $index }}{{ $uniqueSuffix }}">
+
+                    <select id="quantity_description_id_{{ $index }}{{ $uniqueSuffix }}"
+                        name="products[{{ $index }}][quantity_description_id]"
+                        class="quantity-description-select w-full border border-gray-300 rounded py-2 quantity-input"
+                        data-index="{{ $index }}{{ $uniqueSuffix }}">
+                        <option value="">Seleccionar</option>
+                        @if ($useOld)
+                            @php
+                                $oldQuantityDescriptionId = old("products.{$index}.quantity_description_id", '');
+                                $selectedDescription = $oldQuantityDescriptionId
+                                    ? $quantity_descriptions->firstWhere('id', $oldQuantityDescriptionId)
+                                    : null;
+                            @endphp
+                            @if ($selectedDescription)
+                                <option value="{{ $selectedDescription->id }}" selected>
+                                    {{ $selectedDescription->name }}
+                                </option>
+                            @endif
+                        @elseif(isset($product) && isset($product->quantity_description_id))
+                            @php
+                                $selectedDescription = $quantity_descriptions->firstWhere(
+                                    'id',
+                                    $product->quantity_description_id,
+                                );
+                            @endphp
+                            @if ($selectedDescription)
+                                <option value="{{ $selectedDescription->id }}" selected>
+                                    {{ $selectedDescription->name }}
+                                </option>
+                            @endif
+                        @endif
+                    </select>
+                </div>
+            </div>
+
+            <input type="hidden" name="products[{{ $index }}][quantity]"
+                id="real_quantity_{{ $index }}{{ $uniqueSuffix }}"
+                value="{{ $useOld ? old('products.' . $index . '.quantity') : $defaultQuantity }}">
         </div>
+
     </div>
 
 
@@ -285,14 +383,16 @@
         });
 
         document.querySelectorAll('.product-type-radio').forEach(radio => {
+            const index = radio.dataset.index;
+
             radio.addEventListener('change', function() {
-                const index = this.dataset.index;
                 toggleFields(index, this.value);
                 updateRealQuantity(index);
             });
 
+            // Mostrar campos adecuados en carga inicial
             if (radio.checked) {
-                toggleFields(radio.dataset.index, radio.value);
+                toggleFields(index, radio.value);
             }
         });
     });
@@ -305,6 +405,8 @@
     function toggleFields(index, isContainer) {
         const container = document.getElementById('container_fields_' + index);
         const loose = document.getElementById('loose_fields_' + index);
+
+        if (!container || !loose) return;
 
         if (isContainer === '1') {
             container.classList.remove('hidden');

@@ -2,7 +2,7 @@
     <div class="flex justify-between items-center">
 
         <div class="flex items-center space-x-4">
-            <a href="{{ $userRole === 'Administrador' ? route('admin.dashboard') : route('operator.dashboard') }}" class="flex items-center">
+            <a href="{{ $userRole === 'Administrador' ? route('admin.dashboard') : ($userRole === 'Operador' ? route('operator.dashboard') : route('commercial.dashboard'))  }}" class="flex items-center">
                 <img src="{{ asset($logoPath) }}" alt="Logo" class="h-10 w-auto transition-transform hover:scale-105">
             </a>
             <span class="hidden md:inline-block px-3 py-1 rounded-full text-xs font-semibold bg-amber-100 text-amber-800">

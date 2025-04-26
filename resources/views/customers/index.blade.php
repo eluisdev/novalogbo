@@ -1,5 +1,7 @@
 @if (Auth::user()->role_id == '1')
     @php $layout = 'layouts.admin'; @endphp
+@elseif (Auth::user()->role_id == '2')
+    @php $layout = 'layouts.commercial'; @endphp
 @else
     @php $layout = 'layouts.operator'; @endphp
 @endif

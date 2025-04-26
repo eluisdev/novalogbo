@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use Carbon\Carbon;
+use App\Models\Customer;
 use App\Models\Quotation;
 use App\Models\BillingNote;
 use App\Models\ExchangeRate;
@@ -13,11 +14,91 @@ use PhpOffice\PhpWord\IOFactory;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 use PhpOffice\PhpWord\Style\Language;
-use PhpOffice\PhpWord\Shared\Converter;
 use App\Helpers\NumberToWordsConverter;
+use PhpOffice\PhpWord\Shared\Converter;
 
 class BillingNoteController extends Controller
 {
+    public function index()
+    {
+        $billingNotes = BillingNote::with(['quotation.customer', 'user'])
+            ->orderBy('created_at', 'desc')
+            ->paginate(10);
+
+        return view('operations.index', compact('billingNotes'));
+    }
+
+    public function create()
+    {
+        $customers = Customer::orderBy('name')->get();
+        return view('operations.create', compact('customers'));
+    }
+
+    public function searchQuotations(Request $request)
+    {
+        $request->validate([
+            'search' => 'nullable|string|max:255',
+            'customer_nit' => 'nullable|exists:customers,NIT',
+            'date_from' => 'nullable|date',
+            'date_to' => 'nullable|date|after_or_equal:date_from',
+        ]);
+
+        $query = Quotation::with(['customer', 'costDetails.cost'])
+            ->where('status', 'accepted');
+
+        if ($request->filled('search')) {
+            $query->where(function($q) use ($request) {
+                $q->where('reference_number', 'like', '%'.$request->search.'%')
+                  ->orWhere('reference_customer', 'like', '%'.$request->search.'%');
+            });
+        }
+
+        if ($request->filled('customer_nit')) {
+            $query->where('customer_nit', $request->customer_nit);
+        }
+
+        if ($request->filled('date_from')) {
+            $query->where('created_at', '>=', $request->date_from);
+        }
+
+        if ($request->filled('date_to')) {
+            $query->where('created_at', '<=', $request->date_to . ' 23:59:59');
+        }
+
+        $quotations = $query->orderBy('created_at', 'desc')
+            ->appends($request->query())->get();
+        dd(response()->json($quotations));
+        return response()->json($quotations);
+    }
+
+    public function edit($id)
+    {
+        $billingNote = BillingNote::with(['items.cost'])->findOrFail($id);
+        return view('operations.edit', compact('billingNote'));
+    }
+    public function show($id)
+    {
+        $billingNote = BillingNote::with(['items.cost'])->findOrFail($id);
+        return view('operations.show', compact('billingNote'));
+    }
+    public function destroy($id)
+    {
+        $billingNote = BillingNote::findOrFail($id);
+        $billingNote->delete();
+        return redirect()->route('operations.index')->with('success', 'Nota de cobranza eliminada con éxito.');
+    }
+    public function toggleStatus(Request $request, $id)
+    {
+        $request->validate([
+            'status' => 'required|string',
+        ]);
+        $billingNote = BillingNote::findOrFail($id);
+        $billingNote->status = $request->status;
+        $billingNote->save();
+
+        return redirect()->route('operations.index')->with('success', 'Estado de la nota de cobranza actualizado con éxito.');
+    }
+
     public function download(Request $request)
     {
         $request->validate(
@@ -87,13 +168,15 @@ class BillingNoteController extends Controller
                     'user_id' => Auth::id(),
                     'quotation_id' => $quotation->id,
                     'customer_nit' => $quotation->customer_nit,
+                    'status' => 'pending'
                 ]);
 
                 // Crear items de la nota
                 foreach ($quotation->costDetails as $costDetail) {
                     BillingNoteItem::create([
                         'billing_note_id' => $billingNote->id,
-                        'cost_id' => $costDetail->cost_id,
+                        // TODO: Cambiar a TYPE
+                        'type' => $costDetail->type ?? '',
                         'description' => $costDetail->cost->name,
                         'amount' => $costDetail->amount,
                         'currency' => $costDetail->currency
@@ -101,9 +184,6 @@ class BillingNoteController extends Controller
                 }
                 $billingNote = BillingNote::where('quotation_id', $quotationId)->first();
             }
-
-            // Actualizar estado de la cotización
-            $quotation->update(['status' => 'completed']);
 
             DB::commit();
 
@@ -144,7 +224,7 @@ class BillingNoteController extends Controller
         if ($visible) {
             $header = $section->addHeader();
             $header->addImage(
-                storage_path('app/templates/Herder.png'),
+                public_path('images/Header.png'),
                 [
                     'width' => $pageWidthPoints,
                     'height' => $headerHeightPoints,
@@ -158,7 +238,7 @@ class BillingNoteController extends Controller
             );
             $footer = $section->addFooter();
             $footer->addImage(
-                storage_path('app/templates/Footer.png'),
+                public_path('images/Footer.png'),
                 [
                     'width' => $pageWidthPoints,
                     'height' => $footerHeightPoints,
@@ -435,6 +515,19 @@ class BillingNoteController extends Controller
         $totalInWordsForeign = NumberToWordsConverter::convertToWords(
             $billingNote->total_amount,
             strtoupper($billingNote->currency == 'USD' ? 'DÓLARES AMERICANOS' : 'EUROS')
+        );
+
+        if ($billingNote->currency == 'USD') {
+            $currencyInWords = 'DÓLARES AMERICANOS';
+        } elseif ($billingNote->currency == 'EUR') {
+            $currencyInWords = 'EUROS';
+        } else {
+            $currencyInWords = strtoupper($billingNote->currency);
+        }
+
+        $totalInWordsForeign = NumberToWordsConverter::convertToWords(
+            $billingNote->total_amount,
+            $currencyInWords
         );
 
         $totalInWordsBs = NumberToWordsConverter::convertToWords(

@@ -25,27 +25,112 @@
         return $quotation['costDetails'][$index][$field] ?? $default;
     };
 
-    // Asignar directamente los costDetails que recibes
-    $costsDetails = $costsDetails ?? [];
+    $costsDetails = isset($quotation['costDetails'])
+        ? $quotation['costDetails']
+            ->map(function ($item, $index) use ($getFieldValue) {
+                $data = $item->toArray();
 
-    // Filtrar costos no agregados (si es necesario)
+                if (!isset($data['type'])) {
+                    $data['type'] = isset($data['cost_id']) ? 'cost' : 'charge';
+                }
+
+                $data['is_amount_parallel'] = (bool) $getFieldValue($index, 'is_amount_parallel', false);
+                $data['exchange_rate'] = $getFieldValue($index, 'exchange_rate');
+                $data['amount'] = $getFieldValue($index, 'amount', 0.0);
+                $data['amount_parallel'] = $getFieldValue($index, 'amount_parallel');
+                $data['concept'] = $getFieldValue($index, 'concept', $data['concept'] ?? '');
+
+                return $data;
+            })
+            ->all()
+        : [];
+
+    // Filtrar costos no agregados
     $availableCosts = collect($costs)
         ->filter(function ($cost) use ($costsDetails) {
             return !collect($costsDetails)->contains(function ($detail) use ($cost) {
-                return isset($detail['concept']) &&
-                    strtolower($detail['concept']) === strtolower($cost->name) &&
-                    $detail['type'] === 'cost';
+                return isset($detail['cost_id']) && $detail['cost_id'] == $cost->id;
             });
         })
         ->values();
-
 @endphp
 
 @extends($layout)
 
 @section('dashboard-option')
-
     <div class="w-full mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="w-full">
+
+            <div
+                class="flex flex-col sm:flex-row items-center justify-between gap-4 bg-white rounded-xl shadow-sm p-3 mb-6 border border-gray-200">
+                <h2 class="text-xl font-black text-gray-800">
+                    <span class="text-[#0B628D]">Crear número de servicio interno</span>
+                </h2>
+
+                <div class="flex sm:flex-row flex-col gap-2">
+                    <div class="flex space-x-2">
+                        <a href="{{ route('operations.create') }}"
+                            class="flex items-center justify-center px-4 py-2 bg-[#0B628D] hover:bg-[#19262c] text-white text-sm font-medium rounded-lg transition-colors duration-200 shadow-sm">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24"
+                                stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                            </svg>
+                            Volver a crear operacion
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white shadow-md rounded-lg overflow-hidden border border-gray-200 mb-6">
+                <div class="px-6 py-4 border-b border-gray-200">
+                    <h3 class="text-lg font-medium text-gray-900">Información General</h3>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 p-6">
+                    <!-- Columna 1: Moneda y Tipo de Cambio -->
+                    <div class="space-y-4">
+                        <div class="border-b border-gray-100 pb-2">
+                            <p class="text-sm font-medium text-gray-500">Moneda</p>
+                            <p class="text-lg font-semibold text-gray-900">{{ $quotation['currency'] }}</p>
+                        </div>
+                        <div class="border-b border-gray-100 pb-2">
+                            <p class="text-sm font-medium text-gray-500">Tipo de Cambio</p>
+                            <p class="text-lg font-semibold text-gray-900">{{ $quotation['exchange_rate'] }}
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Columna 2: Datos del Cliente -->
+                    <div class="space-y-4">
+                        <div class="border-b border-gray-100 pb-2">
+                            <p class="text-sm font-medium text-gray-500">NIT Cliente</p>
+                            <p class="text-lg font-semibold text-gray-900">{{ $quotation['customer_nit'] }}</p>
+                        </div>
+                        <div class="border-b border-gray-100 pb-2">
+                            <p class="text-sm font-medium text-gray-500">Nombre Cliente</p>
+                            <p class="text-lg font-semibold text-gray-900">{{ $quotation['customer']['name'] }}
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Columna 3: Contacto del Cliente -->
+                    <div class="space-y-4">
+                        <div class="border-b border-gray-100 pb-2">
+                            <p class="text-sm font-medium text-gray-500">Correo Cliente</p>
+                            <p class="text-lg font-semibold text-gray-900">
+                                {{ $quotation['customer']['email'] }}</p>
+                        </div>
+                        <div class="border-b border-gray-100 pb-2">
+                            <p class="text-sm font-medium text-gray-500">Teléfono Cliente</p>
+                            <p class="text-lg font-semibold text-gray-900">
+                                {{ $quotation['customer']['phone'] }}</p>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
 
         @if ($errors->any())
             <div class="bg-red-100 text-red-700 p-4 rounded-md mb-4">
@@ -57,7 +142,8 @@
             </div>
         @endif
 
-        <form method="POST" action="{{ route('operations.store-from-quotation', $quotation['id']) }}" class="flex flex-col">
+        <form method="POST" action="{{ route('operations.store-from-quotation', $quotation['id']) }}"
+            class="flex flex-col">
             @csrf
             <div class="p-6 border-b-2 border-blue-600 bg-white shadow-sm rounded-lg">
                 <div class="flex items-center mb-6 sm:flex-row flex-col">
@@ -111,11 +197,11 @@
                             @foreach ($costsDetails as $index => $detail)
                                 @if ($detail['type'] === 'cost')
                                     <div class="cost-item bg-white p-4 rounded-lg border border-gray-200 shadow-sm"
-                                        data-index="{{ $index }}" data-id="{{ $detail['id'] ?? '' }}">
+                                        data-index="{{ $index }}" data-cost-id="{{ $detail['cost_id'] ?? '' }}">
                                         <div class="flex justify-between items-center mb-3">
                                             <h4 class="font-medium text-gray-800">{{ $detail['concept'] }}</h4>
                                             <button type="button" class="text-red-500 hover:text-red-700 text-lg"
-                                                onclick="removeCostDetail('{{ $index }}', '{{ $detail['id'] ?? '' }}', 'cost')">&times;</button>
+                                                onclick="removeCostDetail('{{ $index }}', '{{ $detail['cost_id'] ?? '' }}', 'cost')">&times;</button>
                                         </div>
 
                                         <!-- Monto normal -->
@@ -141,7 +227,8 @@
                                                 name="costsDetails[{{ $index }}][is_amount_parallel]"
                                                 value="0">
                                             <input type="checkbox" id="parallel_{{ $index }}"
-                                                name="costsDetails[{{ $index }}][is_amount_parallel]" value="1"
+                                                name="costsDetails[{{ $index }}][is_amount_parallel]"
+                                                value="1"
                                                 class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded parallel-checkbox"
                                                 {{ $detail['is_amount_parallel'] ? 'checked' : '' }}>
                                             <label for="parallel_{{ $index }}"
@@ -191,9 +278,9 @@
                                             value="{{ $detail['concept'] }}">
                                         <input type="hidden" name="costsDetails[{{ $index }}][type]"
                                             value="cost">
-                                        @if (isset($detail['id']))
-                                            <input type="hidden" name="costsDetails[{{ $index }}][id]"
-                                                value="{{ $detail['id'] }}">
+                                        @if (isset($detail['cost_id']))
+                                            <input type="hidden" name="costsDetails[{{ $index }}][cost_id]"
+                                                value="{{ $detail['cost_id'] }}">
                                         @endif
                                     </div>
                                 @endif
@@ -223,22 +310,29 @@
                                         <div class="flex justify-between items-center mb-3">
                                             <h4 class="font-medium text-gray-800">{{ $detail['concept'] }}</h4>
                                             <button type="button" class="text-red-500 hover:text-red-700 text-lg"
-                                                onclick="removeCostDetail('{{ $index }}', '{{ $detail['id'] ?? '' }}', 'charge')">&times;</button>
+                                                onclick="removeCostDetail('{{ $index }}', '', 'charge')">&times;</button>
                                         </div>
 
                                         <!-- Monto normal -->
                                         <div class="relative rounded-md shadow-sm mb-3">
-                                            <p class="text-sm font-medium text-gray-500 mb-1">Costo</p>
                                             <input type="number" step="0.01" min="0"
                                                 name="costsDetails[{{ $index }}][amount]"
                                                 value="{{ $detail['amount'] }}"
                                                 class="block w-full py-2 px-4 border border-gray-300 rounded-md focus:ring-green-500 focus:border-green-500 @error("costsDetails.$index.amount") border-red-500 @enderror"
                                                 placeholder="0.00" required>
-                                            <div
-                                                class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none mt-5">
-                                                <span class="text-gray-500 sm:text-sm">{{ $quotation['currency'] }}</span>
-                                            </div>
                                             @error("costsDetails.$index.amount")
+                                                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                                            @enderror
+                                        </div>
+
+                                        <!-- Monto paralelo -->
+                                        <div class="relative rounded-md shadow-sm mb-3">
+                                            <input type="number" step="0.01" min="0"
+                                                name="costsDetails[{{ $index }}][amount_parallel]"
+                                                value="{{ $detail['amount_parallel'] }}"
+                                                class="block w-full py-2 px-4 border border-gray-300 rounded-md focus:ring-green-500 focus:border-green-500 @error("costsDetails.$index.amount_parallel") border-red-500 @enderror"
+                                                placeholder="0.00" required>
+                                            @error("costsDetails.$index.amount_parallel")
                                                 <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                                             @enderror
                                         </div>
@@ -248,47 +342,24 @@
                                             <input type="hidden"
                                                 name="costsDetails[{{ $index }}][is_amount_parallel]"
                                                 value="0">
-                                            <input type="checkbox" id="parallel_{{ $index }}"
+                                            <input type="checkbox" id="parallel_charge_{{ $index }}"
                                                 name="costsDetails[{{ $index }}][is_amount_parallel]"
                                                 value="1"
-                                                class="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded parallel-checkbox"
+                                                class="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded"
                                                 {{ $detail['is_amount_parallel'] ? 'checked' : '' }}>
-                                            <label for="parallel_{{ $index }}"
+                                            <label for="parallel_charge_{{ $index }}"
                                                 class="ml-2 block text-sm text-gray-700">
-                                                Usar costo paralelo
+                                                Usar monto paralelo
                                             </label>
-                                        </div>
-
-                                        <!-- Monto paralelo -->
-                                        <div class="relative rounded-md shadow-sm mb-3">
-                                            <p class="text-sm font-medium text-gray-500 mb-1">Costo paralelo</p>
-                                            <input type="number" step="0.01" min="0"
-                                                name="costsDetails[{{ $index }}][amount_parallel]"
-                                                value="{{ $detail['amount_parallel'] }}"
-                                                id="amount_parallel_{{ $index }}"
-                                                class="block w-full py-2 px-4 border border-gray-300 rounded-md focus:ring-green-500 focus:border-green-500 @error("costsDetails.$index.amount_parallel") border-red-500 @enderror"
-                                                placeholder="0.00" {{ $detail['is_amount_parallel'] ? 'required' : '' }}>
-                                            <div
-                                                class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none mt-5">
-                                                <span class="text-gray-500 sm:text-sm">{{ $quotation['currency'] }}</span>
-                                            </div>
-                                            @error("costsDetails.$index.amount_parallel")
-                                                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-                                            @enderror
                                         </div>
 
                                         <!-- Campo exchange_rate -->
                                         <div class="relative rounded-md shadow-sm">
-                                            <p class="text-sm font-medium text-gray-500 mb-1">Tasa actual</p>
                                             <input type="number" step="0.01" min="0"
                                                 name="costsDetails[{{ $index }}][exchange_rate]"
                                                 value="{{ number_format($detail['exchange_rate'], 2, '.', '') }}"
                                                 class="block w-full py-2 px-4 border border-gray-300 rounded-md focus:ring-green-500 focus:border-green-500 @error("costsDetails.$index.exchange_rate") border-red-500 @enderror"
                                                 placeholder="1.0000" required>
-                                            <div
-                                                class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none mt-5">
-                                                <span class="text-gray-500 sm:text-sm">Tasa</span>
-                                            </div>
                                             @error("costsDetails.$index.exchange_rate")
                                                 <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                                             @enderror
@@ -300,10 +371,6 @@
                                             value="{{ $detail['concept'] }}">
                                         <input type="hidden" name="costsDetails[{{ $index }}][type]"
                                             value="charge">
-                                        @if (isset($detail['id']))
-                                            <input type="hidden" name="costsDetails[{{ $index }}][id]"
-                                                value="{{ $detail['id'] }}">
-                                        @endif
                                     </div>
                                 @endif
                             @endforeach
@@ -314,7 +381,7 @@
             <div class="w-full bg-white p-5">
                 <button type="submit"
                     class="px-6 py-3 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
-                    Actualizar datos
+                    Generar número de servicio interno
                 </button>
             </div>
         </form>
@@ -341,7 +408,7 @@
                     el.className = 'cursor-pointer hover:bg-gray-100 px-4 py-2';
                     el.innerText = c.name;
                     el.onclick = () => {
-                        addCostDetail('', c.name, 'cost');
+                        addCostDetail(c.id, c.name, 'cost');
                         document.getElementById('costSearch').value = '';
                         results.classList.add('hidden');
                         availableCosts = availableCosts.filter(item => item.id !== c.id);
@@ -355,7 +422,7 @@
         }
 
         function addCostDetail(id, concept, type) {
-            concept = concept.toUpperCase();
+            concept = concept.toUpperCase()
             const quotationCurrency = @json($quotation['currency'] ?? 'USD');
             const exchangeRate = @json($quotation['exchange_rate'] ?? '6.96');
 
@@ -372,17 +439,15 @@
             const isParallelChecked = oldData.is_amount_parallel || false;
 
             const html = `
-        <div class="${type}-item bg-white p-4 rounded-lg border border-gray-200 shadow-sm" 
-             data-index="${index}" data-id="${id}">
+        <div class="${type}-item bg-white p-4 rounded-lg border border-gray-200 shadow-sm" data-index="${index}" data-cost-id="${id}">
             <div class="flex justify-between items-center mb-3">
                 <h4 class="font-medium text-gray-800 uppercase">${concept}</h4>
-                <button type="button" class="text-red-500 hover:text-red-700 text-lg" 
-                    onclick="removeCostDetail('${index}', '${id}', '${type}')">&times;</button>
+                <button type="button" class="text-red-500 hover:text-red-700 text-lg" onclick="removeCostDetail('${index}', '${id}', '${type}')">&times;</button>
             </div>
 
             <!-- Monto normal -->
             <div class="relative rounded-md shadow-sm mb-3">
-                <p class="text-sm font-medium text-gray-500 mb-1">${type === 'cost' ? 'Costo' : 'Cargo'}</p>
+                <p class="text-sm font-medium text-gray-500 mb-1">Costo</p>
                 <input type="number" step="0.01" min="0" name="costsDetails[${index}][amount]"
                     value="${oldData.amount || ''}"
                     class="block w-full pl-7 pr-12 py-2 border border-gray-300 rounded-md focus:ring-${colorClass}-500 focus:border-${colorClass}-500"
@@ -406,7 +471,7 @@
 
             <!-- Monto paralelo -->
             <div class="relative rounded-md shadow-sm mb-3">
-                <p class="text-sm font-medium text-gray-500 mb-1">${type === 'cost' ? 'Costo' : 'Cargo'} paralelo</p>
+                <p class="text-sm font-medium text-gray-500 mb-1">Costo paralelo</p>
                 <input type="number" step="0.01" min="0" name="costsDetails[${index}][amount_parallel]"
                     value="${oldData.amount_parallel || ''}"
                     id="amount_parallel_${index}"
@@ -425,7 +490,7 @@
                     value="${oldData.exchange_rate || exchangeRate}"
                     class="block w-full pl-7 pr-12 py-2 border border-gray-300 rounded-md focus:ring-${colorClass}-500 focus:border-${colorClass}-500"
                     placeholder="1.00" required>
-                <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none mt-5">
+                <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
                     <span class="text-gray-500 sm:text-sm">Tasa</span>
                 </div>
             </div>
@@ -433,6 +498,7 @@
             <input type="hidden" name="costsDetails[${index}][enabled]" value="1">
             <input type="hidden" name="costsDetails[${index}][concept]" value="${concept}">
             <input type="hidden" name="costsDetails[${index}][type]" value="${type}">
+            ${type === 'cost' ? `<input type="hidden" name="costsDetails[${index}][cost_id]" value="${id}">` : ''}
         </div>
     `;
 
@@ -455,7 +521,7 @@
             const el = document.querySelector(`[data-index="${index}"]`);
             if (el) el.remove();
 
-            if (type === 'cost' && id && id !== '' && !id.startsWith('manual_')) {
+            if (type === 'cost' && id && !id.startsWith('manual_')) {
                 const concept = el.querySelector('h4').innerText;
                 availableCosts.push({
                     id,
@@ -473,39 +539,38 @@
         function addManualCost() {
             const name = document.getElementById('manualCostName').value.trim();
             if (!name) return;
-            addCostDetail(id = '', name, 'cost');
+            const id = 'manual_' + Date.now();
+            addCostDetail(id, name, 'cost');
             document.getElementById('manualCostName').value = '';
         }
 
         function addManualCharge() {
             const name = document.getElementById('manualChargeName').value.trim();
             if (!name) return;
-            addCostDetail(id = '', name, 'charge');
+            const id = 'manual_' + Date.now();
+            addCostDetail(id, name, 'charge');
             document.getElementById('manualChargeName').value = '';
         }
 
-        // Configurar los checkboxes existentes al cargar la página
-        document.addEventListener('DOMContentLoaded', function() {
-            const checkboxes = document.querySelectorAll('.parallel-checkbox');
-            console.log(checkboxes);
-            checkboxes.forEach(checkbox => {
-                const index = checkbox.id.split('_')[1];
-                console.log(index);
-                const amountField = document.getElementById(`amount_parallel_${index}`);
+        const checkboxes = document.querySelectorAll('.parallel-checkbox');
 
-                checkbox.addEventListener('change', function() {
-                    console.log("change");
-                    if (this.checked) {
-                        amountField.setAttribute('required', 'required');
-                    } else {
-                        amountField.removeAttribute('required');
-                    }
-                });
+        checkboxes.forEach(checkbox => {
+            const index = checkbox.id.split('_')[1];
+            const amountField = document.getElementById(`amount_parallel_${index}`);
 
-                if (checkbox.checked) {
+            // Configurar el evento change
+            checkbox.addEventListener('change', function() {
+                if (this.checked) {
                     amountField.setAttribute('required', 'required');
+                } else {
+                    amountField.removeAttribute('required');
                 }
             });
+
+            // Ejecutar al cargar por si ya está marcado
+            if (checkbox.checked) {
+                amountField.setAttribute('required', 'required');
+            }
         });
     </script>
 @endsection

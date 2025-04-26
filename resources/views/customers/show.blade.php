@@ -1,5 +1,7 @@
 @if (Auth::user()->role_id == '1')
     @php $layout = 'layouts.admin'; @endphp
+@elseif (Auth::user()->role_id == '2')
+    @php $layout = 'layouts.commercial'; @endphp
 @else
     @php $layout = 'layouts.operator'; @endphp
 @endif
@@ -124,14 +126,14 @@
                                             @php
                                                 $statusClasses = [
                                                     'pending' => 'bg-yellow-100 text-yellow-800',
-                                                    'approved' => 'bg-green-100 text-green-800',
-                                                    'rejected' => 'bg-red-100 text-red-800',
+                                                    'accepted' => 'bg-green-100 text-green-800',
+                                                    'refused' => 'bg-red-100 text-red-800',
                                                     'expired' => 'bg-gray-100 text-gray-800',
                                                 ];
                                                 $statusText = [
-                                                    'pending' => 'Pendiente',
-                                                    'approved' => 'Finalizado',
-                                                    'rejected' => 'Rechazado',
+                                                    'pending' => 'Pendiente de respuesta',
+                                                    'accepted' => 'Confirmado',
+                                                    'refused' => 'Rechazado',
                                                     'expired' => 'Expirado',
                                                 ];
                                             @endphp

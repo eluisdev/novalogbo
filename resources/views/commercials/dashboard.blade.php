@@ -2,7 +2,7 @@
 
 @section('content')
     <div class="min-h-screen flex flex-col bg-gradient-to-t from-[#052f43] to-[#032c40]">
-        <x-navbar user-name="{{ Auth::user()->username }}" user-role="Operador" logo-path="images/logoNova.png" />
+        <x-navbar user-name="{{ Auth::user()->username }}" user-role="Comercial" logo-path="images/logoNova.png" />
 
         <div class="flex-grow flex flex-col justify-center"> <!-- Contenedor flexible añadido -->
             <h1 class="text-4xl font-extrabold text-center mb-12 text-amber-300">Aplicaciones</h1>
@@ -32,31 +32,6 @@
                             </svg>
                         </div>
                         <p class="text-center font-medium text-sm md:text-base">Cotizaciones</p>
-                    </a>
-                </li>
-
-                <!-- Operaciones -->
-                <li
-                    class="p-4 md:p-6 rounded-full hover:bg-[#131f24] transition-colors duration-150 ease-in text-white hover:text-amber-500">
-                    <a href="{{ route('operations.index') }}" class="flex flex-col items-center">
-                        <div class="p-3 md:p-4 rounded-full mb-2">
-                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" class="h-10 md:h-12 w-10 md:w-12">
-                                <circle cx="256" cy="256" r="120" fill="none" stroke="currentColor"
-                                    stroke-width="40" />
-                                <circle cx="256" cy="256" r="60" fill="currentColor" />
-                                <g stroke="currentColor" stroke-width="40" stroke-linecap="square">
-                                    <line x1="256" y1="60" x2="256" y2="140" />
-                                    <line x1="371" y1="141" x2="316" y2="196" />
-                                    <line x1="452" y1="256" x2="372" y2="256" />
-                                    <line x1="371" y1="371" x2="316" y2="316" />
-                                    <line x1="256" y1="452" x2="256" y2="372" />
-                                    <line x1="141" y1="371" x2="196" y2="316" />
-                                    <line x1="60" y1="256" x2="140" y2="256" />
-                                    <line x1="141" y1="141" x2="196" y2="196" />
-                                </g>
-                            </svg>
-                        </div>
-                        <p class="text-center font-medium text-sm md:text-base">Operaciones</p>
                     </a>
                 </li>
             </ul>

@@ -62,13 +62,10 @@ class User extends Authenticatable
     public function role(): BelongsTo
     {
         return $this->belongsTo(Role::class);
-
     }
 
-    public function quotations(): HasMany
+    public function quotations()
     {
-        return $this->hasMany(Quotation::class);
+        return $this->hasMany(Quotation::class, 'users_id', 'id');
     }
-
-
 }

@@ -29,7 +29,7 @@
             </div>
 
             <div class="flex sm:flex-row flex-col items-center gap-6 max-sm:justify-center">
-                <a href="{{ route('operations.previewCreate') }}"
+                <a href="{{ route('operations.create') }}"
                     class="flex items-center justify-center px-4 py-2 bg-[#0B628D] hover:bg-[#19262c] text-white text-sm font-medium rounded-lg transition-colors duration-200 shadow-sm">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24"
                         stroke="currentColor">
@@ -77,14 +77,14 @@
                     </thead>
                     {{-- TODO: Crear buscador de operaciones --}}
                     <tbody id="operationsTableBody" class="bg-white divide-y divide-gray-200">
-                        @if (count($operations) === 0)
+                        @if (count($billingNotes) === 0)
                             <tr>
                                 <td colspan="7" class="px-6 py-4 text-center text-sm text-gray-500">
                                     No hay operaciones registradas.
                                 </td>
                             </tr>
                         @else
-                            @foreach ($operations as $operation)
+                            @foreach ($billingNotes as $operation)
                                 <tr class="operation-row hover:bg-gray-50 transition-colors duration-150"
                                     data-customer="{{ strtolower($operation->customer) }}"
                                     data-ci="{{ strtolower($operation->customer->NIT) }}"
@@ -115,7 +115,7 @@
                                                 class="text-sm text-white bg-red-500 rounded-full px-3 py-1 inline-flex items-center justify-center">
                                                 <span class="mr-1 font-bold">•</span> Pendiente de respuesta
                                             </div>
-                                        @elseif (strtolower($operation->status) == 'approved')
+                                        @elseif (strtolower($operation->status) == 'accepted')
                                             <div
                                                 class="text-sm text-white bg-green-500 rounded-full px-3 py-1 inline-flex items-center justify-center">
                                                 <span class="mr-1 font-bold">•</span> Confirmada
@@ -123,7 +123,7 @@
                                         @else
                                             <div
                                                 class="text-sm text-white bg-green-500 rounded-full px-3 py-1 inline-flex items-center justify-center">
-                                                <span class="mr-1 font-bold">•</span> Finalizado
+                                                <span class="mr-1 font-bold">•</span> Rechazada
                                             </div>
                                         @endif
                                     </td>

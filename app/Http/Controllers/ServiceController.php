@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\Service;
+use App\Models\Quotation;
+use App\Models\QuotationService;
 use Illuminate\Http\Request;
 
 class ServiceController extends Controller
@@ -37,7 +39,7 @@ class ServiceController extends Controller
     public function show($id)
     {
         $service = Service::findOrFail($id);
-        if (!$service) {
+        if(!$service) {
             return redirect()->route('services.index')->with('error', 'Servicio no encontrado.');
         }
         return view('admin.services.show', compact('service'));
@@ -45,7 +47,7 @@ class ServiceController extends Controller
     public function edit($id)
     {
         $service = Service::findOrFail($id);
-        if (!$service) {
+        if(!$service) {
             return redirect()->route('services.index')->with('error', 'Servicio no encontrado.');
         }
         return view('admin.services.edit', compact('service'));
@@ -76,8 +78,12 @@ class ServiceController extends Controller
     public function destroy($id)
     {
         $service = Service::findOrFail($id);
-        if (!$service) {
+        if(!$service) {
             return redirect()->route('services.index')->with('error', 'Servicio no encontrado.');
+        }
+        $quotation = QuotationService::with('services')->where('service_id',$id)->first();
+        if($quotation){
+            return redirect()->route('services.index')->with('error', 'Este servicio esta asociado a una cotización.');
         }
         $service->delete();
         return redirect()->route('services.index')->with('success', 'Servicio eliminado exitosamente.');
@@ -85,7 +91,7 @@ class ServiceController extends Controller
     public function toggleStatus($id)
     {
         $service = Service::findOrFail($id);
-        if (!$service) {
+        if(!$service) {
             return redirect()->route('services.index')->with('error', 'Servicio no encontrado.');
         }
         $service->is_active = !$service->is_active;

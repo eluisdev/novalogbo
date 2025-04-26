@@ -48,7 +48,7 @@
                             [
                                 'route' => 'quotations.index',
                                 'text' => 'Cotizaciones',
-                                'active' => request()->is('quotes*'),
+                                'active' => request()->is('quotation*'),
                             ],
                             [
                                 'route' => 'operations.index',

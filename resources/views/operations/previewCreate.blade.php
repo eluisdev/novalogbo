@@ -101,7 +101,7 @@
                                                 class="text-sm text-white bg-red-500 rounded-full px-3 py-1 inline-flex items-center justify-center">
                                                 <span class="mr-1 font-bold">•</span> Pendiente de respuesta
                                             </div>
-                                        @elseif (strtolower($quotation->status) == 'approved')
+                                        @elseif (strtolower($quotation->status) == 'accepted')
                                             <div
                                                 class="text-sm text-white bg-green-500 rounded-full px-3 py-1 inline-flex items-center justify-center">
                                                 <span class="mr-1 font-bold">•</span> Confirmada

@@ -1,6 +1,10 @@
-@php
-    $layout = Auth::user()->role_id == '1' ? 'layouts.admin' : 'layouts.operator';
-@endphp
+@if (Auth::user()->role_id == '1')
+    @php $layout = 'layouts.admin'; @endphp
+@elseif (Auth::user()->role_id == '2')
+    @php $layout = 'layouts.commercial'; @endphp
+@else
+    @php $layout = 'layouts.operator'; @endphp
+@endif
 
 @extends($layout)
 
@@ -115,7 +119,7 @@
                     </button>
                 </form>
 
-                @if ($quotation_data['status'] !== 'approved')
+                @if ($quotation_data['status'] !== 'accepted')
                     <a href="{{ route('quotations.edit', $quotation_data['id']) }}"
                         class="flex items-center justify-center px-4 py-2 bg-[#FF9800] hover:bg-[#e68a00] text-white text-sm font-medium rounded-lg transition-all duration-200 shadow-sm hover:shadow-md w-full sm:w-auto">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24"

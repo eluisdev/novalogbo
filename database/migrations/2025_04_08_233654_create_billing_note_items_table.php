@@ -14,12 +14,13 @@ return new class extends Migration
         Schema::create('billing_note_items', function (Blueprint $table) {
             $table->id();
             $table->foreignId('billing_note_id')->constrained()->onDelete('cascade');
-            $table->foreignId('cost_id')->constrained()->onDelete('restrict');
             $table->string('description');
-            $table->decimal('amount', 12, 2);
-            $table->string('currency', 3);
-            $table->timestamps(); // Para auditoría
-            $table->index('billing_note_id'); // Mejora rendimiento en consultas
+            $table->string('type');
+            $table->decimal('amount', 15, 2);
+            $table->string('currency', 10); // USD or BOB
+            $table->decimal('exchange_rate', 15, 2)->nullable();
+            $table->timestamps();
+            $table->index('billing_note_id');
         });
     }
 

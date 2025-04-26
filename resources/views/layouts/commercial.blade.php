@@ -3,7 +3,7 @@
 @section('content')
     <div class="bg-gray-100 h-screen flex flex-col relative">
         <div class="relative z-20">
-            <x-navbar user-name="{{ Auth::user()->username }}" user-role="Operador" logo-path="images/logoNova.png" />
+            <x-navbar user-name="{{ Auth::user()->username }}" user-role="Comercial" logo-path="images/logoNova.png" />
 
             <!-- Botón de menú móvil -->
             <div class="md:hidden absolute top-20 left-7 z-30">

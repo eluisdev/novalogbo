@@ -19,8 +19,60 @@ use App\Helpers\NumberToWordsConverter;
 
 class InvoiceController extends Controller
 {
-    // ... (métodos index, create, show se mantienen igual)
+    public function view()
+    {
+        return view('invoices.view');
+    }
+    public function create()
+    {
+        $customers = Customer::all();
+        $quotations = Quotation::all();
+        return view('invoices.create', compact('customers', 'quotations'));
+    }
+    public function store(Request $request)
+    {
+        $validatedData = $request->validate([
+            'customer_id' => 'required|exists:customers,id',
+            'quotation_id' => 'required|exists:quotations,id',
+            'visible' => 'required|boolean'
+        ]);
 
+        $customerId = $validatedData['customer_id'];
+        $quotationId = $validatedData['quotation_id'];
+        $visible = $validatedData['visible'];
+
+        // Aquí puedes agregar la lógica para crear la factura
+        // ...
+
+        return redirect()->route('invoices.view')->with('success', 'Factura creada exitosamente.');
+    }
+    public function show($id)
+    {
+        $invoice = Invoice::with(['customer', 'items.cost', 'quotation.products'])->findOrFail($id);
+        return view('invoices.show', compact('invoice'));
+    }
+    public function edit($id)
+    {
+        $invoice = Invoice::with(['customer', 'items.cost', 'quotation.products'])->findOrFail($id);
+        $customers = Customer::all();
+        $quotations = Quotation::all();
+        return view('invoices.edit', compact('invoice', 'customers', 'quotations'));
+    }
+    public function delete($id)
+    {
+        $invoice = Invoice::findOrFail($id);
+        $invoice->delete();
+        return redirect()->route('invoices.view')->with('success', 'Factura eliminada exitosamente.');
+    }
+    public function toggleStatus(Request $request, $id){
+        $request->validate([
+            'status' => 'required|string'
+        ]);
+        $invoice = Invoice::findOrFail($id);
+        $invoice->status = $request->status;
+        $invoice->save();
+        return redirect()->route('invoices.view')->with('success', 'Estado de la factura actualizado exitosamente.');
+    }
     public function download(Request $request)
     {
         $validatedData = $request->validate([
@@ -35,7 +87,6 @@ class InvoiceController extends Controller
             $existingInvoice = Invoice::where('quotation_id', $quotationId)->first();
             if (!$existingInvoice) {
                 $rateValue = $quotation->exchange_rate;
-
                 $subtotal = 0;
                 $taxRate = 0.13; // IVA de Bolivia (13%)
 
@@ -85,7 +136,7 @@ class InvoiceController extends Controller
                     $invoiceItem->save();
                 }
             }
-            
+
             $invoice = Invoice::where('quotation_id', $quotation->id)->first();
             DB::commit();
 
@@ -132,7 +183,7 @@ class InvoiceController extends Controller
         if ($visible) {
             $header = $section->addHeader();
             $header->addImage(
-                storage_path('app/templates/Herder.png'),
+                public_path('images/Header.png'),
                 [
                     'width' => $pageWidthPoints,
                     'height' => $headerHeightPoints,
@@ -146,7 +197,7 @@ class InvoiceController extends Controller
             );
             $footer = $section->addFooter();
             $footer->addImage(
-                storage_path('app/templates/Footer.png'),
+                public_path('images/Footer.png'),
                 [
                     'width' => $pageWidthPoints,
                     'height' => $footerHeightPoints,
@@ -362,11 +413,19 @@ class InvoiceController extends Controller
 
         $section->addTextBreak(1);
 
-        // Literal del total en ambas monedas
+        if ($invoice->currency == 'USD') {
+            $currencyInWords = 'DÓLARES AMERICANOS';
+        } elseif ($invoice->currency == 'EUR') {
+            $currencyInWords = 'EUROS';
+        } else {
+            $currencyInWords = strtoupper($invoice->currency);
+        }
+
         $totalInWordsForeign = NumberToWordsConverter::convertToWords(
             $totalForeign,
-            strtoupper($invoice->currency == 'USD' ? 'DÓLARES AMERICANOS' : 'EUROS')
+            $currencyInWords
         );
+
 
         $totalInWordsBs = NumberToWordsConverter::convertToWords(
             $totalBs,

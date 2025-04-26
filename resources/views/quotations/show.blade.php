@@ -1,12 +1,15 @@
-@php
-    $layout = Auth::user()->role_id == '1' ? 'layouts.admin' : 'layouts.operator';
-@endphp
+@if (Auth::user()->role_id == '1')
+    @php $layout = 'layouts.admin'; @endphp
+@elseif (Auth::user()->role_id == '2')
+    @php $layout = 'layouts.commercial'; @endphp
+@else
+    @php $layout = 'layouts.operator'; @endphp
+@endif
 
 @extends($layout)
 
-{{-- {{dd($quotation_data)}} --}}
 @section('dashboard-option')
-    <div class="w-full mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="w-full mx-auto px-4 sm:px-6 lg:px-8 pb-5">
         <div
             class="flex flex-col sm:flex-row items-center justify-between gap-4 bg-white rounded-xl shadow-sm p-3 mb-6 border border-gray-200">
             <h2 class="text-xl font-black text-gray-800">
@@ -14,7 +17,7 @@
             </h2>
 
             <div class="flex sm:flex-row flex-col gap-2">
-                @if ($quotation_data['status'] === 'approved')
+                @if ($quotation_data['status'] === 'accepted')
                     <form action="{{ route('quotations.updateStatus', $quotation_data['id']) }}" method="POST"
                         class="w-full sm:w-auto">
                         @csrf
@@ -27,15 +30,17 @@
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                     d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99" />
                             </svg>
-                            Cancelar finalizacion
+                            Cancelar confirmacion
                         </button>
                     </form>
-                @else
+                @endif
+
+                @if ($quotation_data['status'] === 'pending')
                     <form action="{{ route('quotations.updateStatus', $quotation_data['id']) }}" method="POST"
                         class="w-full sm:w-auto">
                         @csrf
                         @method('PATCH')
-                        <input type="hidden" name="status" value="approved" />
+                        <input type="hidden" name="status" value="accepted" />
                         <button type="submit"
                             class="flex items-center justify-center px-4 py-2 bg-[#0b8d41] hover:bg-[#588498] text-white text-sm font-medium rounded-lg transition-colors duration-200 shadow-sm">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24"
@@ -44,6 +49,39 @@
                                     d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99" />
                             </svg>
                             Confirmar cotizacion
+                        </button>
+
+                    </form>
+                    <form action="{{ route('quotations.updateStatus', $quotation_data['id']) }}" method="POST"
+                        class="w-full sm:w-auto">
+                        @csrf
+                        @method('PATCH')
+                        <input type="hidden" name="status" value="refused" />
+                        <button type="submit"
+                            class="flex items-center justify-center px-4 py-2 bg-red-500 hover:bg-red-600 text-white text-sm font-medium rounded-lg transition-colors duration-200 shadow-sm">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24"
+                                stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99" />
+                            </svg>
+                            Rechazar cotizacion
+                        </button>
+                    </form>
+                @endif
+                @if ($quotation_data['status'] === 'refused')
+                    <form action="{{ route('quotations.updateStatus', $quotation_data['id']) }}" method="POST"
+                        class="w-full sm:w-auto">
+                        @csrf
+                        @method('PATCH')
+                        <input type="hidden" name="status" value="pending" />
+                        <button type="submit"
+                            class="flex items-center justify-center px-4 py-2 bg-red-500 hover:bg-red-600 text-white text-sm font-medium rounded-lg transition-colors duration-200 shadow-sm">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24"
+                                stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99" />
+                            </svg>
+                            Cancelar Rechazo
                         </button>
                     </form>
                 @endif
@@ -115,7 +153,7 @@
                     </button>
                 </form>
 
-                @if ($quotation_data['status'] !== 'approved')
+                @if ($quotation_data['status'] !== 'accepted')
                     <a href="{{ route('quotations.edit', $quotation_data['id']) }}"
                         class="flex items-center justify-center px-4 py-2 bg-[#FF9800] hover:bg-[#e68a00] text-white text-sm font-medium rounded-lg transition-all duration-200 shadow-sm hover:shadow-md w-full sm:w-auto">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24"
@@ -173,8 +211,19 @@
 
                 <div class="border-b border-gray-100 pb-2">
                     <p class="text-sm font-medium text-gray-500">Estado cotizacion</p>
-                    <p class="text-lg font-semibold text-gray-900">
-                        {{ $quotation_data['status'] === 'approved' ? 'Aceptada' : 'Pendiente de respuesta' }}</p>
+                    <span
+                        class="inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold mt-2 
+    {{ $quotation_data['status'] === 'accepted'
+        ? 'bg-green-100 text-green-800'
+        : ($quotation_data['status'] === 'pending'
+            ? 'bg-yellow-100 text-yellow-800'
+            : 'bg-red-100 text-red-800') }}">
+                        {{ $quotation_data['status'] === 'accepted'
+                            ? 'Aceptada'
+                            : ($quotation_data['status'] === 'pending'
+                                ? 'Pendiente de respuesta'
+                                : 'Rechazada') }}
+                    </span>
                 </div>
 
             </div>
@@ -201,7 +250,7 @@
                             <div>
                                 <p class="text-sm font-medium text-gray-500">Cantidad</p>
                                 <p class="text-gray-700">{{ $product['quantity'] }}
-                                    ({{ $product['quantity_description_name'] }})
+                                    {{ $product['quantity_description_name'] }}
                                 </p>
                             </div>
                             <div class="space-y-2">
@@ -296,7 +345,52 @@
                 </div>
             </div>
         </div>
+        <!-- Sección de Detalles de Cotización -->
+        <div class="p-6  bg-white shadow-sm mb-6 rounded-lg">
+            <div class="flex items-center mb-6 sm:flex-row flex-col">
+                <span class="inline-flex items-center justify-center p-3 rounded-full bg-blue-50 text-blue-600 mr-3">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
+                        stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                    </svg>
+                </span>
+                <h3 class="text-lg font-semibold text-gray-800">Detalles de cotización</h3>
+                <p class="text-sm text-gray-500 sm:ml-2">Información adicional de la cotización</p>
+            </div>
 
+            <div class="flex flex-col gap-2 mb-5">
+                <!-- Seguro -->
+                <div class="flex gap-2 items-center">
+                    <p class="block text-sm font-bold">Seguro: </p>
+                    <p class="block text-sm text-gray-700">{{ $quotation_data['insurance'] }}</p>
+                </div>
+
+                <!-- Forma de pago -->
+                <div class="flex flex-col gap-2">
+                    <div class="flex gap-2 items-center">
+                        <p class="block text-sm font-bold">Forma de Pago</p>
+                        <p class="block text-sm text-gray-700">{{ $quotation_data['payment_method'] }}</p>
+                    </div>
+
+                    <!-- Validez -->
+                    <div>
+                        <div class="flex gap-2 items-center">
+                            <p class="block text-sm font-bold">Validez</p>
+                            <p class="block text-sm text-gray-700">{{ $quotation_data['validity'] }}</p>
+                        </div>
+                    </div>
+
+                    <!-- Observaciones -->
+                    <div>
+                        <div class="flex gap-2 items-center">
+                            <p class="block text-sm font-bold">Observaciones</p>
+                            <p class="block text-sm text-gray-700">{{ $quotation_data['observations'] }}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
         <div class="bg-white shadow-md rounded-lg overflow-hidden border border-gray-200">
             <div class="px-6 py-4 border-b border-gray-200">
                 <h3 class="text-lg font-medium text-gray-900">Resumen Total</h3>

@@ -4,7 +4,6 @@
 
 @extends($layout)
 
-{{dd($quotation_data)}}
 @section('dashboard-option')
     <div class="w-full mx-auto px-4 sm:px-6 lg:px-8 pb-5">
         <div
@@ -15,7 +14,7 @@
 
             <div class="flex sm:flex-row flex-col gap-2">
                 <div class="flex space-x-2">
-                    <a href="{{ route('operations.create', $quotation_data["id"]) }}"
+                    <a href="{{ route('operations.create') }}"
                         class="flex items-center justify-center px-4 py-2 bg-[#0B628D] hover:bg-[#19262c] text-white text-sm font-medium rounded-lg transition-colors duration-200 shadow-sm">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24"
                             stroke="currentColor">
@@ -27,7 +26,7 @@
                 </div>
             </div>
         </div>
-        <div class="bg-white rounded-xl shadow-sm p-3 mb-6 border border-gray-200">
+        {{-- <div class="bg-white rounded-xl shadow-sm p-3 mb-6 border border-gray-200">
             <div class="flex flex-col lg:flex-row gap-2 w-full justify-between items-center">
                 @if ($errors->any())
                     <div class="bg-red-100 text-red-700 p-4 rounded-md">
@@ -81,7 +80,7 @@
                     </button>
                 </form>
 
-                @if ($quotation_data['status'] !== 'approved')
+                @if ($quotation_data['status'] !== 'accepted')
                     <a href="{{ route('quotations.edit', $quotation_data['id']) }}"
                         class="flex items-center justify-center px-4 py-2 bg-[#FF9800] hover:bg-[#e68a00] text-white text-sm font-medium rounded-lg transition-all duration-200 shadow-sm hover:shadow-md w-full sm:w-auto">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24"
@@ -93,7 +92,7 @@
                     </a>
                 @endif
             </div>
-        </div>
+        </div> --}}
 
         {{-- @if ($quotation_data['status'] !== 'pending')
             <div
@@ -199,15 +198,15 @@
                     <p class="text-sm font-medium text-gray-500">Estado cotizacion</p>
                     <p class="text-lg font-semibold text-gray-900">
                         @switch($quotation_data['status'])
-                            @case('approved')
-                                Aprobada
+                            @case('accepted')
+                                Confirmada
                             @break
 
                             @case('pending')
                                 Pendiente de respuesta
                             @break
 
-                            @case('rejected')
+                            @case('refused')
                                 Rechazada
                             @break
 

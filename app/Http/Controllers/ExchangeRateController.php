@@ -50,7 +50,7 @@ class ExchangeRateController extends Controller
                 'active' => $request->has('active'),
             ]);
 
-            return redirect()->route('admin.exchange-rates.index')
+            return redirect()->route('exchange-rates.index')
                 ->with('success', 'Tipo de cambio creado correctamente.');
         } catch (\Exception $e) {
             return redirect()->back()
@@ -62,7 +62,7 @@ class ExchangeRateController extends Controller
     public function show($id)
     {
         $exchangeRate = ExchangeRate::findOrFail($id);
-        if (!$exchangeRate) {
+        if(!$exchangeRate) {
             return redirect()->route('exchange-rates.index')->with('error', 'Tipo de cambio no encontrada.');
         }
         return view('admin.exchange-rates.show', compact('exchangeRate'));
@@ -71,7 +71,7 @@ class ExchangeRateController extends Controller
     public function edit($id)
     {
         $exchangeRate = ExchangeRate::findOrFail($id);
-        if (!$exchangeRate) {
+        if(!$exchangeRate) {
             return redirect()->route('exchange-rates.index')->with('error', 'Tipo de cambio no encontrada.');
         }
         return view('admin.exchange-rates.edit', compact('exchangeRate'));
@@ -80,7 +80,7 @@ class ExchangeRateController extends Controller
     public function update(Request $request,  $id)
     {
         $exchangeRate = ExchangeRate::findOrFail($id);
-        if (!$exchangeRate) {
+        if(!$exchangeRate) {
             return redirect()->route('exchange-rates.index')->with('error', 'Tipo de cambio no encontrada.');
         }
 
@@ -122,7 +122,7 @@ class ExchangeRateController extends Controller
     public function destroy($id)
     {
         $exchangeRate = ExchangeRate::findOrFail($id);
-        if (!$exchangeRate) {
+        if(!$exchangeRate) {
             return redirect()->route('exchange-rates.index')->with('error', 'Tipo de cambio no encontrada.');
         }
         try {
@@ -138,7 +138,7 @@ class ExchangeRateController extends Controller
     public function toggleStatus($id)
     {
         $exchangeRate = ExchangeRate::findOrFail($id);
-        if (!$exchangeRate) {
+        if(!$exchangeRate) {
             return redirect()->route('exchange-rates.index')->with('error', 'Tipo de cambio no encontrada.');
         }
         try {

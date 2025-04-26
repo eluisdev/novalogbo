@@ -6,6 +6,8 @@
 
 @extends($layout)
 
+
+
 @section('dashboard-option')
     <div class="w-full mx-auto px-4 sm:px-6 lg:px-8">
         <div
@@ -15,7 +17,8 @@
                     <span class="text-[#0B628D]">Operaciones</span>
                 </h2>
 
-                <div class="relative">
+                <!-- Barra de búsqueda mejorada -->
+                <div class="relative max-w-md w-full">
                     <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                         <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -23,9 +26,24 @@
                         </svg>
                     </div>
                     <input type="text" id="searchInput"
-                        class="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:ring-[#0B628D] focus:border-[#0B628D] sm:text-sm"
-                        placeholder="Buscar cotización...">
+                        class="block w-full pl-10 pr-10 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:ring-[#0B628D] focus:border-[#0B628D] sm:text-sm"
+                        placeholder="Buscar operación...">
+                    <div id="searchClear" class="absolute inset-y-0 right-0 pr-3 flex items-center cursor-pointer">
+                        <svg class="h-5 w-5 text-gray-400 hover:text-gray-600" fill="none" stroke="currentColor"
+                            viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12">
+                            </path>
+                        </svg>
+                    </div>
                 </div>
+            </div>
+
+            <div class="mb-4 flex items-center">
+                <input id="filterPending" type="checkbox"
+                    class="h-4 w-4 text-[#0B628D] focus:ring-[#0B628D] border-gray-300 rounded">
+                <label for="filterPending" class="ml-2 text-sm text-gray-700">
+                    Mostrar solo operaciones abiertas
+                </label>
             </div>
 
             <div class="flex sm:flex-row flex-col items-center gap-6 max-sm:justify-center">
@@ -55,15 +73,11 @@
                             </th>
                             <th scope="col"
                                 class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                N° Cotización
+                                N° Operacion
                             </th>
                             <th scope="col"
                                 class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                Costo total
-                            </th>
-                            <th scope="col"
-                                class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                Fecha de creacion
+                                Fecha de emision
                             </th>
                             <th scope="col"
                                 class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -75,7 +89,6 @@
                             </th>
                         </tr>
                     </thead>
-                    {{-- TODO: Crear buscador de operaciones --}}
                     <tbody id="operationsTableBody" class="bg-white divide-y divide-gray-200">
                         @if (count($billingNotes) === 0)
                             <tr>
@@ -87,42 +100,41 @@
                             @foreach ($billingNotes as $operation)
                                 <tr class="operation-row hover:bg-gray-50 transition-colors duration-150"
                                     data-customer="{{ strtolower($operation->customer) }}"
-                                    data-ci="{{ strtolower($operation->customer->NIT) }}"
-                                    data-reference="{{ strtolower($operation->reference_number) }}"
-                                    data-currency="{{ strtolower($operation->currency) }}"
-                                    data-amount="{{ strtolower($operation->amount) }}"
+                                    data-customer-nit="{{ strtolower($operation->customer_nit) }}"
+                                    data-op_number="{{ strtolower($operation->op_number) }}"
+                                    data-emission_date="{{ strtolower($operation->emmision_date) }}"
                                     data-status="{{ strtolower($operation->status) }}">
                                     <td class="px-6 py-4 whitespace-nowrap">
-                                        <div class="text-sm font-medium text-gray-900">{{ $operation->customer }}
+                                        <div class="text-sm font-medium text-gray-900">
+                                            {{ $operation->quotation->customer }}
                                         </div>
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap">
-                                        <div class="text-sm text-gray-900">{{ $operation->customer->NIT }}</div>
+                                        <div class="text-sm text-gray-900">{{ $operation->customer }}</div>
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap">
-                                        <div class="text-sm text-gray-900">{{ $operation->reference_number }}</div>
+                                        <div class="text-sm text-gray-900">{{ $operation->customer_nit }}</div>
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap">
-                                        <div class="text-sm text-gray-900">{{ $operation->amount }}
-                                            {{ $operation->currency }}</div>
+                                        <div class="text-sm text-gray-900">{{ $operation->op_number }}</div>
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap">
-                                        <div class="text-sm text-gray-900">{{ $operation->delivery_date }}</div>
+                                        <div class="text-sm text-gray-900">{{ $operation->emmision_date }}</div>
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap">
                                         @if (strtolower($operation->status) == 'pending')
                                             <div
-                                                class="text-sm text-white bg-red-500 rounded-full px-3 py-1 inline-flex items-center justify-center">
-                                                <span class="mr-1 font-bold">•</span> Pendiente de respuesta
+                                                class="text-sm text-white bg-green-500 rounded-full px-3 py-1 inline-flex items-center justify-center">
+                                                <span class="mr-1 font-bold">•</span> Abierta
                                             </div>
                                         @elseif (strtolower($operation->status) == 'accepted')
                                             <div
-                                                class="text-sm text-white bg-green-500 rounded-full px-3 py-1 inline-flex items-center justify-center">
-                                                <span class="mr-1 font-bold">•</span> Confirmada
+                                                class="text-sm text-white bg-red-500 rounded-full px-3 py-1 inline-flex items-center justify-center">
+                                                <span class="mr-1 font-bold">•</span> Cerrada
                                             </div>
                                         @else
                                             <div
-                                                class="text-sm text-white bg-green-500 rounded-full px-3 py-1 inline-flex items-center justify-center">
+                                                class="text-sm text-white bg-yellow-500 rounded-full px-3 py-1 inline-flex items-center justify-center">
                                                 <span class="mr-1 font-bold">•</span> Rechazada
                                             </div>
                                         @endif
@@ -136,7 +148,8 @@
                                                     viewBox="0 0 24 24" stroke="currentColor">
                                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
                                                         d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                                        stroke-width="1.5"
                                                         d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
                                                 </svg>
                                             </a>
@@ -165,59 +178,76 @@
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             const searchInput = document.getElementById('searchInput');
+            const searchClear = document.getElementById('searchClear');
             const filterPendingCheckbox = document.getElementById('filterPending');
             const operationRows = document.querySelectorAll('.operation-row');
-            const noResultsRow = document.createElement('tr');
-            noResultsRow.innerHTML =
-                '<td colspan="7" class="px-6 py-4 text-center text-sm text-gray-500">No se encontraron resultados</td>';
+            const noResultsMessage = @json(__('No se encontraron resultados'));
 
-            function filteroperations() {
-                const searchTerm = searchInput.value.toLowerCase();
+            // Mostrar/ocultar botón de limpiar búsqueda
+            searchInput.addEventListener('input', function() {
+                searchClear.classList.toggle('hidden', this.value === '');
+                filterOperations();
+            });
+
+            // Limpiar búsqueda
+            searchClear.addEventListener('click', function() {
+                searchInput.value = '';
+                searchClear.classList.add('hidden');
+                filterOperations();
+                searchInput.focus();
+            });
+
+            // Filtrar por estado
+            filterPendingCheckbox.addEventListener('change', filterOperations);
+
+            // Función mejorada de filtrado
+            function filterOperations() {
+                const searchTerm = searchInput.value.toLowerCase().trim();
                 const showOnlyPending = filterPendingCheckbox.checked;
-                let hasResults = false;
+                let hasVisibleRows = false;
 
                 operationRows.forEach(row => {
                     const customer = row.getAttribute('data-customer');
-                    const ci = row.getAttribute('data-ci');
-                    const reference = row.getAttribute('data-reference');
-                    const currency = row.getAttribute('data-currency');
-                    const amount = row.getAttribute('data-amount');
+                    const nit = row.getAttribute('data-nit');
+                    const opNumber = row.getAttribute('data-op_number');
+                    const emitionDate = row.getAttribute('data-emition-date');
                     const status = row.getAttribute('data-status');
 
-                    const statusMatch = !showOnlyPending || status === 'pending';
-
-                    const searchMatch = searchTerm === '' ||
+                    // Verificar coincidencia con el término de búsqueda
+                    const matchesSearch = searchTerm === '' ||
                         customer.includes(searchTerm) ||
-                        ci.includes(searchTerm) ||
-                        reference.includes(searchTerm) ||
-                        currency.includes(searchTerm) ||
-                        amount.includes(searchTerm);
+                        nit.includes(searchTerm) ||
+                        emitionDate.includes(searchTerm) ||
+                        opNumber.includes(searchTerm);
 
-                    if (statusMatch && searchMatch) {
+                    // Verificar estado
+                    const matchesStatus = !showOnlyPending || status === 'pending';
+
+                    if (matchesSearch && matchesStatus) {
                         row.style.display = '';
-                        hasResults = true;
+                        hasVisibleRows = true;
                     } else {
                         row.style.display = 'none';
                     }
                 });
 
-                const tableBody = document.getElementById('operationsTableBody');
-                const existingNoResults = tableBody.querySelector('.no-results');
-
-                if (!hasResults && operationRows.length > 0) {
-                    if (!existingNoResults) {
-                        noResultsRow.classList.add('no-results');
-                        tableBody.appendChild(noResultsRow);
+                // Mostrar mensaje si no hay resultados
+                const noResultsRow = document.querySelector('#operationsTableBody tr[data-no-results]');
+                if (!hasVisibleRows && operationRows.length > 0) {
+                    if (!noResultsRow) {
+                        const tr = document.createElement('tr');
+                        tr.setAttribute('data-no-results', 'true');
+                        tr.innerHTML =
+                            `<td colspan="7" class="px-6 py-4 text-center text-sm text-gray-500">${noResultsMessage}</td>`;
+                        document.getElementById('operationsTableBody').appendChild(tr);
                     }
-                } else {
-                    if (existingNoResults) {
-                        tableBody.removeChild(existingNoResults);
-                    }
+                } else if (noResultsRow) {
+                    noResultsRow.remove();
                 }
             }
 
-            searchInput.addEventListener('input', filteroperations);
-            filterPendingCheckbox.addEventListener('change', filteroperations);
+            // Filtro inicial
+            filterOperations();
         });
     </script>
 @endsection

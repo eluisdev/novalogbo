@@ -40,6 +40,10 @@ Route::get('/', function () {
 //     return view('welcome');
 // });
 
+
+
+
+//Route::post('/downloadOperation', [OperationController::class, 'downloadOperation'])->name('operations.download');
 /*
 |--------------------------------------------------------------------------
 | Autenticación
@@ -242,12 +246,6 @@ Route::middleware(['auth', 'role:admin,operator,commercial'])->group(function ()
         Route::get('/searchLocation', 'searchLocation')->name('searchLocation');
         Route::get('/searchCustomer', 'searchCustomer')->name('searchCustomer');
         Route::get('/searchQuantityDescription', 'searchQuantityDescription')->name('searchQuantityDescription');
-
-        // TODO: ELIMINAR ESTO POR QUE NO PERTENECE A COMERCIAL
-        Route::post('/billingNoteWord', [BillingNoteController::class, 'download'])->name('billing-note.download');
-        Route::post('/invoiceWord', [InvoiceController::class, 'download'])->name('invoice.download');
-
-
         Route::post('/generateInternalQuotation', 'generateExcel')->name('generate.excel.download');
         Route::post('/generateQuotation', 'generarCotizacion')->name('generate.download');
 
@@ -269,19 +267,6 @@ Route::middleware(['auth', 'role:admin,operator,commercial'])->group(function ()
 */
 Route::middleware(['auth', 'role:admin,operator'])->group(function () {
 
-    // Gestión de facturas
-    // Route::prefix('invoices')->name('invoices.')->controller(InvoiceController::class)->group(function () {
-    //     Route::get('/', 'index')->name('index');
-    //     Route::get('/create', 'create')->name('create');
-    //     Route::post('/', 'store')->name('store');
-    //     Route::post('/invoiceWord', 'download')->name('invoice.download');
-    //     Route::get('/{id}', 'show')->name('show');
-    //     Route::get('/edit/{id}', 'edit')->name('edit');
-    //     Route::put('/{id}', 'update')->name('update');
-    //     Route::delete('/{id}', 'destroy')->name('destroy');
-    //     Route::patch('toggle-status/{id}', 'toggleStatus')->name('toggleStatus');
-    // });
-
     Route::prefix('operations')->group(function () {
         Route::get('/', [OperationController::class, 'index'])->name('operations.index');
         Route::get('/create', [OperationController::class, 'create'])->name('operations.create');
@@ -293,13 +278,14 @@ Route::middleware(['auth', 'role:admin,operator'])->group(function () {
             ->name('operations.store-from-quotation');
 
         // Route::get('/{id}', [OperationController::class, 'show'])->name('operations.show');
-        Route::get('/show/{id}', [OperationController::class, 'showPrueba'])->name('operations.showPrueba');
+        Route::get('/show/{id}', [OperationController::class, 'show'])->name('operations.show');
         // Route::get('/edit/{id}', [OperationController::class, 'edit'])->name('operations.edit');
-        Route::get('/edit/{id}', [OperationController::class, 'editPrueba'])->name('operations.editPrueba');
+        Route::get('/edit/{id}', [OperationController::class, 'edit'])->name('operations.edit');
         Route::delete('/{id}', [OperationController::class, 'destroy'])->name('operations.destroy');
         Route::post('/toggleStatus/{id}', [OperationController::class, 'toggleStatus'])
             ->name('operations.toggle-status');
-        Route::post('/download/{id}', [OperationController::class, 'download'])->name('operations.download');
+        Route::post('/downloadOperation', [OperationController::class, 'downloadOperation'])->name('operations.download');
+        Route::post('/invoiceWord', [InvoiceController::class, 'invoiceDownload'])->name('invoice.download');
     });
 });
 /*

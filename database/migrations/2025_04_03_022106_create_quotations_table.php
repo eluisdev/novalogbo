@@ -25,6 +25,7 @@ return new class extends Migration
             $table->text('validity')->nullable();
             $table->text('observations')->nullable();
             $table->string('juncture')->nullable();
+            $table->boolean('is_parallel')->default(false);
             $table->unsignedBigInteger('users_id');
             $table->foreign('users_id')->references('id')->on('users')->onDelete('cascade');
             $table->integer('customer_nit');

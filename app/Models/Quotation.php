@@ -29,6 +29,7 @@ class Quotation extends Model
         'validity',
         'juncture',
         'observations',
+        'is_parallel'
     ];
     protected $casts = [
         'delivery_date' => 'datetime',

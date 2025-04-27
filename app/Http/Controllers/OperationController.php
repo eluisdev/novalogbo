@@ -140,6 +140,7 @@ class OperationController extends Controller
             'search' => 'nullable|string|max:255',
             'customer_nit' => 'nullable|exists:customers,NIT',
             'date_from' => 'nullable|date',
+            //user_id => 'user => quotation->user->id' //Tanto para cotizacion y billingNote (Operación)
             'date_to' => 'nullable|date|after_or_equal:date_from',
         ]);
 
@@ -412,7 +413,7 @@ class OperationController extends Controller
         $billingNote->status = $request->status;
         $billingNote->save();
 
-        return redirect()->route('operations.index')->with('success', 'Estado de la nota de cobranza actualizado con éxito.');
+        return redirect()->route('operations.show', $id)->with('success', 'Estado de la nota de cobranza actualizado con éxito.');
     }
     public function downloadOperation(Request $request)
     {

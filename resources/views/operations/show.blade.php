@@ -12,14 +12,25 @@
                 <span class="text-[#0B628D]">Número de servicio interno: {{ $billingNote['op_number'] }}</span>
             </h2>
             <div class="flex sm:flex-row flex-col gap-2">
-                @if ($billingNote->quotation['status'] === 'approved')
-                    <form action="{{ route('quotations.updateStatus', $billingNote->quotation['id']) }}" method="POST"
+                @if ($billingNote->status !== 'completed')
+                    {{-- @if ($quotation_data['status'] !== 'accepted') --}}
+                    <a href="{{ route('operations.edit', $billingNote['id']) }}"
+                        class="flex px-4 py-2 bg-[#FF9800] hover:bg-[#e68a00] text-white text-sm font-medium rounded-lg transition-all duration-200 shadow-sm hover:shadow-md w-full sm:w-auto">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24"
+                            stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                        </svg>
+                        Editar
+                    </a>
+                @endif
+                @if ($billingNote['status'] === 'completed')
+                    <form action="{{ route('operations.toggle-status', $billingNote->id) }}" method="POST"
                         class="w-full sm:w-auto">
                         @csrf
-                        @method('PATCH')
                         <input type="hidden" name="status" value="pending" />
                         <button type="submit"
-                            class="flex items-center justify-center px-4 py-2 bg-[#0b8d41] hover:bg-[#588498] text-white text-sm font-medium rounded-lg transition-colors duration-200 shadow-sm">
+                            class="flex items-center justify-center px-4 py-2 bg-red-500 hover:bg-red-600 text-white text-sm font-medium rounded-lg transition-colors duration-200 shadow-sm">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24"
                                 stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -29,11 +40,10 @@
                         </button>
                     </form>
                 @else
-                    <form action="{{ route('quotations.updateStatus', $billingNote->quotation['id']) }}" method="POST"
+                    <form action="{{ route('operations.toggle-status', $billingNote->id) }}" method="POST"
                         class="w-full sm:w-auto">
                         @csrf
-                        @method('PATCH')
-                        <input type="hidden" name="status" value="approved" />
+                        <input type="hidden" name="status" value="completed" />
                         <button type="submit"
                             class="flex items-center justify-center px-4 py-2 bg-[#0b8d41] hover:bg-[#588498] text-white text-sm font-medium rounded-lg transition-colors duration-200 shadow-sm">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24"
@@ -45,79 +55,126 @@
                         </button>
                     </form>
                 @endif
+                <div class="flex sm:flex-row flex-col gap-2">
+                    <div class="flex space-x-2">
+                        <a href="{{ route('operations.index') }}"
+                            class="flex items-center justify-center px-4 py-2 bg-[#0B628D] hover:bg-[#19262c] text-white text-sm font-medium rounded-lg transition-colors duration-200 shadow-sm">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24"
+                                stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                            </svg>
+                            Volver a operaciones
+                        </a>
+                    </div>
+                </div>
             </div>
         </div>
+        @if ($errors->any())
+            <div class="bg-red-100 text-red-700 p-4 rounded-md mb-5">
+                <ul class="list-disc pl-5">
+                    @foreach ($errors->all() as $error)
+                        <li>{{ $error }}</li>
+                    @endforeach
+                </ul>
+            </div>
+        @endif
         <div
-            class="flex flex-col justify-end sm:flex-row items-center gap-4 bg-white rounded-xl shadow-sm p-3 mb-6 border border-gray-200">
-            {{-- @if ($quotation_data['status'] !== 'accepted') --}}
-            <a href="{{ route('operations.edit', $billingNote['id']) }}"
-                class="flex px-4 py-2 bg-[#FF9800] hover:bg-[#e68a00] text-white text-sm font-medium rounded-lg transition-all duration-200 shadow-sm hover:shadow-md w-full sm:w-auto">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24"
-                    stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                </svg>
-                Editar
-            </a>
-            {{-- @endif --}}
-        </div>
-        {{-- @if ($quotation['status'] !== 'pending')
-            <div
-                class="bg-gray-200 rounded-xl shadow-sm p-3 mb-6 border border-gray-200 flex justify-between sm:flex-row flex-col max-sm:gap-4">
-                <form action="{{ route('quotations.invoice.download') }}" method="POST" class="w-full sm:w-auto">
-                    @csrf
-                    <input type="hidden" name="quotation_id" value="{{ $quotation['id'] }}" />
-                    <div class="flex gap-2 sm:flex-row flex-col max-sm:justify-center items-center">
-                        <label class="inline-flex items-center cursor-pointer">
-                            <input type="hidden" name="visible" value="0">
-                            <input type="checkbox" name="visible"
-                                class="form-checkbox h-6 w-6 text-[#4CAF50] rounded border-gray-300 focus:ring-[#4CAF50] mr-3 ml-2"
-                                value="1" checked>
-                            <span class="text-gray-700 font-medium flex items-center">
-                                Fondo + Logo
-                            </span>
-                        </label>
-                        <button type="submit"
-                            class="flex items-center justify-center px-4 py-2 bg-yellow-600 hover:bg-yellow-800 hover:cursor-pointer text-white text-sm font-medium rounded-lg transition-all duration-200 shadow-sm opacity-70 w-full sm:w-auto">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none"
-                                viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M9 14l6-6m-5.5.5h.01m4.99 5h.01M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16l3.5-2 3.5 2 3.5-2 3.5 2z" />
-                            </svg>
-                            Crear factura
-                        </button>
-                    </div>
-                </form>
+            class="flex flex-col justify-between items-center gap-4 bg-white rounded-xl shadow-sm p-3 mb-6 border border-gray-200">
+            <form action="{{ route('operations.download') }}" method="POST"
+                class="w-full flex flex-col sm:flex-row gap-4 items-stretch sm:items-center">
+                @csrf
+                <input type="hidden" name="id" value="{{ $billingNote['id'] }}" />
 
-                <form action="{{ route('quotations.billing-note.download') }}" method="POST"
-                    class="w-full sm:w-auto flex gap-2 max-sm:justify-center">
+                <!-- Fondo + Logo -->
+                <div
+                    class="flex items-center bg-white rounded-lg border border-gray-200 p-1.5 shadow-sm flex-1 sm:flex-none">
+                    <label class="inline-flex items-center cursor-pointer w-full">
+                        <input type="hidden" name="visible" value="0">
+                        <input type="checkbox" name="visible" value="1"
+                            class="form-checkbox h-5 w-5 text-[#4CAF50] rounded border-gray-300 focus:ring-[#4CAF50] mr-3 ml-2"
+                            checked>
+                        <span class="text-gray-700 font-medium">Fondo + Logo</span>
+                    </label>
+                </div>
+
+                <!-- Select de tipo de cotización -->
+                <div class="flex-1 min-w-0">
+                    <select id="exchange_option_operation" name="exchange_option"
+                        class="w-full h-full px-3 py-2 text-sm text-gray-800 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-[#4CAF50] focus:border-[#4CAF50] hover:border-gray-400 transition-colors cursor-pointer"
+                        onchange="updateHiddenInputsOperation()">
+                        <option value="" disabled selected class="text-gray-400">Seleccione una opción</option>
+                        <option value="1">USD (valor original) y tasa original</option>
+                        <option value="2">USD (valor paralelo) y tasa original</option>
+                        <option value="3">USD (valor original) y tasa modificada</option>
+                        <option value="4">USD (valor paralelo) y tasa modificada</option>
+                    </select>
+                </div>
+
+                <!-- Inputs ocultos -->
+                <input type="hidden" name="is_parallel" id="is_parallel" value="0">
+                <input type="hidden" name="use_exchange_rate" id="use_exchange_rate" value="0">
+
+                <!-- Botón enviar -->
+                <button type="submit"
+                    class="flex items-center justify-center gap-2 px-4 py-2 bg-[#4CAF50] hover:bg-[#3d8b40] text-white text-sm font-semibold rounded-lg transition-all duration-200 shadow-md hover:shadow-lg flex-1 sm:flex-none sm:w-auto">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
+                        stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    Crear nota de cobranza
+                </button>
+            </form>
+
+            @if ($billingNote->status === 'completed')
+                <form action="{{ route('invoice.download') }}" method="POST"
+                    class="w-full flex flex-col sm:flex-row gap-4 items-stretch sm:items-center">
                     @csrf
-                    <input type="hidden" name="quotation_id" value="{{ $quotation['id'] }}" />
-                    <div class="flex flex-col sm:flex-row-reverse gap-2 items-center">
-                        <div class="flex items-center bg-white rounded-lg border border-gray-200 p-1 shadow-sm">
-                            <label class="inline-flex items-center cursor-pointer">
-                                <input type="hidden" name="visible" value="0">
-                                <input type="checkbox" name="visible"
-                                    class="form-checkbox h-6 w-6 text-[#4CAF50] rounded border-gray-300 focus:ring-[#4CAF50] mr-3 ml-2"
-                                    value="1" checked>
-                                <span class="text-gray-700 font-medium flex items-center">
-                                    Fondo + Logo
-                                </span>
-                            </label>
-                        </div>
-                        <button type="submit"
-                            class="flex items-center justify-center px-4 py-2 bg-[#4CAF50] hover:bg-[#3d8b40] text-white text-sm font-medium rounded-lg transition-all duration-200 shadow-sm hover:shadow-md w-full sm:w-auto">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none"
-                                viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                            </svg>
-                            Crear nota de cobranza
-                        </button>
+                    <input type="hidden" name="id" value="{{ $billingNote['id'] }}" />
+
+                    <!-- Fondo + Logo -->
+                    <div
+                        class="flex items-center bg-white rounded-lg border border-gray-200 p-2 shadow-sm flex-1 sm:flex-none">
+                        <label class="inline-flex items-center cursor-pointer w-full">
+                            <input type="hidden" name="visible" value="0">
+                            <input type="checkbox" name="visible" value="1"
+                                class="form-checkbox h-5 w-5 text-[#4CAF50] rounded border-gray-300 focus:ring-[#4CAF50] mr-3 ml-2"
+                                checked>
+                            <span class="text-gray-700 font-medium">Fondo + Logo</span>
+                        </label>
                     </div>
+
+                    <!-- Select de tipo de cotización -->
+                    <div class="flex-1 min-w-0">
+                        <select id="exchange_option_operation" name="exchange_option"
+                            class="w-full h-full px-3 py-2 text-sm text-gray-800 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-[#4CAF50] focus:border-[#4CAF50] hover:border-gray-400 transition-colors cursor-pointer"
+                            onchange="updateHiddenInputsOperation()">
+                            <option value="" disabled selected>Seleccione una opción</option>
+                            <option value="1">USD (valor original) y tasa original</option>
+                            <option value="2">USD (valor paralelo) y tasa original</option>
+                            <option value="3">USD (valor original) y tasa modificada</option>
+                            <option value="4">USD (valor paralelo) y tasa modificada</option>
+                        </select>
+                    </div>
+
+                    <!-- Inputs ocultos -->
+                    <input type="hidden" name="is_parallel" id="is_parallel_operation" value="0">
+                    <input type="hidden" name="use_exchange_rate" id="use_exchange_rate_operation" value="0">
+
+                    <!-- Botón enviar -->
+                    <button type="submit"
+                        class="flex items-center justify-center px-4 py-2 bg-yellow-600 hover:bg-yellow-800 text-white text-sm font-medium rounded-lg transition-all duration-200 shadow-sm hover:shadow-md flex-1 sm:flex-none sm:w-auto">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24"
+                            stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M9 14l6-6m-5.5.5h.01m4.99 5h.01M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16l3.5-2 3.5 2 3.5-2 3.5 2z" />
+                        </svg>
+                        Crear factura
+                    </button>
                 </form>
-            </div>
-        @endif --}}
+            @endif
+        </div>
 
         <div class="bg-white shadow-md rounded-lg overflow-hidden border border-gray-200 mb-6">
             <div class="px-6 py-4 border-b border-gray-200">
@@ -164,9 +221,16 @@
                 <div class="border-b border-gray-100 pb-2">
                     <p class="text-sm font-medium text-gray-500">Estado cotizacion</p>
                     <p class="text-lg font-semibold text-gray-900">
-                        {{ $billingNote->quotation['status'] === 'accepted' ? 'Confirmado' : 'Pendiente de respuesta' }}</p>
+                        {{ $billingNote->quotation['status'] === 'accepted' ? 'Confirmado' : 'Pendiente de respuesta' }}
+                    </p>
                 </div>
 
+                <div class="border-b border-gray-100 pb-2">
+                    <p class="text-sm font-medium text-gray-500">Estado operacion</p>
+                    <p class="text-lg font-semibold text-gray-900">
+                        {{ $billingNote->status === 'completed' ? 'Finalizado' : 'Abierta' }}
+                    </p>
+                </div>
             </div>
         </div>
 
@@ -179,19 +243,23 @@
 
                 <div class="p-6">
                     <div class="overflow-x-auto">
-                        <table class="min-w-full divide-y divide-gray-200">
+                        <table class="min-w-full table-fixed divide-y divide-gray-200"> <!-- Añadido table-fixed -->
                             <thead class="bg-gray-50">
                                 <tr>
                                     <th scope="col"
-                                        class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        class="w-2/5 px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                         Concepto
                                     </th>
                                     <th scope="col"
-                                        class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        class="w-1/5 px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                         Monto
                                     </th>
                                     <th scope="col"
-                                        class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        class="w-1/5 px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        Monto Paralelo
+                                    </th>
+                                    <th scope="col"
+                                        class="w-1/5 px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                         Tasa de cambio
                                     </th>
                                 </tr>
@@ -200,13 +268,17 @@
                                 @foreach ($costsDetails as $item)
                                     @if ($item['enabled'] == '1' && $item['type'] == 'cost')
                                         <tr>
-                                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                                            <td
+                                                class="w-2/5 px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                                                 {{ $item['concept'] }}
                                             </td>
-                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                            <td class="w-1/5 px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                                                 {{ number_format($item['amount'], 2) }}
                                             </td>
-                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                            <td class="w-1/5 px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                                {{ number_format($item['amount_parallel'], 2) }}
+                                            </td>
+                                            <td class="w-1/5 px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                                                 {{ $item['exchange_rate'] }}
                                             </td>
                                         </tr>
@@ -226,19 +298,23 @@
 
                 <div class="p-6">
                     <div class="overflow-x-auto">
-                        <table class="min-w-full divide-y divide-gray-200">
+                        <table class="min-w-full table-fixed divide-y divide-gray-200"> <!-- Añadido table-fixed -->
                             <thead class="bg-gray-50">
                                 <tr>
                                     <th scope="col"
-                                        class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        class="w-2/5 px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                         Concepto
                                     </th>
                                     <th scope="col"
-                                        class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        class="w-1/5 px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                         Monto
                                     </th>
                                     <th scope="col"
-                                        class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        class="w-1/5 px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        Monto Paralelo
+                                    </th>
+                                    <th scope="col"
+                                        class="w-1/5 px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                         Tasa de cambio
                                     </th>
                                 </tr>
@@ -247,13 +323,17 @@
                                 @foreach ($costsDetails as $item)
                                     @if ($item['enabled'] == '1' && $item['type'] == 'charge')
                                         <tr>
-                                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                                            <td
+                                                class="w-2/5 px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                                                 {{ $item['concept'] }}
                                             </td>
-                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                            <td class="w-1/5 px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                                                 {{ number_format($item['amount'], 2) }}
                                             </td>
-                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                            <td class="w-1/5 px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                                {{ number_format($item['amount_parallel'], 2) }}
+                                            </td>
+                                            <td class="w-1/5 px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                                                 {{ $item['exchange_rate'] }}
                                             </td>
                                         </tr>
@@ -302,7 +382,7 @@
                         <div class="flex justify-between py-2 border-b border-gray-200">
                             <span class="text-gray-600">Subtotal Costos:</span>
                             <span class="font-medium">
-                                 {{ number_format($subtotalCosts, 2) }}
+                                {{ number_format($subtotalCosts, 2) }}
                             </span>
                         </div>
 
@@ -310,7 +390,7 @@
                         <div class="flex justify-between py-2 border-b border-gray-200">
                             <span class="text-gray-600">Subtotal Cargos:</span>
                             <span class="font-medium">
-                                 {{ number_format($subtotalCharges, 2) }}
+                                {{ number_format($subtotalCharges, 2) }}
                             </span>
                         </div>
 
@@ -318,7 +398,7 @@
                         <div class="flex justify-between py-3 border-t-2 border-gray-300 mt-2">
                             <span class="text-gray-800 font-semibold">Total General:</span>
                             <span class="font-bold text-lg text-[#0B628D]">
-                                 {{ number_format($total, 2) }}
+                                {{ number_format($total, 2) }}
                             </span>
                         </div>
 
@@ -347,16 +427,67 @@
                                     0,
                                 );
                             @endphp
-                            {{-- <div class="flex justify-between py-2 border-t border-gray-200 mt-3 pt-3">
-                                <span class="text-gray-600">Total (Moneda Paralela):</span>
-                                <span class="font-medium text-[#0B628D]">
-                                    USD {{ number_format($totalParallel, 2) }}
-                                </span>
-                            </div> --}}
                         @endif
                     </div>
                 </div>
             </div>
         </div>
     </div>
+    <script>
+        function updateHiddenInputs() {
+            const select = document.getElementById('exchange_option');
+            const isParallel = document.getElementById('is_parallel');
+            const useExchangeRate = document.getElementById('use_exchange_rate');
+
+            switch (select.value) {
+                case '1':
+                    isParallel.value = 0;
+                    useExchangeRate.value = 0;
+                    break;
+                case '2':
+                    isParallel.value = 1;
+                    useExchangeRate.value = 0;
+                    break;
+                case '3':
+                    isParallel.value = 0;
+                    useExchangeRate.value = 1;
+                    break;
+                case '4':
+                    isParallel.value = 1;
+                    useExchangeRate.value = 1;
+                    break;
+                default:
+                    isParallel.value = 0;
+                    useExchangeRate.value = 0;
+            }
+        }
+
+        function updateHiddenInputsOperation() {
+            const select = document.getElementById('exchange_option_operation');
+            const isParallel = document.getElementById('is_parallel_operation');
+            const useExchangeRate = document.getElementById('use_exchange_rate_operation');
+
+            switch (select.value) {
+                case '1':
+                    isParallel.value = 0;
+                    useExchangeRate.value = 0;
+                    break;
+                case '2':
+                    isParallel.value = 1;
+                    useExchangeRate.value = 0;
+                    break;
+                case '3':
+                    isParallel.value = 0;
+                    useExchangeRate.value = 1;
+                    break;
+                case '4':
+                    isParallel.value = 1;
+                    useExchangeRate.value = 1;
+                    break;
+                default:
+                    isParallel.value = 0;
+                    useExchangeRate.value = 0;
+            }
+        }
+    </script>
 @endsection

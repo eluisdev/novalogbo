@@ -38,15 +38,14 @@
                 </div>
             </div>
 
-            <div class="mb-4 flex items-center">
-                <input id="filterPending" type="checkbox"
-                    class="h-4 w-4 text-[#0B628D] focus:ring-[#0B628D] border-gray-300 rounded">
-                <label for="filterPending" class="ml-2 text-sm text-gray-700">
-                    Mostrar solo operaciones abiertas
-                </label>
-            </div>
-
             <div class="flex sm:flex-row flex-col items-center gap-6 max-sm:justify-center">
+                <div class="flex items-center">
+                    <input id="filterPending" type="checkbox"
+                        class="h-4 w-4 text-[#0B628D] focus:ring-[#0B628D] border-gray-300 rounded">
+                    <label for="filterPending" class="ml-2 text-sm text-gray-700">
+                        Mostrar solo operaciones abiertas
+                    </label>
+                </div>
                 <a href="{{ route('operations.create') }}"
                     class="flex items-center justify-center px-4 py-2 bg-[#0B628D] hover:bg-[#19262c] text-white text-sm font-medium rounded-lg transition-colors duration-200 shadow-sm">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24"
@@ -121,17 +120,17 @@
                                     <td class="px-6 py-4 whitespace-nowrap">
                                         @if (strtolower($operation->status) == 'pending')
                                             <div
-                                                class="text-sm text-white bg-green-500 rounded-full px-3 py-1 inline-flex items-center justify-center">
+                                                class="text-sm text-white bg-yellow-500 rounded-full px-3 py-1 inline-flex items-center justify-center">
                                                 <span class="mr-1 font-bold">•</span> Abierta
                                             </div>
-                                        @elseif (strtolower($operation->status) == 'accepted')
+                                        @elseif (strtolower($operation->status) == 'completed')
                                             <div
-                                                class="text-sm text-white bg-red-500 rounded-full px-3 py-1 inline-flex items-center justify-center">
+                                                class="text-sm text-white bg-green-500 rounded-full px-3 py-1 inline-flex items-center justify-center">
                                                 <span class="mr-1 font-bold">•</span> Cerrada
                                             </div>
                                         @else
                                             <div
-                                                class="text-sm text-white bg-yellow-500 rounded-full px-3 py-1 inline-flex items-center justify-center">
+                                                class="text-sm text-white bg-red-500 rounded-full px-3 py-1 inline-flex items-center justify-center">
                                                 <span class="mr-1 font-bold">•</span> Rechazada
                                             </div>
                                         @endif

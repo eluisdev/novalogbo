@@ -46,11 +46,28 @@
                                 'text' => 'Cotizaciones',
                                 'active' => request()->is('quotations*'),
                             ],
-                            // TODO: Revisar si podemos agregar operaciones con admin
                             [
                                 'route' => 'operations.index',
                                 'text' => 'Operaciones',
                                 'active' => request()->is('operations*'),
+                            ],
+                            [
+                                'route' => '#',
+                                'text' => 'Reportes',
+                                'active' =>
+                                    request()->is('reports/quotations*') || request()->is('reports/operations*'),
+                                'children' => [
+                                    [
+                                        'route' => 'reports.quotations',
+                                        'text' => 'Cotizaciones',
+                                        'active' => request()->is('reports/quotations*'),
+                                    ],
+                                    [
+                                        'route' => 'reports.operations',
+                                        'text' => 'Operaciones',
+                                        'active' => request()->is('reports/operations*'),
+                                    ],
+                                ],
                             ],
                             [
                                 'route' => '#',

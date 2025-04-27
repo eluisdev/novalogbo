@@ -214,7 +214,8 @@ Route::middleware(['auth', 'role:admin'])->group(function () {
     });
 
     Route::prefix('reports')->name('reports.')->controller(ReportController::class)->group(function () {
-        Route::get('/', 'index')->name('index');
+        Route::get('/quotations', 'getQuotations')->name('quotations');
+        Route::get('/operations', 'getOperations')->name('operations');
         Route::get('/create', 'create')->name('create');
     });
 });

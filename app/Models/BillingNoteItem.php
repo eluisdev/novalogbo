@@ -14,8 +14,10 @@ class BillingNoteItem extends Model
     protected $fillable = [
         'billing_note_id',
         'type',
+        'is_amount_parallel',
         'description',
         'amount',
+        'amount_parallel',
         'currency',
         'exchange_rate',
     ];

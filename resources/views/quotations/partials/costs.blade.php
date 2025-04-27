@@ -26,7 +26,6 @@
                 <input type="checkbox" id="parallel_exchange_checkbox" name="is_parallel"
                     class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded" value="1"
                     @if (old('is_parallel', isset($quotation_data) ? $quotation_data['formData']['is_parallel'] : 0)) checked @endif>
-                <input type="hidden" name="is_parallel" value="0">
                 <label for="parallel_exchange_checkbox" class="font-medium">Cambio paralelo en Bs.</label>
             </div>
             <div id="juncture_container" class="@if (!old('juncture', isset($quotation_data) ? $quotation_data['formData']['juncture'] : '')) hidden @endif">
@@ -233,7 +232,7 @@
                         &times;
                     </button>
                 </div>
-                
+
                 <div class="mb-2">
                     <label class="block text-sm font-medium text-gray-700 mb-1">Costo </label>
                     <div class="relative rounded-md shadow-sm">
@@ -257,7 +256,7 @@
                         </div>
                     </div>
                 </div>
-                
+
                 <input type="hidden" name="costs[${cost.id}][enabled]" value="1">
                 <input type="hidden" name="costs[${cost.id}][cost_id]" value="${cost.id}">
                 <input type="hidden" name="costs[${cost.id}][concept]" value="${cost.name}">

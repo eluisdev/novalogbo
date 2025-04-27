@@ -1,44 +1,55 @@
 @php
     $layout = Auth::user()->role_id == '1' ? 'layouts.admin' : 'layouts.operator';
 
-    // Convertir correctamente el exchange_rate (manejar formatos con comas)
-    $defaultExchangeRate = isset($quotation['exchange_rate'])
-        ? floatval(str_replace(',', '.', $quotation['exchange_rate']))
-        : 1.0; // Valor por defecto
+    // Convertir correctamente el exchange_rate (manejar formatos con comas y puntos)
+    $defaultExchangeRate = isset($billingNote->quotation['exchange_rate'])
+        ? floatval(str_replace(',', '.', str_replace('.', '', $billingNote->quotation['exchange_rate'])))
+        : 1.0;
 
     $hasOldInput = count(old()) > 0;
 
-    // Función mejorada para obtener valores
-    $getFieldValue = function ($index, $field, $default = null) use ($hasOldInput, $quotation, $defaultExchangeRate) {
-        // Caso especial para exchange_rate para asegurar el formato
+    // Función optimizada para obtener valores
+    $getFieldValue = function ($index, $field, $default = null) use ($hasOldInput, $billingNote, $defaultExchangeRate) {
+        // Caso especial para exchange_rate
         if ($field === 'exchange_rate') {
             $value = old(
                 "costsDetails.{$index}.{$field}",
-                $quotation['costDetails'][$index][$field] ?? $defaultExchangeRate,
+                $billingNote->quotation['costDetails'][$index][$field] ?? $defaultExchangeRate,
             );
-            return is_numeric($value) ? floatval($value) : floatval(str_replace(',', '.', $value));
+
+            // Manejar diferentes formatos numéricos
+            if (is_string($value)) {
+                $value = str_replace('.', '', $value); // Eliminar separadores de miles
+                $value = str_replace(',', '.', $value); // Convertir coma decimal a punto
+            }
+
+            return floatval($value);
         }
 
+        // Para otros campos
         if ($hasOldInput) {
-            return old("costsDetails.{$index}.{$field}", $quotation['costDetails'][$index][$field] ?? $default);
+            return old(
+                "costsDetails.{$index}.{$field}",
+                $billingNote->quotation['costDetails'][$index][$field] ?? $default,
+            );
         }
-        return $quotation['costDetails'][$index][$field] ?? $default;
+
+        return $billingNote->quotation['costDetails'][$index][$field] ?? $default;
     };
 
-    // Asignar directamente los costDetails que recibes
+    // Obtener costDetails directamente de la nota de facturación
     $costsDetails = $costsDetails ?? [];
 
-    // Filtrar costos no agregados (si es necesario)
+    // Filtrar costos disponibles (no agregados aún)
     $availableCosts = collect($costs)
-        ->filter(function ($cost) use ($costsDetails) {
-            return !collect($costsDetails)->contains(function ($detail) use ($cost) {
+        ->reject(function ($cost) use ($costsDetails) {
+            return collect($costsDetails)->contains(function ($detail) use ($cost) {
                 return isset($detail['concept']) &&
-                    strtolower($detail['concept']) === strtolower($cost->name) &&
-                    $detail['type'] === 'cost';
+                    mb_strtolower($detail['concept']) === mb_strtolower($cost->name) &&
+                    ($detail['type'] ?? null) === 'cost';
             });
         })
         ->values();
-
 @endphp
 
 @extends($layout)
@@ -46,6 +57,79 @@
 @section('dashboard-option')
 
     <div class="w-full mx-auto px-4 sm:px-6 lg:px-8">
+
+        <div class="w-full">
+
+            <div
+                class="flex flex-col sm:flex-row items-center justify-between gap-4 bg-white rounded-xl shadow-sm p-3 mb-6 border border-gray-200">
+                <h2 class="text-xl font-black text-gray-800">
+                    <span class="text-[#0B628D]">Número de servicio interno: {{ $billingNote['op_number'] }}</span>
+                </h2>
+
+                <div class="flex sm:flex-row flex-col gap-2">
+                    <div class="flex space-x-2">
+                        <a href="{{ route('operations.index') }}"
+                            class="flex items-center justify-center px-4 py-2 bg-[#0B628D] hover:bg-[#19262c] text-white text-sm font-medium rounded-lg transition-colors duration-200 shadow-sm">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24"
+                                stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                            </svg>
+                            Volver a operaciones
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white shadow-md rounded-lg overflow-hidden border border-gray-200 mb-6">
+                <div class="px-6 py-4 border-b border-gray-200">
+                    <h3 class="text-lg font-medium text-gray-900">Información General</h3>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 p-6">
+                    <!-- Columna 1: Moneda y Tipo de Cambio -->
+                    <div class="space-y-4">
+                        <div class="border-b border-gray-100 pb-2">
+                            <p class="text-sm font-medium text-gray-500">Moneda</p>
+                            <p class="text-lg font-semibold text-gray-900">{{ $billingNote->quotation['currency'] }}</p>
+                        </div>
+                        <div class="border-b border-gray-100 pb-2">
+                            <p class="text-sm font-medium text-gray-500">Tipo de Cambio</p>
+                            <p class="text-lg font-semibold text-gray-900">{{ $billingNote->quotation['exchange_rate'] }}
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Columna 2: Datos del Cliente -->
+                    <div class="space-y-4">
+                        <div class="border-b border-gray-100 pb-2">
+                            <p class="text-sm font-medium text-gray-500">NIT Cliente</p>
+                            <p class="text-lg font-semibold text-gray-900">{{ $billingNote->quotation['customer_nit'] }}</p>
+                        </div>
+                        <div class="border-b border-gray-100 pb-2">
+                            <p class="text-sm font-medium text-gray-500">Nombre Cliente</p>
+                            <p class="text-lg font-semibold text-gray-900">{{ $billingNote->quotation['customer']['name'] }}
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Columna 3: Contacto del Cliente -->
+                    <div class="space-y-4">
+                        <div class="border-b border-gray-100 pb-2">
+                            <p class="text-sm font-medium text-gray-500">Correo Cliente</p>
+                            <p class="text-lg font-semibold text-gray-900">
+                                {{ $billingNote->quotation['customer']['email'] }}</p>
+                        </div>
+                        <div class="border-b border-gray-100 pb-2">
+                            <p class="text-sm font-medium text-gray-500">Teléfono Cliente</p>
+                            <p class="text-lg font-semibold text-gray-900">
+                                {{ $billingNote->quotation['customer']['phone'] }}</p>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
 
         @if ($errors->any())
             <div class="bg-red-100 text-red-700 p-4 rounded-md mb-4">
@@ -57,8 +141,9 @@
             </div>
         @endif
 
-        <form method="POST" action="{{ route('operations.store-from-quotation', $quotation['id']) }}" class="flex flex-col">
+        <form method="POST" action="{{ route('operations.update', $billingNote['id']) }}" class="flex flex-col">
             @csrf
+            @method('PUT')
             <div class="p-6 border-b-2 border-blue-600 bg-white shadow-sm rounded-lg">
                 <div class="flex items-center mb-6 sm:flex-row flex-col">
                     <span class="inline-flex items-center justify-center p-3 rounded-full bg-blue-50 text-blue-600 mr-3">
@@ -128,7 +213,7 @@
                                                 placeholder="0.00" required>
                                             <div
                                                 class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none mt-5">
-                                                <span class="text-gray-500 sm:text-sm">{{ $quotation['currency'] }}</span>
+                                                <span class="text-gray-500 sm:text-sm">{{ $billingNote->quotation['currency'] }}</span>
                                             </div>
                                             @error("costsDetails.$index.amount")
                                                 <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
@@ -141,7 +226,8 @@
                                                 name="costsDetails[{{ $index }}][is_amount_parallel]"
                                                 value="0">
                                             <input type="checkbox" id="parallel_{{ $index }}"
-                                                name="costsDetails[{{ $index }}][is_amount_parallel]" value="1"
+                                                name="costsDetails[{{ $index }}][is_amount_parallel]"
+                                                value="1"
                                                 class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded parallel-checkbox"
                                                 {{ $detail['is_amount_parallel'] ? 'checked' : '' }}>
                                             <label for="parallel_{{ $index }}"
@@ -161,7 +247,7 @@
                                                 placeholder="0.00" {{ $detail['is_amount_parallel'] ? 'required' : '' }}>
                                             <div
                                                 class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none mt-5">
-                                                <span class="text-gray-500 sm:text-sm">{{ $quotation['currency'] }}</span>
+                                                <span class="text-gray-500 sm:text-sm">{{ $billingNote->quotation['currency'] }}</span>
                                             </div>
                                             @error("costsDetails.$index.amount_parallel")
                                                 <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
@@ -236,7 +322,7 @@
                                                 placeholder="0.00" required>
                                             <div
                                                 class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none mt-5">
-                                                <span class="text-gray-500 sm:text-sm">{{ $quotation['currency'] }}</span>
+                                                <span class="text-gray-500 sm:text-sm">{{ $billingNote->quotation['currency'] }}</span>
                                             </div>
                                             @error("costsDetails.$index.amount")
                                                 <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
@@ -270,7 +356,7 @@
                                                 placeholder="0.00" {{ $detail['is_amount_parallel'] ? 'required' : '' }}>
                                             <div
                                                 class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none mt-5">
-                                                <span class="text-gray-500 sm:text-sm">{{ $quotation['currency'] }}</span>
+                                                <span class="text-gray-500 sm:text-sm">{{ $billingNote->quotation['currency'] }}</span>
                                             </div>
                                             @error("costsDetails.$index.amount_parallel")
                                                 <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
@@ -356,8 +442,8 @@
 
         function addCostDetail(id, concept, type) {
             concept = concept.toUpperCase();
-            const quotationCurrency = @json($quotation['currency'] ?? 'USD');
-            const exchangeRate = @json($quotation['exchange_rate'] ?? '6.96');
+            const quotationCurrency = @json($billingNote->quotation['currency'] ?? 'USD');
+            const exchangeRate = @json($billingNote->quotation['exchange_rate'] ?? '6.96');
 
             const container = type === 'cost' ?
                 document.getElementById('selectedCostsDetails') :

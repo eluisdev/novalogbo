@@ -293,7 +293,7 @@
                 class="{{ !$defaultIsContainer ? '' : 'hidden' }}">
                 <div class="flex gap-2 items-center md:mt-5.5 sm:flex-row flex-col">
                     <input type="number" id="loose_quantity_{{ $index }}{{ $uniqueSuffix }}"
-                        value="{{ $useOld ? old('products.' . $index . '.loose_quantity', 1) : (isset($product) && property_exists($product, 'loose_quantity') ? $product->loose_quantity : 1) }}"
+                        value="{{ $useOld ? old('products.' . $index . '.loose_quantity', $quantityParts[0]) : (isset($product) && property_exists($product, 'quantity') ? $quantityParts[0] : 1 ) }}"
                         class="w-16 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 quantity-input"
                         min="1" data-index="{{ $index }}{{ $uniqueSuffix }}">
 

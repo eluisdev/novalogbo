@@ -99,18 +99,15 @@
                         @else
                             @foreach ($billingNotes as $operation)
                                 <tr class="operation-row hover:bg-gray-50 transition-colors duration-150"
-                                    data-customer="{{ strtolower($operation->customer) }}"
+                                    data-customer="{{ strtolower($operation->customer->name) }}"
                                     data-customer-nit="{{ strtolower($operation->customer_nit) }}"
                                     data-op_number="{{ strtolower($operation->op_number) }}"
-                                    data-emission_date="{{ strtolower($operation->emmision_date) }}"
+                                    data-emission_date="{{ strtolower($operation->emission_date) }}"
                                     data-status="{{ strtolower($operation->status) }}">
                                     <td class="px-6 py-4 whitespace-nowrap">
                                         <div class="text-sm font-medium text-gray-900">
-                                            {{ $operation->quotation->customer }}
+                                            {{ $operation->quotation->customer->name }}
                                         </div>
-                                    </td>
-                                    <td class="px-6 py-4 whitespace-nowrap">
-                                        <div class="text-sm text-gray-900">{{ $operation->customer }}</div>
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap">
                                         <div class="text-sm text-gray-900">{{ $operation->customer_nit }}</div>
@@ -119,7 +116,7 @@
                                         <div class="text-sm text-gray-900">{{ $operation->op_number }}</div>
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap">
-                                        <div class="text-sm text-gray-900">{{ $operation->emmision_date }}</div>
+                                        <div class="text-sm text-gray-900">{{ $operation->emission_date }}</div>
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap">
                                         @if (strtolower($operation->status) == 'pending')

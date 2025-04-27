@@ -12,8 +12,8 @@
                 <span class="text-[#0B628D]">Número de servicio interno: {{ $billingNote['op_number'] }}</span>
             </h2>
             <div class="flex sm:flex-row flex-col gap-2">
-                @if ($quotation['status'] === 'approved')
-                    <form action="{{ route('quotations.updateStatus', $quotation['id']) }}" method="POST"
+                @if ($billingNote->quotation['status'] === 'approved')
+                    <form action="{{ route('quotations.updateStatus', $billingNote->quotation['id']) }}" method="POST"
                         class="w-full sm:w-auto">
                         @csrf
                         @method('PATCH')
@@ -29,7 +29,7 @@
                         </button>
                     </form>
                 @else
-                    <form action="{{ route('quotations.updateStatus', $quotation['id']) }}" method="POST"
+                    <form action="{{ route('quotations.updateStatus', $billingNote->quotation['id']) }}" method="POST"
                         class="w-full sm:w-auto">
                         @csrf
                         @method('PATCH')
@@ -50,7 +50,7 @@
         <div
             class="flex flex-col justify-end sm:flex-row items-center gap-4 bg-white rounded-xl shadow-sm p-3 mb-6 border border-gray-200">
             {{-- @if ($quotation_data['status'] !== 'accepted') --}}
-            <a href="{{ route('quotations.edit', $quotation['id']) }}"
+            <a href="{{ route('operations.edit', $billingNote['id']) }}"
                 class="flex px-4 py-2 bg-[#FF9800] hover:bg-[#e68a00] text-white text-sm font-medium rounded-lg transition-all duration-200 shadow-sm hover:shadow-md w-full sm:w-auto">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24"
                     stroke="currentColor">
@@ -129,11 +129,11 @@
                 <div class="space-y-4">
                     <div class="border-b border-gray-100 pb-2">
                         <p class="text-sm font-medium text-gray-500">Moneda</p>
-                        <p class="text-lg font-semibold text-gray-900">{{ $billingNote->$quotation['currency'] }}</p>
+                        <p class="text-lg font-semibold text-gray-900">{{ $billingNote->quotation['currency'] }}</p>
                     </div>
                     <div class="border-b border-gray-100 pb-2">
                         <p class="text-sm font-medium text-gray-500">Tipo de Cambio</p>
-                        <p class="text-lg font-semibold text-gray-900">{{ $billingNote->$quotation['exchange_rate'] }}</p>
+                        <p class="text-lg font-semibold text-gray-900">{{ $billingNote->quotation['exchange_rate'] }}</p>
                     </div>
                 </div>
 
@@ -141,11 +141,11 @@
                 <div class="space-y-4">
                     <div class="border-b border-gray-100 pb-2">
                         <p class="text-sm font-medium text-gray-500">NIT Cliente</p>
-                        <p class="text-lg font-semibold text-gray-900">{{ $billingNote->$quotation['customer_nit'] }}</p>
+                        <p class="text-lg font-semibold text-gray-900">{{ $billingNote->quotation['customer_nit'] }}</p>
                     </div>
                     <div class="border-b border-gray-100 pb-2">
                         <p class="text-sm font-medium text-gray-500">Nombre Cliente</p>
-                        <p class="text-lg font-semibold text-gray-900">{{ $billingNote->$quotation['name'] }}</p>
+                        <p class="text-lg font-semibold text-gray-900">{{ $billingNote->customer['name'] }}</p>
                     </div>
                 </div>
 
@@ -153,18 +153,18 @@
                 <div class="space-y-4">
                     <div class="border-b border-gray-100 pb-2">
                         <p class="text-sm font-medium text-gray-500">Correo Cliente</p>
-                        <p class="text-lg font-semibold text-gray-900">{{ $billingNote->$quotation['name'] }}</p>
+                        <p class="text-lg font-semibold text-gray-900">{{ $billingNote->customer['email'] }}</p>
                     </div>
                     <div class="border-b border-gray-100 pb-2">
                         <p class="text-sm font-medium text-gray-500">Teléfono Cliente</p>
-                        <p class="text-lg font-semibold text-gray-900">{{ $billingNote->$quotation['name'] }}</p>
+                        <p class="text-lg font-semibold text-gray-900">{{ $billingNote->customer['cellphone'] }}</p>
                     </div>
                 </div>
 
                 <div class="border-b border-gray-100 pb-2">
                     <p class="text-sm font-medium text-gray-500">Estado cotizacion</p>
                     <p class="text-lg font-semibold text-gray-900">
-                        {{ $billingNote->$quotation['status'] === 'accepted' ? 'Confirmado' : 'Pendiente de respuesta' }}</p>
+                        {{ $billingNote->quotation['status'] === 'accepted' ? 'Confirmado' : 'Pendiente de respuesta' }}</p>
                 </div>
 
             </div>
@@ -204,7 +204,7 @@
                                                 {{ $item['concept'] }}
                                             </td>
                                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                                $ {{ number_format($item['amount'], 2) }}
+                                                {{ number_format($item['amount'], 2) }}
                                             </td>
                                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                                                 {{ $item['exchange_rate'] }}
@@ -251,7 +251,7 @@
                                                 {{ $item['concept'] }}
                                             </td>
                                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                                $ {{ number_format($item['amount'], 2) }}
+                                                {{ number_format($item['amount'], 2) }}
                                             </td>
                                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                                                 {{ $item['exchange_rate'] }}
@@ -302,7 +302,7 @@
                         <div class="flex justify-between py-2 border-b border-gray-200">
                             <span class="text-gray-600">Subtotal Costos:</span>
                             <span class="font-medium">
-                                $ {{ number_format($subtotalCosts, 2) }}
+                                 {{ number_format($subtotalCosts, 2) }}
                             </span>
                         </div>
 
@@ -310,7 +310,7 @@
                         <div class="flex justify-between py-2 border-b border-gray-200">
                             <span class="text-gray-600">Subtotal Cargos:</span>
                             <span class="font-medium">
-                                $ {{ number_format($subtotalCharges, 2) }}
+                                 {{ number_format($subtotalCharges, 2) }}
                             </span>
                         </div>
 
@@ -318,7 +318,7 @@
                         <div class="flex justify-between py-3 border-t-2 border-gray-300 mt-2">
                             <span class="text-gray-800 font-semibold">Total General:</span>
                             <span class="font-bold text-lg text-[#0B628D]">
-                                $ {{ number_format($total, 2) }}
+                                 {{ number_format($total, 2) }}
                             </span>
                         </div>
 
@@ -347,12 +347,12 @@
                                     0,
                                 );
                             @endphp
-                            <div class="flex justify-between py-2 border-t border-gray-200 mt-3 pt-3">
+                            {{-- <div class="flex justify-between py-2 border-t border-gray-200 mt-3 pt-3">
                                 <span class="text-gray-600">Total (Moneda Paralela):</span>
                                 <span class="font-medium text-[#0B628D]">
                                     USD {{ number_format($totalParallel, 2) }}
                                 </span>
-                            </div>
+                            </div> --}}
                         @endif
                     </div>
                 </div>

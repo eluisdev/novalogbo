@@ -277,11 +277,10 @@ Route::middleware(['auth', 'role:admin,operator'])->group(function () {
         Route::post('/create/quotation/{id}', [OperationController::class, 'storeFromQuotation'])
             ->name('operations.store-from-quotation');
 
-        // Route::get('/{id}', [OperationController::class, 'show'])->name('operations.show');
         Route::get('/show/{id}', [OperationController::class, 'show'])->name('operations.show');
-        // Route::get('/edit/{id}', [OperationController::class, 'edit'])->name('operations.edit');
         Route::get('/edit/{id}', [OperationController::class, 'edit'])->name('operations.edit');
         Route::delete('/{id}', [OperationController::class, 'destroy'])->name('operations.destroy');
+        Route::put('/edit/{id}', [OperationController::class, 'update'])->name('operations.update');
         Route::post('/toggleStatus/{id}', [OperationController::class, 'toggleStatus'])
             ->name('operations.toggle-status');
         Route::post('/downloadOperation', [OperationController::class, 'downloadOperation'])->name('operations.download');

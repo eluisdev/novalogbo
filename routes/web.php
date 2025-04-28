@@ -213,11 +213,14 @@ Route::middleware(['auth', 'role:admin'])->group(function () {
         Route::patch('toggle-status/{id}', 'toggleStatus')->name('toggleStatus');
     });
 
-    Route::prefix('reports')->name('reports.')->controller(ReportController::class)->group(function () {
-        Route::get('/quotations', 'getQuotations')->name('quotations');
-        Route::get('/operations', 'getOperations')->name('operations');
-        Route::get('/create', 'create')->name('create');
-    });
+    // Reportes
+    Route::get('/reports/quotations', [ReportController::class, 'quotationsReport'])->name('reports.quotations');
+    Route::get('/reports/operations', [ReportController::class, 'operationsReport'])->name('reports.operations');
+
+    // Exportación
+    Route::post('/reportes/exportar/cotizaciones/excel', [ReportController::class, 'exportQuotationsExcel'])->name('reports.export.quotations.excel');
+    Route::post('/reportes/exportar/operaciones/excel', [ReportController::class, 'exportOperationsExcel'])->name('reports.export.operations.excel');
+
 });
 
 
@@ -280,12 +283,12 @@ Route::middleware(['auth', 'role:admin,operator'])->group(function () {
 
         Route::get('/show/{id}', [OperationController::class, 'show'])->name('operations.show');
         Route::get('/edit/{id}', [OperationController::class, 'edit'])->name('operations.edit');
+        Route::put('/{id}', [OperationController::class, 'update'])->name('operations.update');
         Route::delete('/{id}', [OperationController::class, 'destroy'])->name('operations.destroy');
-        Route::put('/edit/{id}', [OperationController::class, 'update'])->name('operations.update');
         Route::post('/toggleStatus/{id}', [OperationController::class, 'toggleStatus'])
             ->name('operations.toggle-status');
         Route::post('/downloadOperation', [OperationController::class, 'downloadOperation'])->name('operations.download');
-        Route::post('/invoiceWord', [InvoiceController::class, 'invoiceDownload'])->name('invoice.download');
+        Route::post('/invoiceWord', [InvoiceController::class, 'generateInvoiceFromBillingNote'])->name('invoice.download');
     });
 });
 /*

@@ -47,6 +47,10 @@ class BillingNote extends Model
     {
         return $this->hasMany(BillingNoteItem::class);
     }
+    public function invoice()
+    {
+        return $this->hasOne(Invoice::class);
+    }
 
     // Generar números de nota automáticos
     public static function generateNumbers()

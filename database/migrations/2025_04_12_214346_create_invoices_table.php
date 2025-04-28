@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::create('invoices', function (Blueprint $table) {
             $table->id();
-            $table->string('invoice_number')->unique()->comment('Format INV-001-25');
+            $table->string('invoice_number')->unique();
             $table->date('invoice_date');
             $table->decimal('subtotal', 15, 2);
             $table->decimal('tax_amount', 15, 2);
@@ -28,9 +28,8 @@ return new class extends Migration
             $table->foreignId('user_id')->constrained('users')->onDelete('cascade');
             $table->integer('customer_nit');
             $table->foreign('customer_nit')->references('NIT')->on('customers')->onDelete('cascade');
-            // Añadir relación con quotation
-            $table->foreignId('quotation_id')->constrained('quotations')->onDelete('restrict');
-
+            $table->foreignId('billing_note_id')->constrained('billing_notes')->onDelete('cascade');
+            $table->foreignId('quotation_id')->constrained('quotations')->onDelete('cascade');
             $table->timestamps();
         });
     }

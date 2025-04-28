@@ -14,8 +14,11 @@ return new class extends Migration
         Schema::create('invoice_items', function (Blueprint $table) {
             $table->id();
             $table->foreignId('invoice_id')->constrained()->onDelete('cascade');
-            $table->foreignId('cost_id')->constrained('costs')->onDelete('restrict');
             $table->string('description');
+            $table->boolean('is_amount_parallel')->default(false);
+            $table->string('type');
+            $table->decimal('amount', 15, 2);
+            $table->decimal('amount_parallel', 15, 2)->nullable();
             $table->decimal('quantity', 15, 2)->default(1);
             $table->decimal('unit_price', 15, 2);
             $table->decimal('tax_rate', 15, 2)->default(0);
@@ -23,6 +26,7 @@ return new class extends Migration
             $table->decimal('subtotal', 15, 2);
             $table->decimal('total', 15, 2);
             $table->string('currency', 10);
+            $table->decimal('exchange_rate', 15, 2)->nullable();
             $table->timestamps();
         });
     }

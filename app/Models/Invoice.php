@@ -26,7 +26,8 @@ class Invoice extends Model
         'notes',
         'user_id',
         'customer_nit',
-        'quotation_id',
+        'billing_note_id',
+        'quotation_id'
     ];
 
     protected $casts = [
@@ -44,6 +45,10 @@ class Invoice extends Model
         return $this->belongsTo(User::class);
     }
 
+    public function billingNote(): BelongsTo
+    {
+        return $this->belongsTo(BillingNote::class);
+    }
     public function quotation(): BelongsTo
     {
         return $this->belongsTo(Quotation::class);

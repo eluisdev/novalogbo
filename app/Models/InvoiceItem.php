@@ -11,7 +11,6 @@ class InvoiceItem extends Model
 
     protected $fillable = [
         'invoice_id',
-        'cost_id',
         'description',
         'quantity',
         'unit_price',
@@ -20,6 +19,12 @@ class InvoiceItem extends Model
         'subtotal',
         'total',
         'currency',
+        'exchange_rate',
+        'is_amount_parallel',
+        'amount_parallel',
+        'type',
+        'amount',
+
     ];
 
     /**
@@ -28,14 +33,6 @@ class InvoiceItem extends Model
     public function invoice()
     {
         return $this->belongsTo(Invoice::class);
-    }
-
-    /**
-     * Get the cost type associated with this item.
-     */
-    public function cost()
-    {
-        return $this->belongsTo(Cost::class);
     }
 
     /**

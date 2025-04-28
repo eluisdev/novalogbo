@@ -482,8 +482,7 @@ class QuotationController extends Controller
             'services' => [],
             'costs' => []
         ];
-        // TODO: VERIFICAR CAMBIO DE CAMBIA SULETA
-        // Procesar productos
+
         foreach ($quotation->products as $key => $product) {
             $response['products'][$key + 1] = [
                 'name' => $product->name,

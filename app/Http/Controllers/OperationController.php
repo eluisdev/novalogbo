@@ -33,6 +33,7 @@ class OperationController extends Controller
         $quotations = Quotation::with(['customer'])
             ->where('status', 'accepted')
             ->orderBy('created_at', 'desc')
+            ->whereDoesntHave('billingNote')
             ->get();
         $customers = Customer::orderBy('name')->get();
         return view('operations.create', compact('customers', 'quotations'));
@@ -368,6 +369,7 @@ class OperationController extends Controller
 
             // Eliminar items antiguos
             $billingNote->items()->delete();
+            $billingNote->invoice()->delete();
 
             // Crear nuevos items
             foreach ($validated['costsDetails'] as $itemData) {
@@ -417,6 +419,7 @@ class OperationController extends Controller
     }
     public function downloadOperation(Request $request)
     {
+        dd($request->all());
         $request->validate(
             [
                 'id' => 'required|integer|exists:billing_notes,id',

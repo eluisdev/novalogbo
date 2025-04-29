@@ -55,12 +55,6 @@
                                 'text' => 'Operaciones',
                                 'active' => request()->is('operations*'),
                             ],
-                            //TODO agregar contabilidad
-                            // [
-                            //     'route' => 'operations.index',
-                            //     'text' => 'Contabilidad',
-                            //     'active' => request()->is('operations*'),
-                            // ],
                         ];
                     @endphp
 

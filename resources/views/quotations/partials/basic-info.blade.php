@@ -273,8 +273,6 @@
             exchangeRateInput.value = rate;
         }
 
-        console.log('Exchange Rate actualizado:', exchangeRateInput.value);
-
         // Actualizar símbolos en toda la página
         document.querySelectorAll('.currency-symbol').forEach(el => {
             el.textContent = symbol;

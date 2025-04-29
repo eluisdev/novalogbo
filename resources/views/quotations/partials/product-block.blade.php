@@ -249,7 +249,6 @@
         function updateRealQuantity(index) {
             const isContainer = document.querySelector(`input[name="products[${index}][is_container]"]:checked`)
                 .value;
-            console.log(isContainer, "CONTENEDOR");
             if (isContainer === '1') {
                 // Para contenedores (part1 x part2)
                 const part1Input = document.querySelector(`[id^="quantity_part1_${index}"]`) || document
@@ -257,7 +256,6 @@
                 const part2Input = document.querySelector(`[id^="quantity_part2_${index}"]`) || document
                     .querySelector(`[id^="quantity_part2_clone_${index}"]`);
                 const realQuantityInput = document.querySelector(`[id^="real_quantity_${index}"]`);
-                console.log(part1Input, part2Input, realQuantityInput);
 
                 if (part1Input && part2Input && realQuantityInput) {
                     realQuantityInput.value = `${part1Input.value} x ${part2Input.value}`;
@@ -277,7 +275,6 @@
             }
         }
 
-        // Event delegation para TODOS los inputs de cantidad (incluyendo clones)
         document.addEventListener('input', function(e) {
             if (e.target.classList.contains('quantity-input')) {
                 const index = e.target.dataset.index;
@@ -285,7 +282,6 @@
             }
         });
 
-        // Event delegation para TODOS los radio buttons (incluyendo clones)
         document.addEventListener('change', function(e) {
             const number = e.target.name
             const match = number.match(/\[(\d{1,2})\]/)

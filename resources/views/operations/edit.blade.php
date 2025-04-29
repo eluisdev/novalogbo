@@ -573,14 +573,11 @@
         // Configurar los checkboxes existentes al cargar la página
         document.addEventListener('DOMContentLoaded', function() {
             const checkboxes = document.querySelectorAll('.parallel-checkbox');
-            console.log(checkboxes);
             checkboxes.forEach(checkbox => {
                 const index = checkbox.id.split('_')[1];
-                console.log(index);
                 const amountField = document.getElementById(`amount_parallel_${index}`);
 
                 checkbox.addEventListener('change', function() {
-                    console.log("change");
                     if (this.checked) {
                         amountField.setAttribute('required', 'required');
                     } else {

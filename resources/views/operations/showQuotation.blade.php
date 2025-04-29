@@ -193,7 +193,6 @@
                         <p class="text-lg font-semibold text-gray-900">{{ $quotation_data['customer_info']['phone'] }}</p>
                     </div>
                 </div>
-                {{-- TODO: Revisar estados de cotizacion 5 --}}
                 <div class="border-b border-gray-100 pb-2">
                     <p class="text-sm font-medium text-gray-500">Estado cotizacion</p>
                     <p class="text-lg font-semibold text-gray-900">

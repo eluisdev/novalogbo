@@ -116,7 +116,6 @@
                                     <td class="px-6 py-4 whitespace-nowrap">
                                         <div class="text-sm text-gray-900">{{ $quotation->delivery_date }}</div>
                                     </td>
-                                    {{-- TODO: Revisar estados de cotizaciones --}}
                                     <td class="px-6 py-4 whitespace-nowrap">
                                         @if (strtolower($quotation->status) == 'pending')
                                             <div

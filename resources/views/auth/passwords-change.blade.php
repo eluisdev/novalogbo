@@ -43,7 +43,6 @@
                 class="w-full flex justify-center py-3 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-gradient-to-r from-[#0e71a2] to-[#074665] hover:from-[#084665] hover:to-[#06364e] transition-colors duration-200 hover:cursor-pointer mt-6">
                 Cambiar contraseña
             </button>
-            {{-- TODO:Please wait before retrying. --}}
         </form>
     </div>
 @endsection

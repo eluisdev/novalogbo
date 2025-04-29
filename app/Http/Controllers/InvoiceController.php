@@ -336,7 +336,7 @@ class InvoiceController extends Controller
                         'description' => $item->description,
                         'amount' => $amount,
                         'amountBs' => $amountBs,
-                        'quantity'=> $item->quantity,
+                        'quantity' => $item->quantity,
                         'show' => true
                     ];
                     $totalForeign += $amount;
@@ -349,7 +349,7 @@ class InvoiceController extends Controller
                     'description' => $item->description,
                     'amount' => $amount,
                     'amountBs' => $amountBs,
-                    'quantity'=> $item->quantity,
+                    'quantity' => $item->quantity,
                     'show' => true
                 ];
                 $totalForeign += $amount;
@@ -395,12 +395,12 @@ class InvoiceController extends Controller
         // Subtotales
         $totalInnerTable->addRow();
         $totalInnerTable->addCell(2000)->addText('Subtotal:', ['bold' => true], $rightOptions);
-        $totalInnerTable->addCell(2500)->addText($invoice->currency . ' ' . number_format($invoice->subtotal, 2), null, $rightOptions);
 
-        if($isParallel ){
+        if ($isParallel) {
+            $totalInnerTable->addCell(2500)->addText($invoice->currency . ' ' . number_format($totalForeign, 2), null, $rightOptions);
             $totalInnerTable->addCell(2500)->addText('BS ' . number_format($totalBs, 2), null, $rightOptions);
-        }
-        else{
+        } else {
+            $totalInnerTable->addCell(2500)->addText($invoice->currency . ' ' . number_format($invoice->subtotal, 2), null, $rightOptions);
             $totalInnerTable->addCell(2500)->addText('BS ' . number_format($invoice->subtotal * $invoice->exchange_rate, 2), null, $rightOptions);
         }
 
@@ -541,5 +541,4 @@ class InvoiceController extends Controller
 
         return response()->download($tempFile, $filename)->deleteFileAfterSend(true);
     }
-
 }

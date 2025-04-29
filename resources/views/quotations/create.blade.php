@@ -52,3 +52,4 @@
     <x-quotations.modal-customer />
     <x-quotations.modal-quotation-description />
     <x-quotations.modal-preview />
+@endsection

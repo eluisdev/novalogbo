@@ -28,6 +28,7 @@ use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 use PhpOffice\PhpWord\SimpleType\JcTable;
 use PhpOffice\PhpSpreadsheet\Style\Border;
 use PhpOffice\PhpSpreadsheet\Style\Alignment;
+use PhpOffice\PhpWord\Style\Language;
 
 class QuotationController extends Controller
 {
@@ -869,6 +870,7 @@ class QuotationController extends Controller
         $quotationRef = $quotation->reference_number;
 
         $phpWord = new PhpWord();
+        $phpWord->getSettings()->setThemeFontLang(new Language(Language::ES_ES));
         $phpWord->setDefaultFontName('Montserrat');
         $pageWidthInches = 8.52;
         $headerHeightInches = 2.26;

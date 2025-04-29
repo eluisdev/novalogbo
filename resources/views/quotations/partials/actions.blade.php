@@ -235,7 +235,7 @@
         ${previewData.isParallelChecked ? `
             <span class="bg-yellow-300 p-1 inline-block font-semibold">
                 **Debido a la coyuntura actual, en la presente cotización se está aplicando el costo de 
-                transferencia del ${juncture.value || '113'}% (CCFEE) sobre los recargos generados en origen, de acuerdo 
+                transferencia del ${juncture.value || '113'}% sobre los recargos generados en origen, de acuerdo 
                 con la comisión que cobra nuestro banco actualmente. Si esta llega a variar, considerar 
                 la modificación de ese monto de acuerdo con la tarifa vigente.
             </span>

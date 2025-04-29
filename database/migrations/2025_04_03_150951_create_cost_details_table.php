@@ -15,8 +15,9 @@ return new class extends Migration
             $table->id();
             $table->foreignId('quotation_id')->constrained('quotations')->onDelete('cascade');
             $table->foreignId('cost_id')->constrained('costs')->onDelete('cascade');
-            $table->string('concept');
-            $table->decimal('amount', 10, 2);
+            $table->string('concept')->nullable();
+            $table->decimal('amount', 15, 2);
+            $table->decimal('amount_parallel', 15,2)->nullable();
             $table->string('currency')->default('USD');
             $table->timestamps();
         });

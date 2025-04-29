@@ -26,6 +26,7 @@ class Product extends Model
         'volume',
         'volume_unit',
         'description',
+        'is_container'
     ];
 
     public function quotation(): BelongsTo

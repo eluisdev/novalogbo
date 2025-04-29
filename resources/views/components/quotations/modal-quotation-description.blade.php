@@ -3,7 +3,7 @@
 
     <div class="relative z-50 flex items-center justify-center min-h-screen p-4">
         <div class="bg-white rounded-lg shadow-xl w-full max-w-lg p-6">
-            <h1 class="text-center mb-5 font-bold w-full bg-[#0B628D] rounded p-3 text-white">Crear descripcion de campo</h1>
+            <h1 class="text-center mb-5 font-bold w-full bg-[#0B628D] rounded p-3 text-white">Crear unidad de cantidad</h1>
             <form id="create-quotation-description-form" action="{{ route('quotations.storeQuantityDescripcion') }}"
                 method="POST">
                 @csrf
@@ -18,7 +18,7 @@
                 @endif
                 @php
                     $fields = [
-                        'name' => 'Descripcion de cantidad',
+                        'name' => 'Unidad de cantidad',
                     ];
                 @endphp
 
@@ -42,7 +42,7 @@
                 <div class="flex gap-3 mt-6">
                     <button type="submit"
                         class="flex-1 py-2 px-4 rounded-md text-sm font-medium text-white bg-gradient-to-r from-blue-600 to-blue-800 hover:from-blue-700 hover:to-blue-900 transition">
-                        <span>{{ isset($customer) ? 'Actualizar datos' : 'Crear descripcion de campo' }}</span>
+                        <span>{{ isset($customer) ? 'Actualizar datos' : 'Crear unidad de cantidad' }}</span>
                     </button>
 
                     <button type="button" onclick="closeModalDescriptionQuotation()"

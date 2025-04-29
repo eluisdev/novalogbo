@@ -24,7 +24,12 @@ class Quotation extends Model
         'customer_nit',
         'users_id',
         'status',
+        'insurance',
+        'payment_method',
+        'validity',
+        'juncture',
         'observations',
+        'is_parallel'
     ];
     protected $casts = [
         'delivery_date' => 'datetime',
@@ -34,11 +39,11 @@ class Quotation extends Model
 
     public function customer(): BelongsTo
     {
-        return $this->belongsTo(Customer::class, 'customer_nit', 'NIT');
+        return $this->belongsTo(Customer::class, 'customer_nit');
     }
     public function user(): BelongsTo
     {
-        return $this->belongsTo(User::class);
+        return $this->belongsTo(User::class, 'users_id', 'id');
     }
     public function products(): HasMany
     {
@@ -50,7 +55,8 @@ class Quotation extends Model
         return $this->hasMany(QuotationService::class);
     }
 
-    public function costDetails(): HasMany{
+    public function costDetails(): HasMany
+    {
         return $this->hasMany(CostDetail::class);
     }
 
@@ -59,7 +65,8 @@ class Quotation extends Model
         return $this->hasOne(BillingNote::class, 'quotation_id');
     }
 
-    public function invoices(): HasOne{
+    public function invoices(): HasOne
+    {
         return $this->hasOne(Invoice::class);
     }
 }

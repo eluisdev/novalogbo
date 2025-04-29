@@ -1,4 +1,4 @@
-<form action="{{ isset($usuario) ? route('users.update', $usuario->id) : route('users.store') }}"       method="POST"
+<form action="{{ isset($usuario) ? route('users.update', $usuario->id) : route('users.store') }}" method="POST"
     class="bg-white mx-auto max-w-2xl p-8 space-y-4 rounded-xl shadow-lg border-2 border-blue-200" data-loading-form>
 
     @csrf
@@ -18,9 +18,9 @@
 
     @php
         $fields = [
-            'name' => 'Nombres',
-            'surname' => 'Apellidos',
-            'email' => 'Correo electrónico',
+            'name' => 'Nombres *',
+            'surname' => 'Apellidos *',
+            'email' => 'Correo electrónico *',
             'phone' => 'Teléfono',
         ];
     @endphp
@@ -72,9 +72,13 @@
     @endif
 
     <div class="mb-4">
-        <label class="block font-semibold text-gray-700 mb-2">Rol del usuario</label>
+        <label class="block font-semibold text-gray-700 mb-2">Rol del usuario *</label>
         <div class="flex sm:flex-row flex-col justify-around">
-            @foreach (['1' => 'Administrador', '2' => 'Operario'] as $value => $label)
+            @foreach ([
+        '1' => 'Administrador',
+        '2' => 'Comercial',
+        '3' => 'Operador',
+    ] as $value => $label)
                 <label class="inline-flex items-center">
                     <input type="radio" id="role_id" name="role_id" value="{{ $value }}"
                         class="rounded-full border-gray-300 text-indigo-600 focus:ring-indigo-500"
@@ -87,7 +91,8 @@
 
     <button type="submit"
         class="w-full flex justify-center items-center py-3 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-gradient-to-r from-[#0e71a2] to-[#074665] hover:from-[#084665] hover:to-[#06364e] transition-colors duration-200 hover:cursor-pointer mt-6"
-        data-loading-text="{{ isset($usuario) ? 'Actualizando' : 'Creando' }}" data-loading-classes="from-gray-400 to-gray-500">
+        data-loading-text="{{ isset($usuario) ? 'Actualizando' : 'Creando' }}"
+        data-loading-classes="from-gray-400 to-gray-500">
         <span data-button-text>{{ isset($usuario) ? 'Actualizar datos' : 'Crear usuario' }}</span>
         <span data-loading-spinner class="hidden">
             <x-loading-spinner />
@@ -96,9 +101,9 @@
 
 </form>
 @if (isset($usuario))
-<script>
-    document.getElementById('toggle-password').addEventListener('change', function() {
-        document.getElementById('password-fields').classList.toggle('hidden');
-    });
-</script>
+    <script>
+        document.getElementById('toggle-password').addEventListener('change', function() {
+            document.getElementById('password-fields').classList.toggle('hidden');
+        });
+    </script>
 @endif

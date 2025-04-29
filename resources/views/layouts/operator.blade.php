@@ -1,7 +1,7 @@
 @extends('layouts.app')
 
 @section('content')
-    <div class="bg-gray-100 min-h-screen flex flex-col relative">
+    <div class="bg-gray-100 h-screen flex flex-col relative">
         <div class="relative z-20">
             <x-navbar user-name="{{ Auth::user()->username }}" user-role="Operador" logo-path="images/logoNova.png" />
 
@@ -50,6 +50,17 @@
                                 'text' => 'Cotizaciones',
                                 'active' => request()->is('quotation*'),
                             ],
+                            [
+                                'route' => 'operations.index',
+                                'text' => 'Operaciones',
+                                'active' => request()->is('operations*'),
+                            ],
+                            //TODO agregar contabilidad
+                            // [
+                            //     'route' => 'operations.index',
+                            //     'text' => 'Contabilidad',
+                            //     'active' => request()->is('operations*'),
+                            // ],
                         ];
                     @endphp
 
@@ -63,8 +74,8 @@
                 </nav>
             </div>
 
-            <div class="flex-1 bg-gradient-to-b from-[#29617a] to-[#163a54] py-6 overflow-y-auto h-[calc(100vh-4.1rem)]">
-                <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex-1 bg-gradient-to-b from-[#29617a] to-[#163a54] py-6 overflow-y-auto max-h-full">
+                <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-full">
                     @yield('dashboard-option')
                 </div>
             </div>

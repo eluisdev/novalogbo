@@ -12,7 +12,7 @@
             class="flex flex-col sm:flex-row items-center justify-between gap-4 bg-white rounded-xl shadow-sm p-3 mb-6 border border-gray-200">
             <div class="flex items-center gap-6 sm:flex-row flex-col">
                 <h2 class="text-xl font-black text-gray-800">
-                    <span class="text-[#0B628D]">Cantidad descripción</span>
+                    <span class="text-[#0B628D]">Unidad de cantidad</span>
                 </h2>
 
                 <div class="relative">
@@ -24,7 +24,7 @@
                     </div>
                     <input type="text" id="searchInput"
                         class="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:ring-[#0B628D] focus:border-[#0B628D] sm:text-sm"
-                        placeholder="Buscar descripción...">
+                        placeholder="Buscar unidad...">
                 </div>
             </div>
 
@@ -35,7 +35,7 @@
                         stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
                     </svg>
-                    Crear descripcion
+                    Crear unidad
                 </a>
             </div>
         </div>

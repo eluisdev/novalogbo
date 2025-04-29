@@ -21,9 +21,9 @@
 
     @php
         $fields = [
-            'name' => 'Nombre o Razon social',
-            'NIT' => 'CI / NIT',
-            'email' => 'Correo electrónico',
+            'name' => 'Nombre o Razon social *',
+            'NIT' => 'CI / NIT *',
+            'email' => 'Correo electrónico *',
             'phone' => 'Teléfono',
             'cellphone' => 'Celular',
             'address' => 'Dirección',

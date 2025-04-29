@@ -18,7 +18,7 @@
 
     @php
         $fields = [
-            'name' => 'Descripcion de cantidad',
+            'name' => 'Unidad de cantidad',
         ];
     @endphp
 
@@ -35,7 +35,7 @@
         class="w-full flex justify-center items-center py-3 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-gradient-to-r from-[#0e71a2] to-[#074665] hover:from-[#084665] hover:to-[#06364e] transition-colors duration-200 hover:cursor-pointer mt-6"
         data-loading-text="{{ isset($quantityDescription) ? 'Actualizando...' : 'Creando...' }}"
         data-loading-classes="from-gray-400 to-gray-500">
-        <span data-button-text> {{ isset($quantityDescription) ? 'Actualizar datos' : 'Crear descripcion' }}</span>
+        <span data-button-text> {{ isset($quantityDescription) ? 'Actualizar datos' : 'Crear unidad de cantidad' }}</span>
         <span data-loading-spinner class="hidden">
             <x-loading-spinner />
         </span>

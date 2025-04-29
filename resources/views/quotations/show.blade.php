@@ -1,12 +1,15 @@
-@php
-    $layout = Auth::user()->role_id == '1' ? 'layouts.admin' : 'layouts.operator';
-@endphp
+@if (Auth::user()->role_id == '1')
+    @php $layout = 'layouts.admin'; @endphp
+@elseif (Auth::user()->role_id == '2')
+    @php $layout = 'layouts.commercial'; @endphp
+@else
+    @php $layout = 'layouts.operator'; @endphp
+@endif
 
 @extends($layout)
 
-{{-- {{dd($quotation_data)}} --}}
 @section('dashboard-option')
-    <div class="w-full mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="w-full mx-auto px-4 sm:px-6 lg:px-8 pb-5">
         <div
             class="flex flex-col sm:flex-row items-center justify-between gap-4 bg-white rounded-xl shadow-sm p-3 mb-6 border border-gray-200">
             <h2 class="text-xl font-black text-gray-800">
@@ -14,7 +17,7 @@
             </h2>
 
             <div class="flex sm:flex-row flex-col gap-2">
-                @if ($quotation_data['status'] === 'approved')
+                @if ($quotation_data['status'] === 'accepted')
                     <form action="{{ route('quotations.updateStatus', $quotation_data['id']) }}" method="POST"
                         class="w-full sm:w-auto">
                         @csrf
@@ -27,15 +30,17 @@
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                     d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99" />
                             </svg>
-                            Cancelar finalizacion
+                            Cancelar confirmacion
                         </button>
                     </form>
-                @else
+                @endif
+
+                @if ($quotation_data['status'] === 'pending')
                     <form action="{{ route('quotations.updateStatus', $quotation_data['id']) }}" method="POST"
                         class="w-full sm:w-auto">
                         @csrf
                         @method('PATCH')
-                        <input type="hidden" name="status" value="approved" />
+                        <input type="hidden" name="status" value="accepted" />
                         <button type="submit"
                             class="flex items-center justify-center px-4 py-2 bg-[#0b8d41] hover:bg-[#588498] text-white text-sm font-medium rounded-lg transition-colors duration-200 shadow-sm">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24"
@@ -43,7 +48,40 @@
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                     d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99" />
                             </svg>
-                            Finalizar cotizacion
+                            Confirmar cotizacion
+                        </button>
+
+                    </form>
+                    <form action="{{ route('quotations.updateStatus', $quotation_data['id']) }}" method="POST"
+                        class="w-full sm:w-auto">
+                        @csrf
+                        @method('PATCH')
+                        <input type="hidden" name="status" value="refused" />
+                        <button type="submit"
+                            class="flex items-center justify-center px-4 py-2 bg-red-500 hover:bg-red-600 text-white text-sm font-medium rounded-lg transition-colors duration-200 shadow-sm">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24"
+                                stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99" />
+                            </svg>
+                            Rechazar cotizacion
+                        </button>
+                    </form>
+                @endif
+                @if ($quotation_data['status'] === 'refused')
+                    <form action="{{ route('quotations.updateStatus', $quotation_data['id']) }}" method="POST"
+                        class="w-full sm:w-auto">
+                        @csrf
+                        @method('PATCH')
+                        <input type="hidden" name="status" value="pending" />
+                        <button type="submit"
+                            class="flex items-center justify-center px-4 py-2 bg-red-500 hover:bg-red-600 text-white text-sm font-medium rounded-lg transition-colors duration-200 shadow-sm">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24"
+                                stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99" />
+                            </svg>
+                            Cancelar Rechazo
                         </button>
                     </form>
                 @endif
@@ -115,7 +153,7 @@
                     </button>
                 </form>
 
-                @if ($quotation_data['status'] !== 'approved')
+                @if ($quotation_data['status'] !== 'accepted')
                     <a href="{{ route('quotations.edit', $quotation_data['id']) }}"
                         class="flex items-center justify-center px-4 py-2 bg-[#FF9800] hover:bg-[#e68a00] text-white text-sm font-medium rounded-lg transition-all duration-200 shadow-sm hover:shadow-md w-full sm:w-auto">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24"
@@ -128,64 +166,6 @@
                 @endif
             </div>
         </div>
-
-        @if ($quotation_data['status'] !== 'pending')
-            <div
-                class="bg-gray-200 rounded-xl shadow-sm p-3 mb-6 border border-gray-200 flex justify-between sm:flex-row flex-col max-sm:gap-4">
-                <form action="{{ route('quotations.invoice.download') }}" method="POST" class="w-full sm:w-auto">
-                    @csrf
-                    <input type="hidden" name="quotation_id" value="{{ $quotation_data['id'] }}" />
-                    <div class="flex gap-2 sm:flex-row flex-col max-sm:justify-center items-center">
-                        <label class="inline-flex items-center cursor-pointer">
-                            <input type="hidden" name="visible" value="0">
-                            <input type="checkbox" name="visible"
-                                class="form-checkbox h-6 w-6 text-[#4CAF50] rounded border-gray-300 focus:ring-[#4CAF50] mr-3 ml-2"
-                                value="1" checked>
-                            <span class="text-gray-700 font-medium flex items-center">
-                                Fondo + Logo
-                            </span>
-                        </label>
-                        <button type="submit"
-                            class="flex items-center justify-center px-4 py-2 bg-yellow-600 hover:bg-yellow-800 hover:cursor-pointer text-white text-sm font-medium rounded-lg transition-all duration-200 shadow-sm opacity-70 w-full sm:w-auto">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none"
-                                viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M9 14l6-6m-5.5.5h.01m4.99 5h.01M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16l3.5-2 3.5 2 3.5-2 3.5 2z" />
-                            </svg>
-                            Crear factura
-                        </button>
-                    </div>
-                </form>
-
-                <form action="{{ route('quotations.billing-note.download') }}" method="POST"
-                    class="w-full sm:w-auto flex gap-2 max-sm:justify-center">
-                    @csrf
-                    <input type="hidden" name="quotation_id" value="{{ $quotation_data['id'] }}" />
-                    <div class="flex flex-col sm:flex-row-reverse gap-2 items-center">
-                        <div class="flex items-center bg-white rounded-lg border border-gray-200 p-1 shadow-sm">
-                            <label class="inline-flex items-center cursor-pointer">
-                                <input type="hidden" name="visible" value="0">
-                                <input type="checkbox" name="visible"
-                                    class="form-checkbox h-6 w-6 text-[#4CAF50] rounded border-gray-300 focus:ring-[#4CAF50] mr-3 ml-2"
-                                    value="1" checked>
-                                <span class="text-gray-700 font-medium flex items-center">
-                                    Fondo + Logo
-                                </span>
-                            </label>
-                        </div>
-                        <button type="submit"
-                            class="flex items-center justify-center px-4 py-2 bg-[#4CAF50] hover:bg-[#3d8b40] text-white text-sm font-medium rounded-lg transition-all duration-200 shadow-sm hover:shadow-md w-full sm:w-auto">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none"
-                                viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                            </svg>
-                            Crear nota de cobranza
-                        </button>
-                    </div>
-                </form>
-            </div>
-        @endif
 
         <div class="bg-white shadow-md rounded-lg overflow-hidden border border-gray-200 mb-6">
             <div class="px-6 py-4 border-b border-gray-200">
@@ -231,10 +211,26 @@
 
                 <div class="border-b border-gray-100 pb-2">
                     <p class="text-sm font-medium text-gray-500">Estado cotizacion</p>
-                    <p class="text-lg font-semibold text-gray-900">
-                        {{ $quotation_data['status'] === 'approved' ? 'Finalizado' : 'Pendiente' }}</p>
+                    <span
+                        class="inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold mt-2 
+                        {{ $quotation_data['status'] === 'accepted'
+                            ? 'bg-green-100 text-green-800'
+                            : ($quotation_data['status'] === 'pending'
+                                ? 'bg-yellow-100 text-yellow-800'
+                                : 'bg-red-100 text-red-800') }}">
+                        {{ $quotation_data['status'] === 'accepted'
+                            ? 'Aceptada'
+                            : ($quotation_data['status'] === 'pending'
+                                ? 'Pendiente de respuesta'
+                                : 'Rechazada') }}
+                    </span>
                 </div>
 
+
+                <div class="border-b border-gray-100 pb-2">
+                    <p class="text-sm font-medium text-gray-500">Referencia cliente</p>
+                    <p class="text-lg font-semibold text-gray-900">{{ $quotation_data['reference_customer'] }}</p>
+                </div>
             </div>
         </div>
 
@@ -247,7 +243,13 @@
                 @foreach ($quotation_data['products'] as $product)
                     <div class="mb-8 p-4 border border-gray-200 rounded-lg">
                         <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-4">
-                            <!-- Detalles del Producto -->
+                            @if (isset($product['name']))
+                                <div class="space-y-2">
+                                    <p class="text-sm font-medium text-gray-500">Nombre</p>
+                                    <p class="text-gray-700">{{ $product['name'] }}</p>
+                                </div>
+                            @endif
+
                             <div>
                                 <p class="text-sm font-medium text-gray-500">Peso</p>
                                 <p class="text-gray-700">{{ $product['weight'] }} kg</p>
@@ -259,7 +261,7 @@
                             <div>
                                 <p class="text-sm font-medium text-gray-500">Cantidad</p>
                                 <p class="text-gray-700">{{ $product['quantity'] }}
-                                    ({{ $product['quantity_description_name'] }})
+                                    {{ $product['quantity_description_name'] }}
                                 </p>
                             </div>
                             <div class="space-y-2">
@@ -274,6 +276,7 @@
                                 <p class="text-sm font-medium text-gray-500">Incoterm</p>
                                 <p class="text-gray-700">{{ $product['incoterm_name'] }}</p>
                             </div>
+
                         </div>
                     </div>
                 @endforeach
@@ -333,6 +336,10 @@
                                         class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                         Monto
                                     </th>
+                                    <th scope="col"
+                                        class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        Monto Paralelo
+                                    </th>
                                 </tr>
                             </thead>
                             <tbody class="bg-white divide-y divide-gray-200">
@@ -345,6 +352,11 @@
                                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                                                 {{ $quotation_data['currency'] }} {{ $cost['amount'] }}
                                             </td>
+
+                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                                {{ $quotation_data['currency'] }}
+                                                {{ $cost['amount_parallel'] ? $cost['amount_parallel'] : '0.00' }}
+                                            </td>
                                         </tr>
                                     @endif
                                 @endforeach
@@ -354,36 +366,111 @@
                 </div>
             </div>
         </div>
+        <!-- Sección de Detalles de Cotización -->
+        <div class="p-6  bg-white shadow-sm mb-6 rounded-lg">
+            <div class="flex items-center mb-6 sm:flex-row flex-col">
+                <span class="inline-flex items-center justify-center p-3 rounded-full bg-blue-50 text-blue-600 mr-3">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
+                        stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                    </svg>
+                </span>
+                <h3 class="text-lg font-semibold text-gray-800">Detalles de cotización</h3>
+                <p class="text-sm text-gray-500 sm:ml-2">Información adicional de la cotización</p>
+            </div>
 
+            <div class="flex flex-col gap-2 mb-5">
+                <!-- Seguro -->
+                <div class="flex gap-2 items-center">
+                    <p class="block text-sm font-bold">Seguro: </p>
+                    <p class="block text-sm text-gray-700">{{ $quotation_data['insurance'] }}</p>
+                </div>
+
+                <!-- Forma de pago -->
+                <div class="flex flex-col gap-2">
+                    <div class="flex gap-2 items-center">
+                        <p class="block text-sm font-bold">Forma de Pago</p>
+                        <p class="block text-sm text-gray-700">{{ $quotation_data['payment_method'] }}</p>
+                    </div>
+
+                    <!-- Validez -->
+                    <div>
+                        <div class="flex gap-2 items-center">
+                            <p class="block text-sm font-bold">Validez</p>
+                            <p class="block text-sm text-gray-700">{{ $quotation_data['validity'] }}</p>
+                        </div>
+                    </div>
+
+                    <!-- Observaciones -->
+                    <div>
+                        <div class="flex gap-2 items-center">
+                            <p class="block text-sm font-bold">Observaciones</p>
+                            <p class="block text-sm text-gray-700">{{ $quotation_data['observations'] }}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
         <div class="bg-white shadow-md rounded-lg overflow-hidden border border-gray-200">
             <div class="px-6 py-4 border-b border-gray-200">
                 <h3 class="text-lg font-medium text-gray-900">Resumen Total</h3>
             </div>
 
             <div class="p-6">
-                <div class="flex justify-end">
-                    <div class="w-full md:w-1/3">
+                <div class="flex gap-3 justify-end space-x-8 flex-wrap"> <!-- Añadido space-x-8 para separar los dos resúmenes -->
+                    <!-- Resumen 1: Solo costos originales -->
+                    <div class="w-full md:w-1/3 bg-gray-50 p-4 rounded-lg mr-0">
+                        <h3 class="font-bold text-gray-700 mb-3">Resumen Original</h3>
                         @php
-                            $subtotal = array_reduce(
+                            $subtotal_original = array_reduce(
                                 $quotation_data['costs'],
                                 function ($carry, $item) {
-                                    return $carry + ($item['enabled'] == '1' ? $item['amount'] : 0);
+                                    $amount = is_numeric($item['amount']) ? (float)$item['amount'] : 0;
+                                    return $carry + ($item['enabled'] == '1' ? $amount : 0);
                                 },
-                                0,
+                                0
                             );
                         @endphp
-
                         <div class="flex justify-between py-2 border-b border-gray-200">
                             <span class="text-gray-600">Subtotal:</span>
                             <span class="font-medium">
-                                {{ $quotation_data['currency'] }} {{ number_format($subtotal, 2) }}
+                                {{ $quotation_data['currency'] }} {{ number_format($subtotal_original, 2) }}
                             </span>
                         </div>
-
                         <div class="flex justify-between py-2 border-b border-gray-200">
                             <span class="text-gray-600">Total:</span>
                             <span class="font-bold text-lg text-[#0B628D]">
-                                {{ $quotation_data['currency'] }} {{ number_format($subtotal, 2) }}
+                                {{ $quotation_data['currency'] }} {{ number_format($subtotal_original, 2) }}
+                            </span>
+                        </div>
+                    </div>
+            
+                    <!-- Resumen 2: Usa costos paralelos (si existen) -->
+                    <div class="w-full md:w-1/3 bg-blue-50 p-4 rounded-lg">
+                        <h3 class="font-bold text-gray-700 mb-3">Resumen con Costos Paralelos</h3>
+                        @php
+                            $subtotal_parallel = array_reduce(
+                                $quotation_data['costs'],
+                                function ($carry, $item) {
+                                    $amount = isset($item['amount_parallel']) && is_numeric($item['amount_parallel']) 
+                                        ? (float)$item['amount_parallel'] 
+                                        : (is_numeric($item['amount']) ? (float)$item['amount'] : 0);
+                                    return $carry + ($item['enabled'] == '1' ? $amount : 0);
+                                },
+                                0
+                            );
+                        @endphp
+                        <div class="flex justify-between py-2 border-b border-gray-200">
+                            <span class="text-gray-600">Subtotal:</span>
+                            <span class="font-medium">
+                                {{ $quotation_data['currency'] }} {{ number_format($subtotal_parallel, 2) }}
+                            </span>
+                        </div>
+                        <div class="flex justify-between py-2 border-b border-gray-200">
+                            <span class="text-gray-600">Total:</span>
+                            <span class="font-bold text-lg text-[#0B628D]">
+                                {{ $quotation_data['currency'] }} {{ number_format($subtotal_parallel, 2) }}
                             </span>
                         </div>
                     </div>

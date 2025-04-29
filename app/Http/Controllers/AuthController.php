@@ -47,6 +47,8 @@ class AuthController extends Controller
             return redirect()->intended(route('admin.dashboard'));
         } elseif ($user->role->description == 'operator') {
             return redirect()->intended(route('operator.dashboard'));
+        } elseif ($user->role->description == 'commercial') {
+            return redirect()->intended(route('commercial.dashboard'));
         } else {
             // Manejar otros roles o redirigir a una página predeterminada
             return redirect()->intended(route('home'));

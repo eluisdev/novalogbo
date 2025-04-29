@@ -10,12 +10,10 @@ use App\Models\Product;
 use App\Models\Service;
 use App\Models\Customer;
 use App\Models\Incoterm;
-use App\Models\Continent;
 use App\Models\Quotation;
 use App\Models\CostDetail;
 use App\Models\ExchangeRate;
 use Illuminate\Http\Request;
-use App\Models\productDetail;
 use PhpOffice\PhpWord\PhpWord;
 use App\Models\QuotationService;
 use PhpOffice\PhpWord\IOFactory;
@@ -24,16 +22,12 @@ use App\Models\QuantityDescription;
 use Illuminate\Support\Facades\Auth;
 use PhpOffice\PhpWord\Shared\Converter;
 use PhpOffice\PhpSpreadsheet\Style\Fill;
-use PhpOffice\PhpWord\TemplateProcessor;
 use Illuminate\Support\Facades\Validator;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 use PhpOffice\PhpWord\SimpleType\JcTable;
 use PhpOffice\PhpSpreadsheet\Style\Border;
-use PhpOffice\PhpWord\SimpleType\TblWidth;
 use PhpOffice\PhpSpreadsheet\Style\Alignment;
-use PhpOffice\PhpSpreadsheet\Worksheet\Drawing;
-use PhpOffice\PhpSpreadsheet\Style\NumberFormat;
 
 class QuotationController extends Controller
 {
@@ -41,7 +35,7 @@ class QuotationController extends Controller
 
     public function index()
     {
-        if (Auth::user()->role_id === 1) {
+        if (Auth::user()->role_id === 1 || Auth::user()->role_id === 3) {
             $quotations = Quotation::with(['customer', 'user'])
                 ->orderBy('created_at', 'desc')
                 ->get();
@@ -312,13 +306,20 @@ class QuotationController extends Controller
                 'products.*.destination_id' => 'required_with:products',
                 'products.*.incoterm_id' => 'required_with:products',
                 'products.*.quantity' => 'required_with:products|string',
-                'products.*.quantity_description_id' => 'required_with:products',
+                'products.*.quantity_description_id' => 'nullable|exists:quantity_descriptions,id',
                 'products.*.weight' => 'nullable|numeric',
                 'products.*.volume' => 'nullable|numeric',
                 'products.*.volume_unit' => 'nullable|string|max:10',
                 'products.*.description' => 'nullable|string',
-                'costs' => 'nullable|array',
+                'products.*.is_container' => 'nullable|boolean',
+                'costs' => 'required|array',
                 'services' => 'nullable|array',
+                'observations' => 'nullable|string',
+                'insurance' => 'nullable|string',
+                'payment_method' => 'nullable|string',
+                'validity' => 'nullable|string',
+                'juncture' => 'nullable|string',
+                'is_parallel' => 'nullable|boolean',
             ],
             [
                 'currency.required' => 'La moneda es obligatoria.',
@@ -334,12 +335,12 @@ class QuotationController extends Controller
                 'products.*.incoterm_id.required_with' => 'El incoterm es obligatorio.',
                 'products.*.quantity.required_with' => 'La cantidad es obligatoria.',
                 'products.*.quantity.string' => 'La cantidad debe ser una cadena de texto.',
-                'products.*.quantity_description_id.required_with' => 'La descripción de la cantidad es obligatoria.',
                 'products.*.weight.numeric' => 'El peso debe ser un número.',
                 'products.*.volume.numeric' => 'El volumen debe ser un número.',
                 'products.*.volume_unit.string' => 'La unidad de volumen debe ser una cadena de texto.',
                 'products.*.volume_unit.max' => 'La unidad de volumen no puede exceder los 10 caracteres.',
                 'products.*.description.string' => 'La descripción debe ser una cadena de texto.',
+                'costs.required' => 'Los costos son obligatorios.',
             ]
         );
 
@@ -367,13 +368,19 @@ class QuotationController extends Controller
             } while (!$isUnique);
 
             $quotation->reference_number = $referenceNumber;
-            $quotation->reference_customer = $validatedData['reference_customer'] ?? '';
+            $quotation->reference_customer = $validatedData['reference_customer'] ?? null;
             $quotation->currency = $validatedData['currency'];
             $quotation->exchange_rate = $validatedData['exchange_rate'];
             $quotation->amount = 0;
             $quotation->customer_nit = $validatedData['NIT'];
             $quotation->users_id = Auth::id();
+            $quotation->insurance = $validatedData['insurance'] ?? null;
+            $quotation->payment_method = $validatedData['payment_method'] ?? null;
+            $quotation->validity = $validatedData['validity'] ?? null;
+            $quotation->juncture = $validatedData['juncture'] ?? null;
+            $quotation->observations = $validatedData['observations'] ?? null;
             $quotation->status = 'pending';
+            $quotation->is_parallel = $validatedData['is_parallel'] ?? false;
             $quotation->save();
 
             $totalAmount = 0;
@@ -387,11 +394,12 @@ class QuotationController extends Controller
                     $productDetail->destination_id = $product['destination_id'];
                     $productDetail->incoterm_id = $product['incoterm_id'];
                     $productDetail->quantity = $product['quantity'];
-                    $productDetail->quantity_description_id = $product['quantity_description_id'];
+                    $productDetail->quantity_description_id = $product['quantity_description_id'] ?? null;
                     $productDetail->weight = $product['weight'];
                     $productDetail->volume = $product['volume'];
                     $productDetail->volume_unit = $product['volume_unit'];
                     $productDetail->description = $product['description'] ?? '';
+                    $productDetail->is_container = $product['is_container'] ?? false;
                     $productDetail->save();
                 }
             }
@@ -405,6 +413,7 @@ class QuotationController extends Controller
                         $costDetail->cost_id = $cost['cost_id'];
                         $costDetail->concept = $cost['concept'] ?? '';
                         $costDetail->amount = $cost['amount'];
+                        $costDetail->amount_parallel = $cost['amount_parallel'] ?? null;
                         $costDetail->currency = $quotation->currency;
                         $costDetail->save();
 
@@ -438,7 +447,7 @@ class QuotationController extends Controller
             DB::rollBack();
             return back()
                 ->withInput()
-                ->with('error', 'Error creating quotation: ' . $e->getMessage());
+                ->with('error', 'Error creando la cotización: ' . $e->getMessage());
         }
     }
     public function show($id)
@@ -461,12 +470,19 @@ class QuotationController extends Controller
             'exchange_rate' => $quotation->exchange_rate,
             'reference_number' => $quotation->reference_number,
             'status' => $quotation->status,
+            'reference_customer' => $quotation->reference_customer,
+            'delivery_date' => $quotation->delivery_date,
+            'insurance' => $quotation->insurance ?? null,
+            'payment_method' => $quotation->payment_method ?? null,
+            'validity' => $quotation->validity ?? null,
+            'juncture' => $quotation->juncture ?? null,
+            'observations' => $quotation->observations ?? null,
+            'is_parallel' => $quotation->is_parallel ?? false,
             'products' => [],
             'services' => [],
             'costs' => []
         ];
 
-        // Procesar productos
         foreach ($quotation->products as $key => $product) {
             $response['products'][$key + 1] = [
                 'name' => $product->name,
@@ -475,15 +491,15 @@ class QuotationController extends Controller
                 'weight' => (string)$product->weight,
                 'incoterm_id' => (string)$product->incoterm_id,
                 'quantity' => $product->quantity,
-                'quantity_description_id' => (string)$product->quantity_description_id,
+                'quantity_description_id' => (string)$product->quantity_description_id ?? null,
                 'volume' => (string)$product->volume,
                 'volume_unit' => $product->volume_unit,
                 'description' => $product->description,
-                // Agregar nombres adicionales
                 'origin_name' => $product->origin->name,
                 'destination_name' => $product->destination->name,
                 'incoterm_name' => $product->incoterm->code,
-                'quantity_description_name' => $product->quantityDescription->name
+                'quantity_description_name' => $product->quantityDescription->name ?? null,
+                'is_container' => $product->is_container,
             ];
         }
 
@@ -498,9 +514,9 @@ class QuotationController extends Controller
             $response['costs'][$costDetail->cost_id] = [
                 'enabled' => '1',
                 'amount' => (string)$costDetail->amount,
+                'amount_parallel' => (string)$costDetail->amount_parallel,
                 'cost_id' => (string)$costDetail->cost_id,
                 'concept' => $costDetail->concept,
-                // Agregar nombre del costo
                 'cost_name' => $costDetail->cost->name
             ];
         }
@@ -534,7 +550,14 @@ class QuotationController extends Controller
             'reference_customer' => $quotation->reference_customer,
             'currency' => $quotation->currency,
             'exchange_rate' => $quotation->exchange_rate,
-            'reference_number' => $quotation->reference_number,
+            'status' => $quotation->status,
+            'delivery_date' => $quotation->delivery_date,
+            'insurance' => $quotation->insurance ?? null,
+            'payment_method' => $quotation->payment_method ?? null,
+            'validity' => $quotation->validity ?? null,
+            'juncture' => $quotation->juncture ?? null,
+            'observations' => $quotation->observations ?? null,
+            'is_parallel' => $quotation->is_parallel ?? false,
             'products' => [],
             'services' => [],
             'costs' => []
@@ -549,7 +572,7 @@ class QuotationController extends Controller
                 'weight' => (string)$product->weight,
                 'incoterm_id' => (string)$product->incoterm_id,
                 'quantity' => $product->quantity,
-                'quantity_description_id' => (string)$product->quantity_description_id,
+                'quantity_description_id' => (string)$product->quantity_description_id ?? null,
                 'volume' => (string)$product->volume,
                 'volume_unit' => $product->volume_unit,
                 'description' => $product->description,
@@ -559,7 +582,8 @@ class QuotationController extends Controller
                 'destination_name' => $product->destination->name,
                 'destination_country_id' => $product->destination->country->id,
                 'incoterm_name' => $product->incoterm->code,
-                'quantity_description_name' => $product->quantityDescription->name
+                'quantity_description_name' => $product->quantityDescription->name ?? null,
+                'is_container' => $product->is_container,
             ];
         }
 
@@ -571,8 +595,9 @@ class QuotationController extends Controller
         // Procesar costos para edición
         foreach ($quotation->costDetails as $costDetail) {
             $formData['costs'][$costDetail->cost_id] = [
-                'enabled' => '1', // Todos los costos guardados están habilitados
+                'enabled' => '1',
                 'amount' => (string)$costDetail->amount,
+                'amount_parallel' => (string)$costDetail->amount_parallel,
                 'cost_id' => (string)$costDetail->cost_id,
                 'concept' => $costDetail->concept,
                 'cost_name' => $costDetail->cost->name
@@ -607,8 +632,6 @@ class QuotationController extends Controller
 
     public function update(Request $request, $id)
     {
-        // dd($request);
-        // Validación de los datos de entrada
         $validatedData = $request->validate([
             'NIT' => 'required|exists:customers,NIT',
             'currency' => 'required|string|max:10',
@@ -621,24 +644,39 @@ class QuotationController extends Controller
             'products.*.destination_id' => 'required|exists:cities,id',
             'products.*.incoterm_id' => 'required|exists:incoterms,id',
             'products.*.quantity' => 'required|string',
-            'products.*.quantity_description_id' => 'required|exists:quantity_descriptions,id',
+            'products.*.quantity_description_id' => 'nullable|exists:quantity_descriptions,id',
             'products.*.weight' => 'nullable|numeric',
             'products.*.volume' => 'nullable|numeric',
             'products.*.volume_unit' => 'nullable|string|max:10',
             'products.*.description' => 'nullable|string',
-            'services' => 'required|array',
+            'products.*.is_container' => 'nullable|boolean',
+            'services' => 'nullable|array',
             'costs' => 'required|array',
             'costs.*.cost_id' => 'required|exists:costs,id',
-            // 'costs.*.amount' => 'required|numeric',
             'costs.*.amount' => 'nullable|numeric',
-            'costs.*.concept' => 'nullable|string'
+            'costs.*.amount_parallel' => 'nullable|numeric',
+            'costs.*.concept' => 'nullable|string',
+            'observations' => 'nullable|string',
+            'insurance' => 'nullable|string',
+            'payment_method' => 'nullable|string',
+            'validity' => 'nullable|string',
+            'juncture' => 'nullable|string',
+            'is_parallel' => 'nullable|boolean',
         ]);
 
         DB::beginTransaction();
 
         try {
-            // Obtener la cotización existente
+
             $quotation = Quotation::findOrFail($id);
+
+            $junctureValue = $validatedData['juncture'] ?? null;
+
+            if (isset($validatedData['is_parallel']) && $validatedData['is_parallel']) {
+                $junctureValue = $validatedData['juncture'] ?? null;
+            } else {
+                $junctureValue = null;
+            }
 
             // Actualizar datos básicos de la cotización
             $quotation->update([
@@ -647,7 +685,14 @@ class QuotationController extends Controller
                 'currency' => $validatedData['currency'],
                 'exchange_rate' => $validatedData['exchange_rate'],
                 'reference_number' => $validatedData['reference_number'],
-                'reference_customer' => $validatedData['reference_customer'] ?? '',
+                'reference_customer' => $validatedData['reference_customer'] ?? null,
+                'insurance' => $validatedData['insurance'] ?? null,
+                'payment_method' => $validatedData['payment_method'] ?? null,
+                'validity' => $validatedData['validity'] ?? null,
+                'juncture' => $junctureValue,
+                'observations' => $validatedData['observations'] ?? null,
+                'is_parallel' => $validatedData['is_parallel'] ?? false,
+                'status' => 'pending',
                 'amount' => 0 // Se recalculará al final
             ]);
 
@@ -661,6 +706,14 @@ class QuotationController extends Controller
             //dd($validatedData['products']);
             // Procesar y guardar los nuevos productos
             foreach ($validatedData['products'] as $productData) {
+
+                $quantityDescriptionId = null;
+                if (isset($productData['is_container']) && $productData['is_container']) {
+                    $quantityDescriptionId = null;
+                } elseif (isset($productData['quantity_description_id'])) {
+                    $quantityDescriptionId = $productData['quantity_description_id'];
+                }
+
                 $product = new Product([
                     'quotation_id' => $quotation->id,
                     'name' => $productData['name'] ?? null,
@@ -668,7 +721,8 @@ class QuotationController extends Controller
                     'destination_id' => $productData['destination_id'],
                     'incoterm_id' => $productData['incoterm_id'],
                     'quantity' => $productData['quantity'],
-                    'quantity_description_id' => $productData['quantity_description_id'],
+                    'quantity_description_id' => $quantityDescriptionId,
+                    'is_container' => $productData['is_container'] ?? false,
                     'weight' => $productData['weight'] ?? null,
                     'volume' => $productData['volume'] ?? null,
                     'volume_unit' => $productData['volume_unit'] ?? null,
@@ -678,28 +732,32 @@ class QuotationController extends Controller
             }
 
             // Procesar y guardar los servicios
-            foreach ($validatedData['services'] as $serviceId => $status) {
-                // if (is_numeric($serviceId)) { // Asegurar que es un ID válido
-                if (is_numeric($serviceId) && $status !== 'none') { // Asegurar que es un ID válido
-                    $quotationService = new QuotationService([
-                        'quotation_id' => $quotation->id,
-                        'service_id' => $serviceId,
-                        'included' => $status === 'include'
-                    ]);
-                    $quotationService->save();
+            if ($request->has('services')) {
+                foreach ($validatedData['services'] as $serviceId => $status) {
+                    // if (is_numeric($serviceId)) { // Asegurar que es un ID válido
+                    if (is_numeric($serviceId) && $status !== 'none') { // Asegurar que es un ID válido
+                        $quotationService = new QuotationService([
+                            'quotation_id' => $quotation->id,
+                            'service_id' => $serviceId,
+                            'included' => $status === 'include'
+                        ]);
+                        $quotationService->save();
+                    }
                 }
             }
-            //TODO: Ver por que el enabled desaparece
-            // Procesar y guardar los costos
+
             $totalAmount = 0;
             foreach ($validatedData['costs'] as $costId => $costData) {
-                // dd($costData);
                 if (isset($costData['amount'])) {
-                    // if (isset($costData['enabled'])) {
+                    $amountParallelValue = null;
+                    if (isset($validatedData['is_parallel']) && $validatedData['is_parallel']) {
+                        $amountParallelValue = $costData['amount_parallel'] ?? null;
+                    }
                     $costDetail = new CostDetail([
                         'quotation_id' => $quotation->id,
-                        'cost_id' => $costData["cost_id"],
+                        'cost_id' => $costData['cost_id'],
                         'amount' => $costData['amount'],
+                        'amount_parallel' => $amountParallelValue,
                         'currency' => $validatedData['currency'],
                         'concept' => $costData['concept'] ?? ''
                     ]);
@@ -708,7 +766,6 @@ class QuotationController extends Controller
                     $totalAmount += $costData['amount'];
                 }
             }
-
             // Actualizar el monto total de la cotización
             $quotation->amount = $totalAmount;
             $quotation->save();
@@ -776,33 +833,37 @@ class QuotationController extends Controller
         ]);
         $visible = $validated['visible'] ?? true;
 
-        // Fetch quotation data from database using the validated quotation_id
-        $quotation = Quotation::findOrFail($validated['quotation_id']);
+        $quotation = Quotation::with('user.role')->findOrFail($validated['quotation_id']);
         // Get client data from the quotation
         $clientData = $this->getClientData($quotation->customer_nit);
 
         // Get products, services and costs data from the quotation
         $productsData = $this->getProductsData($quotation->products);
+
         $servicesData = $this->getServicesData($quotation->services);
         $costsData = $this->getCostsData($quotation->costDetails);
 
         // Calculate totals in both currencies
         $totalCostBS = 0;
         $totalCostForeign = 0;
+        $totalCostForeignParallel = 0;
 
         foreach ($costsData as $item) {
-            $amount = floatval(str_replace(',', '', $item['amount']));
+            $amount =  $item['amount'];
             if ($item['currency'] == 'BS') {
                 $totalCostBS += $amount;
                 $totalCostForeign += $amount / $quotation->exchange_rate;
+                $totalCostForeignParallel =  $totalCostForeignParallel + ($item['amount_parallel'] ??   $item['amount']) / $quotation->exchange_rate;
             } else {
                 $totalCostForeign += $amount;
+                $totalCostForeignParallel =  $totalCostForeignParallel + ($item['amount_parallel'] ?? $item['amount']);
                 $totalCostBS += $amount * $quotation->exchange_rate;
             }
         }
 
         $totalCostBSFormatted = number_format($totalCostBS, 2, ',', '.');
         $totalCostForeignFormatted = number_format($totalCostForeign, 2, ',', '.');
+        $totalCostForeignFormattedParallel = number_format($totalCostForeignParallel, 2, ',', '.');
         $deliveryDate = Carbon::parse($quotation->delivery_date)->locale('es')->isoFormat('D [de] MMMM [de] YYYY');
 
         $quotationRef = $quotation->reference_number;
@@ -892,7 +953,11 @@ class QuotationController extends Controller
             'borderColor' => '000000',
             'cellMarginLeft' => 50,
             'cellMarginRight' => 50,
-            'layout' => \PhpOffice\PhpWord\Style\Table::LAYOUT_FIXED
+            'cellMarginTop' => 50,
+            'cellMarginBottom' => 50,
+            'layout' => \PhpOffice\PhpWord\Style\Table::LAYOUT_FIXED,
+            'spacing' => 0,
+            'lineHeight' => 1.0
         ];
         $phpWord->addTableStyle('shipmentTable', $tableStyle);
         $table = $section->addTable('shipmentTable');
@@ -900,11 +965,11 @@ class QuotationController extends Controller
             'spaceBefore' => 0,
             'spaceAfter' => 0,
             'spacing' => 0,
-            'lineHeight' => 1.0
+            'lineHeight' => 1.0,
         ];
 
         // Primera fila - Cliente
-        $table->addRow(Converter::cmToTwip(1.7));
+        $table->addRow();
         $table->addCell(Converter::cmToTwip(3), [
             'valign' => 'center',
             'bgColor' => 'bdd6ee',
@@ -922,8 +987,13 @@ class QuotationController extends Controller
             'allCaps' => true,
             'size' => 11
         ], $compactParagraphStyle);
-        $table->addCell(Converter::cmToTwip(0.5), [
+        $table->addCell(Converter::cmToTwip(0.5))->addText('', [
             'valign' => 'center',
+        ], [
+            'spaceBefore' => 0,
+            'spaceAfter' => 0,
+            'spacing' => 0,
+            'lineHeight' => 1.0,
         ]);
 
         // Filas para cada producto
@@ -931,7 +1001,7 @@ class QuotationController extends Controller
             $rowSpan = $index === 0 ? 1 : count($productsData) - 1;
 
             // Segunda fila - Origen y Cantidad
-            $table->addRow(Converter::cmToTwip(1.7));
+            $table->addRow();
             $table->addCell(Converter::cmToTwip(3), [
                 'valign' => 'center',
                 'bgColor' => 'bdd6ee',
@@ -946,26 +1016,32 @@ class QuotationController extends Controller
             ])->addText($product['origin']['city'] . ', ' . $product['origin']['country'], [
                 'size' => 11
             ], $compactParagraphStyle);
-            $table->addCell(Converter::cmToTwip(0.5), [
+            $table->addCell(Converter::cmToTwip(0.5))->addText('', [
                 'valign' => 'center',
+            ], [
+                'spaceBefore' => 0,
+                'spaceAfter' => 0,
+                'spacing' => 0,
+                'lineHeight' => 1.0,
             ]);
             $table->addCell(Converter::cmToTwip(2), [
-                'valign' => 'bottom',
+                'valign' => 'center',
                 'bgColor' => 'bdd6ee',
                 'borderSize' => 1,
             ])->addText('CANTIDAD', [
                 'bold' => true,
                 'size' => 11
             ], $compactParagraphStyle);
+
             $table->addCell(Converter::cmToTwip(3), [
-                'valign' => 'bottom',
+                'valign' => 'center',
                 'borderSize' => 1,
-            ])->addText($product['quantity']['value'], [
+            ])->addText($product['quantity']['value'] . ' ' .  $product['quantity']['unit'], [
                 'size' => 11
             ], $compactParagraphStyle);
 
             // Tercera fila - Destino y Peso
-            $table->addRow(Converter::cmToTwip(1.7));
+            $table->addRow();
             $table->addCell(Converter::cmToTwip(3), [
                 'valign' => 'center',
                 'bgColor' => 'bdd6ee',
@@ -980,11 +1056,16 @@ class QuotationController extends Controller
             ])->addText($product['destination']['city'] . ', ' . $product['destination']['country'], [
                 'size' => 11
             ], $compactParagraphStyle);
-            $table->addCell(Converter::cmToTwip(0.5), [
+            $table->addCell(Converter::cmToTwip(0.5))->addText('', [
                 'valign' => 'center',
+            ], [
+                'spaceBefore' => 0,
+                'spaceAfter' => 0,
+                'spacing' => 0,
+                'lineHeight' => 1.0,
             ]);
             $table->addCell(Converter::cmToTwip(2), [
-                'valign' => 'bottom',
+                'valign' => 'center',
                 'bgColor' => 'bdd6ee',
                 'borderSize' => 1,
             ])->addText('PESO', [
@@ -992,7 +1073,7 @@ class QuotationController extends Controller
                 'size' => 11
             ], $compactParagraphStyle);
             $table->addCell(Converter::cmToTwip(3), [
-                'valign' => 'bottom',
+                'valign' => 'center',
                 'borderSize' => 1,
             ])->addText($product['weight'] . " " . 'KG', [
                 'size' => 11
@@ -1015,9 +1096,14 @@ class QuotationController extends Controller
                 'size' => 11
             ], $compactParagraphStyle);
 
-            $table->addCell(Converter::cmToTwip(0.5), [
+            $table->addCell(Converter::cmToTwip(0.5))->addText('', [
                 'valign' => 'center',
-            ])->addText('');
+            ], [
+                'spaceBefore' => 0,
+                'spaceAfter' => 0,
+                'spacing' => 0,
+                'lineHeight' => 1.0,
+            ]);
             $table->addCell(Converter::cmToTwip(2), [
                 'valign' => 'center',
                 'bgColor' => 'bdd6ee',
@@ -1037,11 +1123,22 @@ class QuotationController extends Controller
             if ($index < count($productsData) - 1) {
                 $table->addRow();
                 $table->addCell(Converter::cmToTwip(15.5), ['gridSpan' => 5])
-                    ->addText('', ['size' => 1]);
+                    ->addText('', ['size' => 1], [
+                        'spaceBefore' => 0,
+                        'spaceAfter' => 0,
+                        'spacing' => 0,
+                        'lineHeight' => 1.0,
+                    ]);
             }
         }
 
         // Texto después de la tabla
+
+        // $section->addText(
+        //     'OPCIÓN 1) PAGO EN EFECTIVO EN ' . $quotation->currency,
+        //     ['bold' => true, 'size' => 11],
+        //     ['spaceAfter' => Converter::pointToTwip(11)]
+        // );
         $section->addTextBreak(1);
         $section->addText(
             'Para el requerimiento de transporte y logística los costos se encuentran líneas abajo',
@@ -1049,250 +1146,368 @@ class QuotationController extends Controller
             ['spaceAfter' => Converter::pointToTwip(11)]
         );
 
-        // Opción de pago 2 (en negrita) - Moneda extranjera
-        $section->addText(
-            'OPCIÓN 1) PAGO EN EFECTIVO EN ' . $quotation->currency,
-            ['bold' => true, 'size' => 11],
-            ['spaceAfter' => Converter::pointToTwip(11)]
-        );
+        if (!$quotation->is_parallel) {
+            $section->addText(
+                'OPCIÓN 1) PAGO EN EFECTIVO EN BS DE EN BOLIVIA',
+                ['bold' => true, 'size' => 11,  'bgColor' => 'ffff00',],
+                ['spaceAfter' => Converter::pointToTwip(11)]
+            );
+            $table = $section->addTable([
+                'width' => 400,
+                'unit' => 'pct',
+                'alignment' => JcTable::CENTER,
+                'cellMargin' => 50,
+            ]);
 
-        // Tabla de costos en moneda extranjera
-        $table = $section->addTable([
-            'width' => 400,
-            'unit' => 'pct',
-            'alignment' => JcTable::CENTER,
-            'cellMargin' => 50,
-        ]);
-
-        // Encabezado de la tabla
-        $table->addRow();
-        $table->addCell(Converter::cmToTwip(10), [
-            'valign' => 'center',
-            'bgColor' => 'bdd6ee',
-            'borderSize' => 1,
-        ])->addText('CONCEPTO', [
-            'bold' => true,
-            'size' => 11,
-            'allCaps' => true
-        ], [
-            'spaceBefore' => 0,
-            'spaceAfter' => 0,
-            'spacing' => 0,
-            'lineHeight' => 1.0,
-            'align' => 'center'
-        ]);
-        $table->addCell(Converter::cmToTwip(3), [
-            'valign' => 'center',
-            'bgColor' => 'bdd6ee',
-            'borderSize' => 1,
-        ])->addText('MONTO ' . $quotation->currency, [
-            'bold' => true,
-            'size' => 11,
-            'allCaps' => true
-        ], [
-            'spaceBefore' => 0,
-            'spaceAfter' => 0,
-            'spacing' => 0,
-            'lineHeight' => 1.0,
-            'align' => 'right'
-        ]);
-
-        // Filas de costos en moneda extranjera
-        foreach ($costsData as $cost) {
-            $amount = floatval(str_replace(',', '', $cost['amount']));
-            $amountForeign = $cost['currency'] == 'BS' ? $amount / $quotation->exchange_rate : $amount;
-            $amountFormatted = number_format($amountForeign, 2, ',', '.');
-
+            // Encabezado de la tabla
             $table->addRow();
             $table->addCell(Converter::cmToTwip(10), [
                 'valign' => 'center',
+                'bgColor' => 'bdd6ee',
                 'borderSize' => 1,
-            ])->addText($cost['name'], [
-                'size' => 11
-            ], [
-                'spaceBefore' => 0,
-                'spaceAfter' => 0,
-                'spacing' => 0,
-                'lineHeight' => 1.0,
-                'align' => 'left'
-            ]);
-            $table->addCell(Converter::cmToTwip(3), [
-                'valign' => 'center',
-                'borderSize' => 1,
-            ])->addText($amountFormatted, [
-                'size' => 11
-            ], [
-                'spaceBefore' => 0,
-                'spaceAfter' => 0,
-                'spacing' => 0,
-                'lineHeight' => 1.0,
-                'align' => 'right'
-            ]);
-        }
-
-        // Total en moneda extranjera
-        $table->addRow();
-        $table->addCell(Converter::cmToTwip(10), [
-            'valign' => 'center',
-            'borderSize' => 1,
-        ])->addText('TOTAL', [
-            'size' => 11,
-            'allCaps' => true
-        ], [
-            'spaceBefore' => 0,
-            'spaceAfter' => 0,
-            'spacing' => 0,
-            'lineHeight' => 1.0,
-            'align' => 'left'
-        ]);
-        $table->addCell(Converter::cmToTwip(3), [
-            'valign' => 'center',
-            'borderSize' => 1,
-        ])->addText($totalCostForeignFormatted, [
-            'size' => 11,
-            'allCaps' => true
-        ], [
-            'spaceBefore' => 0,
-            'spaceAfter' => 0,
-            'spacing' => 0,
-            'lineHeight' => 1.0,
-            'align' => 'right'
-        ]);
-
-
-        // Opción de pago 2 (en negrita) - Moneda local (BS)
-        $section->addText(
-            'OPCIÓN 2) PAGO EN EFECTIVO EN BS DE BOLIVIA',
-            ['bold' => true, 'size' => 11],
-            [
-                'spaceAfter' => Converter::pointToTwip(11),
-                'spaceBefore' => Converter::pointToTwip(11)
-            ]
-        );
-
-        // Tabla de costos en BS
-        $table = $section->addTable([
-            'width' => 400,
-            'unit' => 'pct',
-            'alignment' => JcTable::CENTER,
-            'cellMargin' => 50,
-        ]);
-
-        // Encabezado de la tabla
-        $table->addRow();
-        $table->addCell(Converter::cmToTwip(10), [
-            'valign' => 'center',
-            'bgColor' => 'bdd6ee',
-            'borderSize' => 1,
-        ])->addText('CONCEPTO', [
-            'bold' => true,
-            'size' => 11,
-            'allCaps' => true
-        ], [
-            'spaceBefore' => 0,
-            'spaceAfter' => 0,
-            'spacing' => 0,
-            'lineHeight' => 1.0,
-            'align' => 'center'
-        ]);
-        $table->addCell(Converter::cmToTwip(3), [
-            'valign' => 'center',
-            'bgColor' => 'bdd6ee',
-            'borderSize' => 1,
-        ])->addText('MONTO BS', [
-            'bold' => true,
-            'size' => 11,
-            'allCaps' => true
-        ], [
-            'spaceBefore' => 0,
-            'spaceAfter' => 0,
-            'spacing' => 0,
-            'lineHeight' => 1.0,
-            'align' => 'right'
-        ]);
-
-        // Filas de costos en BS
-        foreach ($costsData as $cost) {
-            $amount = floatval(str_replace(',', '', $cost['amount']));
-            $amountBS = $cost['currency'] == 'BS' ? $amount : $amount * $quotation->exchange_rate;
-            $amountFormatted = number_format($amountBS, 2, ',', '.');
-
-            $table->addRow();
-            $table->addCell(Converter::cmToTwip(10), [
-                'valign' => 'center',
-                'borderSize' => 1,
-            ])->addText($cost['name'], [
-                'size' => 11
-            ], [
-                'spaceBefore' => 0,
-                'spaceAfter' => 0,
-                'spacing' => 0,
-                'lineHeight' => 1.0,
-                'align' => 'left'
-            ]);
-            $table->addCell(Converter::cmToTwip(3), [
-                'valign' => 'center',
-                'borderSize' => 1,
-            ])->addText($amountFormatted, [
-                'size' => 11
-            ], [
-                'spaceBefore' => 0,
-                'spaceAfter' => 0,
-                'spacing' => 0,
-                'lineHeight' => 1.0,
-                'align' => 'right'
-            ]);
-        }
-
-        // Total en BS
-        $table->addRow();
-        $table->addCell(Converter::cmToTwip(10), [
-            'valign' => 'center',
-            'borderSize' => 1,
-        ])->addText('TOTAL', [
-            'size' => 11,
-            'allCaps' => true
-        ], [
-            'spaceBefore' => 0,
-            'spaceAfter' => 0,
-            'spacing' => 0,
-            'lineHeight' => 1.0,
-            'align' => 'left'
-        ]);
-        $table->addCell(Converter::cmToTwip(3), [
-            'valign' => 'center',
-            'borderSize' => 1,
-        ])->addText($totalCostBSFormatted, [
-            'size' => 11,
-            'allCaps' => true
-        ], [
-            'spaceBefore' => 0,
-            'spaceAfter' => 0,
-            'spacing' => 0,
-            'lineHeight' => 1.0,
-            'align' => 'right'
-        ]);
-
-
-        // Nota sobre el tipo de cambio
-        $section->addText(
-            '** Tipo de cambio aplicado: 1 ' . $quotation->currency . ' = ' . $quotation->exchange_rate . ' BS',
-            [
+            ])->addText('CONCEPTO', [
+                'bold' => true,
                 'size' => 11,
-                'bold' => true
-            ],
-            [
-                'spaceAfter' => Converter::pointToTwip(11),
-                'spaceBefore' => Converter::pointToTwip(11),
-            ]
-        );
+                'allCaps' => true
+            ], [
+                'spaceBefore' => 0,
+                'spaceAfter' => 0,
+                'spacing' => 0,
+                'lineHeight' => 1.0,
+                'align' => 'center'
+            ]);
+            $table->addCell(Converter::cmToTwip(3), [
+                'valign' => 'center',
+                'bgColor' => 'bdd6ee',
+                'borderSize' => 1,
+            ])->addText('MONTO ' . $quotation->currency, [
+                'bold' => true,
+                'size' => 11,
+                'allCaps' => true
+            ], [
+                'spaceBefore' => 0,
+                'spaceAfter' => 0,
+                'spacing' => 0,
+                'lineHeight' => 1.0,
+                'align' => 'right'
+            ]);
 
-        // Resto del documento (servicios incluidos/excluidos, etc.)
-        $section->addText(
-            'El servicio incluye:',
-            ['size' => 11, 'bold' => true],
-            ['spaceAfter' => Converter::pointToTwip(11)]
-        );
+            // Filas de costos en moneda extranjera
+            foreach ($costsData as $cost) {
+                $amount = floatval(str_replace(',', '', $cost['amount']));
+                $amountForeign = $cost['currency'] == 'BS' ? $amount / $quotation->exchange_rate : $amount;
+                $amountFormatted = number_format($amountForeign, 2, ',', '.');
+
+                $table->addRow();
+                $table->addCell(Converter::cmToTwip(10), [
+                    'valign' => 'center',
+                    'borderSize' => 1,
+                ])->addText($cost['name'], [
+                    'size' => 11
+                ], [
+                    'spaceBefore' => 0,
+                    'spaceAfter' => 0,
+                    'spacing' => 0,
+                    'lineHeight' => 1.0,
+                    'align' => 'left'
+                ]);
+                $table->addCell(Converter::cmToTwip(3), [
+                    'valign' => 'center',
+                    'borderSize' => 1,
+                ])->addText($amountFormatted, [
+                    'size' => 11
+                ], [
+                    'spaceBefore' => 0,
+                    'spaceAfter' => 0,
+                    'spacing' => 0,
+                    'lineHeight' => 1.0,
+                    'align' => 'right'
+                ]);
+            }
+
+            // Total en moneda extranjera
+            $table->addRow();
+            $table->addCell(Converter::cmToTwip(10), [
+                'valign' => 'center',
+                'borderSize' => 1,
+            ])->addText('TOTAL', [
+                'size' => 11,
+                'allCaps' => true
+            ], [
+                'spaceBefore' => 0,
+                'spaceAfter' => 0,
+                'spacing' => 0,
+                'lineHeight' => 1.0,
+                'align' => 'left'
+            ]);
+            $table->addCell(Converter::cmToTwip(3), [
+                'valign' => 'center',
+                'borderSize' => 1,
+            ])->addText($totalCostForeignFormatted, [
+                'size' => 11,
+                'allCaps' => true,
+                'bgColor' => 'ffff00',
+            ], [
+                'spaceBefore' => 0,
+                'spaceAfter' => 0,
+                'spacing' => 0,
+                'lineHeight' => 1.0,
+                'align' => 'right'
+            ]);
+
+            // Nota sobre el tipo de cambio
+            $section->addText(
+                '** De acuerdo con el TC paralelo vigente.',
+                [
+                    'size' => 11,
+                    'bold' => true
+                ],
+                [
+                    'spaceAfter' => Converter::pointToTwip(11),
+                    'spaceBefore' => Converter::pointToTwip(11),
+                ]
+            );
+        } else {
+            $section->addText(
+                'OPCION 1 ) PAGO EN BOLIVIA A UN TC DE ' . $quotation->exchange_rate,
+                ['bold' => true, 'size' => 11,  'bgColor' => 'ffff00',],
+                ['spaceAfter' => Converter::pointToTwip(11)]
+            );
+            $table = $section->addTable([
+                'width' => 400,
+                'unit' => 'pct',
+                'alignment' => JcTable::CENTER,
+                'cellMargin' => 50,
+            ]);
+
+            // Encabezado de la tabla
+            $table->addRow();
+            $table->addCell(Converter::cmToTwip(10), [
+                'valign' => 'center',
+                'bgColor' => 'bdd6ee',
+                'borderSize' => 1,
+            ])->addText('CONCEPTO', [
+                'bold' => true,
+                'size' => 11,
+                'allCaps' => true
+            ], [
+                'spaceBefore' => 0,
+                'spaceAfter' => 0,
+                'spacing' => 0,
+                'lineHeight' => 1.0,
+                'align' => 'center'
+            ]);
+            $table->addCell(Converter::cmToTwip(3), [
+                'valign' => 'center',
+                'bgColor' => 'bdd6ee',
+                'borderSize' => 1,
+            ])->addText('MONTO ' . $quotation->currency, [
+                'bold' => true,
+                'size' => 11,
+                'allCaps' => true
+            ], [
+                'spaceBefore' => 0,
+                'spaceAfter' => 0,
+                'spacing' => 0,
+                'lineHeight' => 1.0,
+                'align' => 'right'
+            ]);
+
+            // Filas de costos en moneda extranjera
+            foreach ($costsData as $cost) {
+                $amount = floatval(str_replace(',', '', $cost['amount_parallel'] ?? $cost['amount']));
+                $amountForeign = $cost['currency'] == 'BS' ? $amount / $quotation->exchange_rate : $amount;
+                $amountFormatted = number_format($amountForeign, 2, ',', '.');
+
+                $table->addRow();
+                $table->addCell(Converter::cmToTwip(10), [
+                    'valign' => 'center',
+                    'borderSize' => 1,
+                ])->addText($cost['name'], [
+                    'size' => 11
+                ], [
+                    'spaceBefore' => 0,
+                    'spaceAfter' => 0,
+                    'spacing' => 0,
+                    'lineHeight' => 1.0,
+                    'align' => 'left'
+                ]);
+                $table->addCell(Converter::cmToTwip(3), [
+                    'valign' => 'center',
+                    'borderSize' => 1,
+                ])->addText($amountFormatted, [
+                    'size' => 11
+                ], [
+                    'spaceBefore' => 0,
+                    'spaceAfter' => 0,
+                    'spacing' => 0,
+                    'lineHeight' => 1.0,
+                    'align' => 'right'
+                ]);
+            }
+
+            // Total en moneda extranjera
+            $table->addRow();
+            $table->addCell(Converter::cmToTwip(10), [
+                'valign' => 'center',
+                'borderSize' => 1,
+            ])->addText('TOTAL', [
+                'size' => 11,
+                'allCaps' => true
+            ], [
+                'spaceBefore' => 0,
+                'spaceAfter' => 0,
+                'spacing' => 0,
+                'lineHeight' => 1.0,
+                'align' => 'left'
+            ]);
+            $table->addCell(Converter::cmToTwip(3), [
+                'valign' => 'center',
+                'borderSize' => 1,
+            ])->addText($totalCostForeignFormattedParallel, [
+                'size' => 11,
+                'allCaps' => true,
+                'bgColor' => 'ffff00',
+            ], [
+                'spaceBefore' => 0,
+                'spaceAfter' => 0,
+                'spacing' => 0,
+                'lineHeight' => 1.0,
+                'align' => 'right'
+            ]);
+
+
+
+            $section->addText(
+                'OPCION 2 ) PAGO EFECTIVO EN USD O DE ACUERDO CON EL TC PARALELO ',
+                ['bold' => true, 'size' => 11,  'bgColor' => 'ffff00',],
+                [
+                    'spaceAfter' => Converter::pointToTwip(11),
+                    'spaceBefore' => Converter::pointToTwip(11),
+                ]
+            );
+            $table = $section->addTable([
+                'width' => 400,
+                'unit' => 'pct',
+                'alignment' => JcTable::CENTER,
+                'cellMargin' => 50,
+            ]);
+
+            // Encabezado de la tabla
+            $table->addRow();
+            $table->addCell(Converter::cmToTwip(10), [
+                'valign' => 'center',
+                'bgColor' => 'bdd6ee',
+                'borderSize' => 1,
+            ])->addText('CONCEPTO', [
+                'bold' => true,
+                'size' => 11,
+                'allCaps' => true
+            ], [
+                'spaceBefore' => 0,
+                'spaceAfter' => 0,
+                'spacing' => 0,
+                'lineHeight' => 1.0,
+                'align' => 'center'
+            ]);
+            $table->addCell(Converter::cmToTwip(3), [
+                'valign' => 'center',
+                'bgColor' => 'bdd6ee',
+                'borderSize' => 1,
+            ])->addText('MONTO ' . $quotation->currency, [
+                'bold' => true,
+                'size' => 11,
+                'allCaps' => true
+            ], [
+                'spaceBefore' => 0,
+                'spaceAfter' => 0,
+                'spacing' => 0,
+                'lineHeight' => 1.0,
+                'align' => 'right'
+            ]);
+
+            // Filas de costos en moneda extranjera
+            foreach ($costsData as $cost) {
+                $amount = floatval(str_replace(',', '', $cost['amount']));
+                $amountForeign = $cost['currency'] == 'BS' ? $amount / $quotation->exchange_rate : $amount;
+                $amountFormatted = number_format($amountForeign, 2, ',', '.');
+
+                $table->addRow();
+                $table->addCell(Converter::cmToTwip(10), [
+                    'valign' => 'center',
+                    'borderSize' => 1,
+                ])->addText($cost['name'], [
+                    'size' => 11
+                ], [
+                    'spaceBefore' => 0,
+                    'spaceAfter' => 0,
+                    'spacing' => 0,
+                    'lineHeight' => 1.0,
+                    'align' => 'left'
+                ]);
+                $table->addCell(Converter::cmToTwip(3), [
+                    'valign' => 'center',
+                    'borderSize' => 1,
+                ])->addText($amountFormatted, [
+                    'size' => 11
+                ], [
+                    'spaceBefore' => 0,
+                    'spaceAfter' => 0,
+                    'spacing' => 0,
+                    'lineHeight' => 1.0,
+                    'align' => 'right'
+                ]);
+            }
+
+            // Total en moneda extranjera
+            $table->addRow();
+            $table->addCell(Converter::cmToTwip(10), [
+                'valign' => 'center',
+                'borderSize' => 1,
+            ])->addText('TOTAL', [
+                'size' => 11,
+                'allCaps' => true
+            ], [
+                'spaceBefore' => 0,
+                'spaceAfter' => 0,
+                'spacing' => 0,
+                'lineHeight' => 1.0,
+                'align' => 'left'
+            ]);
+            $table->addCell(Converter::cmToTwip(3), [
+                'valign' => 'center',
+                'borderSize' => 1,
+            ])->addText($totalCostForeignFormatted, [
+                'size' => 11,
+                'allCaps' => true,
+                'bgColor' => 'ffff00',
+            ], [
+                'spaceBefore' => 0,
+                'spaceAfter' => 0,
+                'spacing' => 0,
+                'lineHeight' => 1.0,
+                'align' => 'right'
+            ]);
+
+            // Nota sobre el tipo de cambio
+            $section->addText(
+                '',
+                [
+                    'size' => 11,
+                    'bold' => true
+                ],
+            );
+        }
+
+        if (count($servicesData['included']) > 0) {
+            // Resto del documento (servicios incluidos/excluidos, etc.)
+            $section->addText(
+                'El servicio incluye:',
+                ['size' => 11, 'bold' => true],
+                ['spaceAfter' => Converter::pointToTwip(11)]
+            );
+        }
+
 
         $listStyleName = 'bulletStyle';
         $phpWord->addNumberingStyle(
@@ -1319,14 +1534,17 @@ class QuotationController extends Controller
             );
         }
 
-        $section->addText(
-            'El servicio no incluye:',
-            ['size' => 11, 'bold' => true],
-            [
-                'spaceAfter' => Converter::pointToTwip(11),
-                'spaceBefore' => Converter::pointToTwip(11)
-            ]
-        );
+        if (count($servicesData['excluded']) > 0) {
+            $section->addText(
+                'El servicio no incluye:',
+                ['size' => 11, 'bold' => true],
+                [
+                    'spaceAfter' => Converter::pointToTwip(11),
+                    'spaceBefore' => Converter::pointToTwip(11)
+                ]
+            );
+        }
+
 
         foreach ($servicesData['excluded'] as $service) {
             $section->addListItem(
@@ -1341,75 +1559,158 @@ class QuotationController extends Controller
                 ]
             );
         }
-
         $paragraphStyle = array(
             'spaceBefore' => Converter::pointToTwip(11),
             'spaceAfter' => Converter::pointToTwip(11),
+            'lineHeight' => 1.0,
+            'alignment' => \PhpOffice\PhpWord\SimpleType\Jc::BOTH
         );
-
-        $textrun = $section->addTextRun($paragraphStyle);
-        $textrun->addText(
-            'Seguro: ',
-            [
-                'bold' => true,
-                'size' => 11,
-            ]
-        );
-        $textrun->addText(
-            'Se recomienda tener una póliza de seguro para el embarque, ofrecemos la misma de manera adicional considerando el 0.35% sobre el valor declarado, con un min de 30 usd, previa autorización por la compañía de seguros.',
-            [
-                'size' => 11,
-            ]
-        );
-
+        if ($quotation->insurance) {
+            $textrun = $section->addTextRun($paragraphStyle);
+            $textrun->addText(
+                'Seguro: ',
+                [
+                    'bold' => true,
+                    'size' => 11,
+                ]
+            );
+            $textrun->addText(
+                $quotation->insurance,
+                [
+                    'size' => 11,
+                ]
+            );
+        } else {
+            $textrun = $section->addTextRun($paragraphStyle);
+            $textrun->addText(
+                'Seguro: ',
+                [
+                    'bold' => true,
+                    'size' => 11,
+                ]
+            );
+            $textrun->addText(
+                'Se recomienda tener una póliza de seguro para el embarque, ofrecemos la misma de manera adicional considerando el 0.35% sobre el valor declarado, con un min de 30 usd, previa autorización por la compañía de seguros.',
+                [
+                    'size' => 11,
+                ]
+            );
+        }
         $paragraphStyle = array(
             'spaceAfter' => Converter::pointToTwip(11),
         );
+        if ($quotation->payment_method) {
+            $textrun = $section->addTextRun($paragraphStyle);
+            $textrun->addText(
+                'Forma de pago: ',
+                [
+                    'bold' => true,
+                    'size' => 11,
+                ]
+            );
+            $textrun->addText(
+                $quotation->payment_method,
+                [
+                    'size' => 11,
+                ]
+            );
+        } else {
+            $textrun = $section->addTextRun($paragraphStyle);
+            $textrun->addText(
+                'Forma de pago: ',
+                [
+                    'bold' => true,
+                    'size' => 11,
+                ]
+            );
+            $textrun->addText(
+                'Una vez se confirme el arribo del embarque a puerto de destino.',
+                [
+                    'size' => 11,
+                ]
+            );
+        }
+        if ($quotation->validity) {
+            $textrun = $section->addTextRun($paragraphStyle);
+            $textrun->addText(
+                'Validez: ',
+                [
+                    'bold' => true,
+                    'size' => 11,
+                ]
+            );
+            $textrun->addText(
+                $quotation->validity,
+                [
+                    'size' => 11,
+                ]
+            );
+        } else {
 
-        $textrun = $section->addTextRun($paragraphStyle);
-        $textrun->addText(
-            'Forma de pago: ',
-            [
-                'bold' => true,
-                'size' => 11,
-            ]
-        );
-        $textrun->addText(
-            'Una vez se confirme el arribo del embarque a puerto de destino.',
-            [
-                'size' => 11,
-            ]
-        );
+            $textrun = $section->addTextRun($paragraphStyle);
+            $textrun->addText(
+                'Validez: ',
+                [
+                    'bold' => true,
+                    'size' => 11,
+                ]
+            );
+            $textrun->addText(
+                'Los fletes son válidos hasta 10 días, posterior a ese tiempo, validar si los costos aún están vigentes.',
+                [
+                    'size' => 11,
+                ]
+            );
+        }
+        if ($quotation->observations) {
+            $textrun = $section->addTextRun($paragraphStyle);
+            $textrun->addText(
+                'Observaciones: ',
+                [
+                    'bold' => true,
+                    'size' => 11,
+                ]
+            );
+            $textrun->addText(
+                $quotation->observations,
+                [
+                    'size' => 11,
+                ]
+            );
+        } else {
 
-        $textrun = $section->addTextRun($paragraphStyle);
-        $textrun->addText(
-            'Validez: ',
-            [
-                'bold' => true,
-                'size' => 11,
-            ]
-        );
-        $textrun->addText(
-            'Los fletes son válidos hasta 10 días, posterior a ese tiempo, validar si los costos aún están vigentes.',
-            [
-                'size' => 11,
-            ]
-        );
+            $textrun = $section->addTextRun($paragraphStyle);
+            $textrun->addText(
+                'Observaciones: ',
+                [
+                    'bold' => true,
+                    'size' => 11,
+                ]
+            );
+            $textrun->addText(
+                'Se debe considerar como un tiempo de tránsito 48 a 50 días hasta puerto. ',
+                [
+                    'size' => 11,
+                ],
 
-        $textrun = $section->addTextRun($paragraphStyle);
-        $textrun->addText(
-            'Observaciones: ',
-            [
-                'bold' => true,
-                'size' => 11,
-            ]
-        );
-        $textrun->addText(
-            'Se debe considerar como un tiempo de tránsito 48 a 50 días hasta puerto de Iquique. ',
-            [
-                'size' => 11,
-            ]
-        );
+            );
+        }
+
+        if ($quotation->is_parallel) {
+            $juncture = $quotation->juncture ?? 113;
+            $section->addText(
+                '**Debido a la coyuntura actual, en la presente cotización se está aplicando el costo de transferencia del ' . $juncture . '% sobre los recargos generados en origen, de acuerdo con la comisión que cobra nuestro banco actualmente, si esta llega a variar, considerar la modificación de ese monto de acuerdo con la tarifa vigente.',
+                [
+                    'size' => 11,
+                    'bgColor' => 'ffff00',
+                ],
+                [
+                    'spaceAfter' => Converter::pointToTwip(11),
+                    'lineHeight' => 1.0,
+                    'alignment' => \PhpOffice\PhpWord\SimpleType\Jc::BOTH
+                ]
+            );
+        }
 
         $section->addText(
             'Atentamente:',
@@ -1418,8 +1719,19 @@ class QuotationController extends Controller
         );
 
         // Get contact information from quotation
-        $contactName = $quotation->contact_name ?? 'Aidee Callisaya.';
-        $contactPosition = $quotation->contact_position ?? 'Responsable Comercial';
+
+        $contactName = $quotation->users_id
+            ? $quotation->user->name . ' ' . $quotation->user->surname
+            : 'Aidee Callisaya.';
+
+        $contactPosition = $quotation->users_id
+            ? 'Responsable ' . match ($quotation->user->role->description) {
+                'operator' => 'Operador.',
+                'commercial' => 'Comercial.',
+                'admin' => 'Logística y Comex.',
+                default => $quotation->user->role->name,
+            }
+            : 'Responsable Comercial';
 
         $section->addText(
             $contactName,
@@ -1467,7 +1779,16 @@ class QuotationController extends Controller
             $origin = City::with('country')->findOrFail($product->origin_id);
             $destination = City::with('country')->findOrFail($product->destination_id);
             $incoterm = Incoterm::findOrFail($product->incoterm_id);
-            $quantity_descripcion = QuantityDescription::findOrFail($product->quantity_description_id);
+
+            $quantityDetails = [
+                'value' => $product->quantity,
+                'unit' => '' // Valor por defecto para la unidad
+            ];
+
+            if (!$product->is_container) {
+                $quantityDescription = QuantityDescription::findOrFail($product->quantity_description_id);
+                $quantityDetails['unit'] = $quantityDescription->name;
+            }
 
             $processedProducts[] = [
                 'name' => $product->name,
@@ -1481,10 +1802,7 @@ class QuotationController extends Controller
                 ],
                 'weight' => $product->weight,
                 'incoterm' => $incoterm->code,
-                'quantity' => [
-                    'value' => $product->quantity,
-                    'unit' => $quantity_descripcion->name
-                ],
+                'quantity' => $quantityDetails,
                 'volume' => [
                     'value' => $product->volume,
                     'unit' => $product->volume_unit
@@ -1527,7 +1845,8 @@ class QuotationController extends Controller
                 'name' => $cost->name,
                 'description' => $cost->description ?? '',
                 'amount' => $costDetail->amount,
-                'currency' => $costDetail->currency
+                'currency' => $costDetail->currency,
+                'amount_parallel' => $costDetail->amount_parallel ?? null,
             ];
         }
 
@@ -1540,32 +1859,34 @@ class QuotationController extends Controller
             'quotation_id' => 'required|integer',
         ]);
 
-        $quotation = Quotation::findOrFail($validated['quotation_id']);
-
+        $quotation = Quotation::with('user.role')->findOrFail($validated['quotation_id']);
         $clientData = $this->getClientData($quotation->customer_nit);
-
         $productsData = $this->getProductsData($quotation->products);
         $servicesData = $this->getServicesData($quotation->services);
         $costsData = $this->getCostsData($quotation->costDetails);
 
+        // Calculate totals in both currencies
         $totalCostBS = 0;
         $totalCostForeign = 0;
+        $totalCostForeignParallel = 0;
 
         foreach ($costsData as $item) {
             $amount = floatval(str_replace(',', '', $item['amount']));
             if ($item['currency'] == 'BS') {
                 $totalCostBS += $amount;
                 $totalCostForeign += $amount / $quotation->exchange_rate;
+                $totalCostForeignParallel = $totalCostForeignParallel + ($item['amount_parallel'] ?? $item['amount']) / $quotation->exchange_rate;
             } else {
                 $totalCostForeign += $amount;
+                $totalCostForeignParallel = $totalCostForeignParallel + ($item['amount_parallel'] ?? $item['amount']);
                 $totalCostBS += $amount * $quotation->exchange_rate;
             }
         }
 
         $totalCostBSFormatted = number_format($totalCostBS, 2, ',', '.');
         $totalCostForeignFormatted = number_format($totalCostForeign, 2, ',', '.');
+        $totalCostForeignFormattedParallel = number_format($totalCostForeignParallel, 2, ',', '.');
         $deliveryDate = Carbon::parse($quotation->delivery_date)->locale('es')->isoFormat('D [de] MMMM [de] YYYY');
-
         $quotationRef = $quotation->reference_number;
 
         $spreadsheet = new Spreadsheet();
@@ -1640,6 +1961,12 @@ class QuotationController extends Controller
             ],
         ];
 
+        $yellowHighlight = [
+            'fill' => [
+                'fillType' => Fill::FILL_SOLID,
+                'startColor' => ['rgb' => 'FFFF00'],
+            ],
+        ];
 
         $currentRow = 3;
 
@@ -1660,7 +1987,7 @@ class QuotationController extends Controller
         // Reference number with improved styling
         $sheet->setCellValue("B{$currentRow}", "REF: COTIZACIÓN " . $quotationRef);
         $sheet->getStyle("B{$currentRow}")->applyFromArray($titleStyle);
-        $sheet->getStyle("B{$currentRow}")->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setRGB('E8F3FD');
+        $sheet->getStyle("B{$currentRow}:F{$currentRow}")->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setRGB('E8F3FD');
         $sheet->getStyle("B{$currentRow}:F{$currentRow}")->getBorders()->getBottom()->setBorderStyle(Border::BORDER_THIN);
         $sheet->mergeCells("B{$currentRow}:F{$currentRow}");
         $currentRow += 2;
@@ -1701,7 +2028,7 @@ class QuotationController extends Controller
             $sheet->setCellValue("E{$currentRow}", "CANTIDAD");
             $sheet->getStyle("E{$currentRow}")->applyFromArray($headerStyle);
 
-            $sheet->setCellValue("F{$currentRow}", $product['quantity']['value']);
+            $sheet->setCellValue("F{$currentRow}", $product['quantity']['value'] . ' ' .  $product['quantity']['unit']);
             $sheet->getStyle("F{$currentRow}")->applyFromArray($cellStyle);
             $currentRow++;
 
@@ -1750,128 +2077,191 @@ class QuotationController extends Controller
         $sheet->mergeCells("B{$currentRow}:F{$currentRow}");
         $currentRow += 2;
 
-        // Payment option 1 - Foreign currency with better styling
-        $sheet->setCellValue("B{$currentRow}", "OPCIÓN 1) PAGO EN EFECTIVO EN " . $quotation->currency);
-        $sheet->getStyle("B{$currentRow}:F{$currentRow}")->applyFromArray($subtitleStyle);
-        $sheet->getStyle("B{$currentRow}:F{$currentRow}")->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setRGB('DCE6F1');
-        $sheet->getStyle("B{$currentRow}:F{$currentRow}")->getBorders()->getOutline()->setBorderStyle(Border::BORDER_THIN);
-        $sheet->mergeCells("B{$currentRow}:F{$currentRow}");
-        $currentRow += 2;
+        if (!$quotation->is_parallel) {
+            // Payment option 1 - BS payment
+            $sheet->setCellValue("B{$currentRow}", "OPCIÓN 1) PAGO EN EFECTIVO EN BS DE BOLIVIA");
+            $sheet->getStyle("B{$currentRow}:F{$currentRow}")->applyFromArray($subtitleStyle);
+            $sheet->getStyle("B{$currentRow}:F{$currentRow}")->applyFromArray($yellowHighlight);
+            $sheet->getStyle("B{$currentRow}:F{$currentRow}")->getBorders()->getOutline()->setBorderStyle(Border::BORDER_THIN);
+            $sheet->mergeCells("B{$currentRow}:F{$currentRow}");
+            $currentRow += 2;
 
-        // Foreign currency costs table with improved styling
-        // Table header
-        $sheet->setCellValue("B{$currentRow}", "CONCEPTO");
-        $sheet->getStyle("B{$currentRow}:D{$currentRow}")->applyFromArray($headerStyle);
-        $sheet->mergeCells("B{$currentRow}:D{$currentRow}");
-
-        $sheet->setCellValue("E{$currentRow}", "MONTO " . $quotation->currency);
-        $sheet->getStyle("E{$currentRow}:F{$currentRow}")->applyFromArray($headerStyle);
-        $sheet->getStyle("E{$currentRow}:F{$currentRow}")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_RIGHT);
-        $sheet->mergeCells("E{$currentRow}:F{$currentRow}");
-        $currentRow++;
-
-        // Cost rows in foreign currency
-        foreach ($costsData as $cost) {
-            $amount = floatval(str_replace(',', '', $cost['amount']));
-            $amountForeign = $cost['currency'] == 'BS' ? $amount / $quotation->exchange_rate : $amount;
-            $amountFormatted = number_format($amountForeign, 2, ',', '.');
-
-            $sheet->setCellValue("B{$currentRow}", $cost['name']);
-            $sheet->getStyle("B{$currentRow}:D{$currentRow}")->applyFromArray($cellStyle);
-            $sheet->getStyle("B{$currentRow}:D{$currentRow}")->getFill()->setFillType(Fill::FILL_SOLID);
+            // Table header
+            $sheet->setCellValue("B{$currentRow}", "CONCEPTO");
+            $sheet->getStyle("B{$currentRow}:D{$currentRow}")->applyFromArray($headerStyle);
             $sheet->mergeCells("B{$currentRow}:D{$currentRow}");
-            $sheet->setCellValue("E{$currentRow}", $amountFormatted);
-            $sheet->getStyle("E{$currentRow}:F{$currentRow}")->applyFromArray($cellStyle);
-            $sheet->getStyle("B{$currentRow}:F{$currentRow}")->getFill()->setFillType(Fill::FILL_SOLID);
+
+            $sheet->setCellValue("E{$currentRow}", "MONTO " . $quotation->currency);
+            $sheet->getStyle("E{$currentRow}:F{$currentRow}")->applyFromArray($headerStyle);
             $sheet->getStyle("E{$currentRow}:F{$currentRow}")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_RIGHT);
-            $sheet->getStyle("E{$currentRow}:F{$currentRow}")->getNumberFormat()->setFormatCode('#,##0.00');
             $sheet->mergeCells("E{$currentRow}:F{$currentRow}");
             $currentRow++;
-        }
 
-        // Total in foreign currency with highlighted styling
-        $sheet->setCellValue("B{$currentRow}", "TOTAL");
-        $sheet->getStyle("B{$currentRow}:D{$currentRow}")->applyFromArray([
-            'font' => ['bold' => true],
-            'borders' => ['allBorders' => ['borderStyle' => Border::BORDER_THIN]],
-            'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['rgb' => 'E8F3FD']],
-        ]);
-        $sheet->mergeCells("B{$currentRow}:D{$currentRow}");
-        $sheet->setCellValue("E{$currentRow}", $totalCostForeignFormatted);
-        $sheet->getStyle("E{$currentRow}:F{$currentRow}")->applyFromArray([
-            'font' => ['bold' => true],
-            'borders' => ['allBorders' => ['borderStyle' => Border::BORDER_THIN]],
-            'alignment' => ['horizontal' => Alignment::HORIZONTAL_RIGHT],
-            'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['rgb' => 'E8F3FD']],
-        ]);
-        $sheet->getStyle("E{$currentRow}:F{$currentRow}")->getNumberFormat()->setFormatCode('#,##0.00');
-        $sheet->mergeCells("E{$currentRow}:F{$currentRow}");
-        $currentRow += 2;
+            // Cost rows in foreign currency
+            foreach ($costsData as $cost) {
+                $amount = floatval(str_replace(',', '', $cost['amount']));
+                $amountForeign = $cost['currency'] == 'BS' ? $amount / $quotation->exchange_rate : $amount;
+                $amountFormatted = number_format($amountForeign, 2, ',', '.');
 
-        $sheet->setCellValue("B{$currentRow}", "OPCIÓN 2) PAGO EN EFECTIVO EN BS DE BOLIVIA");
-        $sheet->getStyle("B{$currentRow}:F{$currentRow}")->applyFromArray($subtitleStyle);
-        $sheet->getStyle("B{$currentRow}:F{$currentRow}")->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setRGB('DCE6F1');
-        $sheet->getStyle("B{$currentRow}:F{$currentRow}")->getBorders()->getOutline()->setBorderStyle(Border::BORDER_THIN);
-        $sheet->mergeCells("B{$currentRow}:F{$currentRow}");
-        $currentRow += 2;
+                $sheet->setCellValue("B{$currentRow}", $cost['name']);
+                $sheet->getStyle("B{$currentRow}:D{$currentRow}")->applyFromArray($cellStyle);
+                $sheet->mergeCells("B{$currentRow}:D{$currentRow}");
+                $sheet->setCellValue("E{$currentRow}", $amountFormatted);
+                $sheet->getStyle("E{$currentRow}:F{$currentRow}")->applyFromArray($cellStyle);
+                $sheet->getStyle("E{$currentRow}:F{$currentRow}")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_RIGHT);
+                $sheet->getStyle("E{$currentRow}:F{$currentRow}")->getNumberFormat()->setFormatCode('#,##0.00');
+                $sheet->mergeCells("E{$currentRow}:F{$currentRow}");
+                $currentRow++;
+            }
 
-        $sheet->setCellValue("B{$currentRow}", "CONCEPTO");
-        $sheet->getStyle("B{$currentRow}:D{$currentRow}")->applyFromArray($headerStyle);
-        $sheet->mergeCells("B{$currentRow}:D{$currentRow}");
-
-        $sheet->setCellValue("E{$currentRow}", "MONTO BS");
-        $sheet->getStyle("E{$currentRow}:F{$currentRow}")->applyFromArray($headerStyle);
-        $sheet->getStyle("E{$currentRow}:F{$currentRow}")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_RIGHT);
-        $sheet->mergeCells("E{$currentRow}:F{$currentRow}");
-        $currentRow++;
-
-        foreach ($costsData as $cost) {
-            $amount = floatval(str_replace(',', '', $cost['amount']));
-            $amountBS = $cost['currency'] == 'BS' ? $amount : $amount * $quotation->exchange_rate;
-            $amountFormatted = number_format($amountBS, 2, ',', '.');
-
-            $sheet->setCellValue("B{$currentRow}", $cost['name']);
-            $sheet->getStyle("B{$currentRow}:D{$currentRow}")->applyFromArray($cellStyle);
+            // Total in foreign currency with highlighted styling
+            $sheet->setCellValue("B{$currentRow}", "TOTAL");
+            $sheet->getStyle("B{$currentRow}:D{$currentRow}")->applyFromArray([
+                'font' => ['bold' => true],
+                'borders' => ['allBorders' => ['borderStyle' => Border::BORDER_THIN]],
+            ]);
             $sheet->mergeCells("B{$currentRow}:D{$currentRow}");
-            $sheet->setCellValue("E{$currentRow}", $amountFormatted);
-            $sheet->getStyle("E{$currentRow}:F{$currentRow}")->applyFromArray($cellStyle);
-            $sheet->getStyle("E{$currentRow}:F{$currentRow}")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_RIGHT);
+            $sheet->setCellValue("E{$currentRow}", $totalCostForeignFormatted);
+            $sheet->getStyle("E{$currentRow}:F{$currentRow}")->applyFromArray([
+                'font' => ['bold' => true],
+                'borders' => ['allBorders' => ['borderStyle' => Border::BORDER_THIN]],
+                'alignment' => ['horizontal' => Alignment::HORIZONTAL_RIGHT],
+            ]);
+            $sheet->getStyle("E{$currentRow}:F{$currentRow}")->applyFromArray($yellowHighlight);
             $sheet->getStyle("E{$currentRow}:F{$currentRow}")->getNumberFormat()->setFormatCode('#,##0.00');
             $sheet->mergeCells("E{$currentRow}:F{$currentRow}");
+            $currentRow += 2;
+
+            // Exchange rate note
+            $sheet->setCellValue("B{$currentRow}", "** De acuerdo con el TC paralelo vigente.");
+            $sheet->getStyle("B{$currentRow}")->getFont()->setBold(true);
+            $currentRow += 2;
+        } else {
+            // Payment option 1 - BS payment with parallel rate
+            $sheet->setCellValue("B{$currentRow}", "OPCIÓN 1) PAGO EN BOLIVIA A UN TC DE " . $quotation->exchange_rate);
+            $sheet->getStyle("B{$currentRow}:F{$currentRow}")->applyFromArray($subtitleStyle);
+            $sheet->getStyle("B{$currentRow}:F{$currentRow}")->applyFromArray($yellowHighlight);
+            $sheet->getStyle("B{$currentRow}:F{$currentRow}")->getBorders()->getOutline()->setBorderStyle(Border::BORDER_THIN);
+            $sheet->mergeCells("B{$currentRow}:F{$currentRow}");
+            $currentRow += 2;
+
+            // Table header
+            $sheet->setCellValue("B{$currentRow}", "CONCEPTO");
+            $sheet->getStyle("B{$currentRow}:D{$currentRow}")->applyFromArray($headerStyle);
+            $sheet->mergeCells("B{$currentRow}:D{$currentRow}");
+
+            $sheet->setCellValue("E{$currentRow}", "MONTO " . $quotation->currency);
+            $sheet->getStyle("E{$currentRow}:F{$currentRow}")->applyFromArray($headerStyle);
+            $sheet->getStyle("E{$currentRow}:F{$currentRow}")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_RIGHT);
+            $sheet->mergeCells("E{$currentRow}:F{$currentRow}");
             $currentRow++;
+
+            // Cost rows in foreign currency with parallel amounts
+            foreach ($costsData as $cost) {
+                $amount = floatval(str_replace(',', '', $cost['amount_parallel'] ?? $cost['amount']));
+                $amountForeign = $cost['currency'] == 'BS' ? $amount / $quotation->exchange_rate : $amount;
+                $amountFormatted = number_format($amountForeign, 2, ',', '.');
+
+                $sheet->setCellValue("B{$currentRow}", $cost['name']);
+                $sheet->getStyle("B{$currentRow}:D{$currentRow}")->applyFromArray($cellStyle);
+                $sheet->mergeCells("B{$currentRow}:D{$currentRow}");
+                $sheet->setCellValue("E{$currentRow}", $amountFormatted);
+                $sheet->getStyle("E{$currentRow}:F{$currentRow}")->applyFromArray($cellStyle);
+                $sheet->getStyle("E{$currentRow}:F{$currentRow}")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_RIGHT);
+                $sheet->getStyle("E{$currentRow}:F{$currentRow}")->getNumberFormat()->setFormatCode('#,##0.00');
+                $sheet->mergeCells("E{$currentRow}:F{$currentRow}");
+                $currentRow++;
+            }
+
+            // Total in foreign currency with parallel amounts
+            $sheet->setCellValue("B{$currentRow}", "TOTAL");
+            $sheet->getStyle("B{$currentRow}:D{$currentRow}")->applyFromArray([
+                'font' => ['bold' => true],
+                'borders' => ['allBorders' => ['borderStyle' => Border::BORDER_THIN]],
+            ]);
+            $sheet->mergeCells("B{$currentRow}:D{$currentRow}");
+            $sheet->setCellValue("E{$currentRow}", $totalCostForeignFormattedParallel);
+            $sheet->getStyle("E{$currentRow}:F{$currentRow}")->applyFromArray([
+                'font' => ['bold' => true],
+                'borders' => ['allBorders' => ['borderStyle' => Border::BORDER_THIN]],
+                'alignment' => ['horizontal' => Alignment::HORIZONTAL_RIGHT],
+            ]);
+            $sheet->getStyle("E{$currentRow}:F{$currentRow}")->applyFromArray($yellowHighlight);
+            $sheet->getStyle("E{$currentRow}:F{$currentRow}")->getNumberFormat()->setFormatCode('#,##0.00');
+            $sheet->mergeCells("E{$currentRow}:F{$currentRow}");
+            $currentRow += 2;
+
+            // Payment option 2 - USD payment
+            $sheet->setCellValue("B{$currentRow}", "OPCIÓN 2) PAGO EFECTIVO EN USD O DE ACUERDO CON EL TC PARALELO");
+            $sheet->getStyle("B{$currentRow}:F{$currentRow}")->applyFromArray($subtitleStyle);
+            $sheet->getStyle("B{$currentRow}:F{$currentRow}")->applyFromArray($yellowHighlight);
+            $sheet->getStyle("B{$currentRow}:F{$currentRow}")->getBorders()->getOutline()->setBorderStyle(Border::BORDER_THIN);
+            $sheet->mergeCells("B{$currentRow}:F{$currentRow}");
+            $currentRow += 2;
+
+            // Table header
+            $sheet->setCellValue("B{$currentRow}", "CONCEPTO");
+            $sheet->getStyle("B{$currentRow}:D{$currentRow}")->applyFromArray($headerStyle);
+            $sheet->mergeCells("B{$currentRow}:D{$currentRow}");
+
+            $sheet->setCellValue("E{$currentRow}", "MONTO " . $quotation->currency);
+            $sheet->getStyle("E{$currentRow}:F{$currentRow}")->applyFromArray($headerStyle);
+            $sheet->getStyle("E{$currentRow}:F{$currentRow}")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_RIGHT);
+            $sheet->mergeCells("E{$currentRow}:F{$currentRow}");
+            $currentRow++;
+
+            // Cost rows in foreign currency
+            foreach ($costsData as $cost) {
+                $amount = floatval(str_replace(',', '', $cost['amount']));
+                $amountForeign = $cost['currency'] == 'BS' ? $amount / $quotation->exchange_rate : $amount;
+                $amountFormatted = number_format($amountForeign, 2, ',', '.');
+
+                $sheet->setCellValue("B{$currentRow}", $cost['name']);
+                $sheet->getStyle("B{$currentRow}:D{$currentRow}")->applyFromArray($cellStyle);
+                $sheet->mergeCells("B{$currentRow}:D{$currentRow}");
+                $sheet->setCellValue("E{$currentRow}", $amountFormatted);
+                $sheet->getStyle("E{$currentRow}:F{$currentRow}")->applyFromArray($cellStyle);
+                $sheet->getStyle("E{$currentRow}:F{$currentRow}")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_RIGHT);
+                $sheet->getStyle("E{$currentRow}:F{$currentRow}")->getNumberFormat()->setFormatCode('#,##0.00');
+                $sheet->mergeCells("E{$currentRow}:F{$currentRow}");
+                $currentRow++;
+            }
+
+            // Total in foreign currency
+            $sheet->setCellValue("B{$currentRow}", "TOTAL");
+            $sheet->getStyle("B{$currentRow}:D{$currentRow}")->applyFromArray([
+                'font' => ['bold' => true],
+                'borders' => ['allBorders' => ['borderStyle' => Border::BORDER_THIN]],
+            ]);
+            $sheet->mergeCells("B{$currentRow}:D{$currentRow}");
+            $sheet->setCellValue("E{$currentRow}", $totalCostForeignFormatted);
+            $sheet->getStyle("E{$currentRow}:F{$currentRow}")->applyFromArray([
+                'font' => ['bold' => true],
+                'borders' => ['allBorders' => ['borderStyle' => Border::BORDER_THIN]],
+                'alignment' => ['horizontal' => Alignment::HORIZONTAL_RIGHT],
+            ]);
+            $sheet->getStyle("E{$currentRow}:F{$currentRow}")->applyFromArray($yellowHighlight);
+            $sheet->getStyle("E{$currentRow}:F{$currentRow}")->getNumberFormat()->setFormatCode('#,##0.00');
+            $sheet->mergeCells("E{$currentRow}:F{$currentRow}");
+            $currentRow += 2;
+
+            // Juncture note if is_parallel is true
+            $juncture = $quotation->juncture ?? 113;
+            $sheet->setCellValue("B{$currentRow}", "**Debido a la coyuntura actual, en la presente cotización se está aplicando el costo de transferencia del " . $juncture . "% sobre los recargos generados en origen, de acuerdo con la comisión que cobra nuestro banco actualmente, si esta llega a variar, considerar la modificación de ese monto de acuerdo con la tarifa vigente.");
+            $sheet->getStyle("B{$currentRow}:F{$currentRow}")->getAlignment()->setWrapText(true);
+            $sheet->getStyle("B{$currentRow}:F{$currentRow}")->applyFromArray($yellowHighlight);
+            $sheet->mergeCells("B{$currentRow}:F{$currentRow}");
+            $currentRow += 2;
         }
 
-        $sheet->setCellValue("B{$currentRow}", "TOTAL");
-        $sheet->getStyle("B{$currentRow}:D{$currentRow}")->applyFromArray([
-            'font' => ['bold' => true],
-            'borders' => ['allBorders' => ['borderStyle' => Border::BORDER_THIN]],
-            'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['rgb' => 'E8F3FD']],
-        ]);
-        $sheet->mergeCells("B{$currentRow}:D{$currentRow}");
-
-        $sheet->setCellValue("E{$currentRow}", $totalCostBSFormatted);
-        $sheet->getStyle("E{$currentRow}:F{$currentRow}")->applyFromArray([
-            'font' => ['bold' => true],
-            'borders' => ['allBorders' => ['borderStyle' => Border::BORDER_THIN]],
-            'alignment' => ['horizontal' => Alignment::HORIZONTAL_RIGHT],
-            'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['rgb' => 'E8F3FD']],
-        ]);
-        $sheet->getStyle("C{$currentRow}")->getNumberFormat()->setFormatCode('#,##0.00');
-        $sheet->mergeCells("E{$currentRow}:F{$currentRow}");
-        $currentRow += 2;
-
-        $sheet->setCellValue("B{$currentRow}", "** Tipo de cambio aplicado: 1 " . $quotation->currency . " = " . $quotation->exchange_rate . " BS");
-        $sheet->getStyle("B{$currentRow}")->getFont()->setBold(true);
-        $sheet->getStyle("B{$currentRow}")->getFont()->setItalic(true);
-        $sheet->getStyle("B{$currentRow}")->getFont()->setColor(new \PhpOffice\PhpSpreadsheet\Style\Color(\PhpOffice\PhpSpreadsheet\Style\Color::COLOR_DARKBLUE));
-        $currentRow += 2;
-
-        $sheet->setCellValue("B{$currentRow}", "El servicio incluye:");
-        $sheet->getStyle("B{$currentRow}")->applyFromArray($subtitleStyle);
-        $sheet->getStyle("B{$currentRow}:F{$currentRow}")->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setRGB('E8F3FD');
-        $sheet->getStyle("B{$currentRow}:F{$currentRow}")->getBorders()->getBottom()->setBorderStyle(Border::BORDER_THIN);
-        $sheet->mergeCells("B{$currentRow}:F{$currentRow}");
-        $currentRow++;
+        if (count($servicesData['included']) > 0) {
+            $sheet->setCellValue("B{$currentRow}", "El servicio incluye:");
+            $sheet->getStyle("B{$currentRow}")->applyFromArray($subtitleStyle);
+            $sheet->getStyle("B{$currentRow}:F{$currentRow}")->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setRGB('DCE6F1');
+            $sheet->getStyle("B{$currentRow}:F{$currentRow}")->getBorders()->getBottom()->setBorderStyle(Border::BORDER_THIN);
+            $sheet->mergeCells("B{$currentRow}:F{$currentRow}");
+            $currentRow++;
+        }
 
         foreach ($servicesData['included'] as $service) {
             $sheet->setCellValue("B{$currentRow}", "✓");
@@ -1886,12 +2276,14 @@ class QuotationController extends Controller
 
         $currentRow++;
 
-        $sheet->setCellValue("B{$currentRow}", "El servicio no incluye:");
-        $sheet->getStyle("B{$currentRow}")->applyFromArray($subtitleStyle);
-        $sheet->getStyle("B{$currentRow}:F{$currentRow}")->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setRGB('E8F3FD');
-        $sheet->getStyle("B{$currentRow}:F{$currentRow}")->getBorders()->getBottom()->setBorderStyle(Border::BORDER_THIN);
-        $sheet->mergeCells("B{$currentRow}:F{$currentRow}");
-        $currentRow++;
+        if (count($servicesData['excluded']) > 0) {
+            $sheet->setCellValue("B{$currentRow}", "El servicio no incluye:");
+            $sheet->getStyle("B{$currentRow}")->applyFromArray($subtitleStyle);
+            $sheet->getStyle("B{$currentRow}:F{$currentRow}")->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setRGB('DCE6F1');
+            $sheet->getStyle("B{$currentRow}:F{$currentRow}")->getBorders()->getBottom()->setBorderStyle(Border::BORDER_THIN);
+            $sheet->mergeCells("B{$currentRow}:F{$currentRow}");
+            $currentRow++;
+        }
 
         foreach ($servicesData['excluded'] as $service) {
             $sheet->setCellValue("B{$currentRow}", "✘");
@@ -1915,40 +2307,97 @@ class QuotationController extends Controller
         $sheet->mergeCells("B{$currentRow}:F{$currentRow}");
         $currentRow++;
 
-        $sheet->setCellValue("B{$currentRow}", "Seguro:");
-        $sheet->getStyle("B{$currentRow}")->getFont()->setBold(true);
+        if ($quotation->insurance) {
+            $sheet->setCellValue("B{$currentRow}", "Seguro:");
+            $sheet->getStyle("B{$currentRow}")->getFont()->setBold(true);
 
-        $sheet->setCellValue("C{$currentRow}", "Se recomienda tener una póliza de seguro para el embarque, ofrecemos la misma de manera adicional considerando el 0.35% sobre el valor declarado, con un min de 30 usd, previa autorización por la compañía de seguros.");
-        $sheet->getStyle("C{$currentRow}:F{$currentRow}")->getAlignment()->setWrapText(true);
-        $sheet->mergeCells("C{$currentRow}:F{$currentRow}");
+            $sheet->setCellValue("C{$currentRow}", $quotation->insurance);
+            $sheet->getStyle("C{$currentRow}:F{$currentRow}")->getAlignment()->setWrapText(true);
+            $sheet->mergeCells("C{$currentRow}:F{$currentRow}");
+        } else {
+            $sheet->setCellValue("B{$currentRow}", "Seguro:");
+            $sheet->getStyle("B{$currentRow}")->getFont()->setBold(true);
+            $sheet->setCellValue("C{$currentRow}", "Se recomienda tener una póliza de seguro para el embarque, ofrecemos la misma de manera adicional considerando el 0.35% sobre el valor declarado, con un min de 30 usd, previa autorización por la compañía de seguros.");
+            $sheet->getStyle("C{$currentRow}:F{$currentRow}")->getAlignment()->setWrapText(true);
+            $sheet->mergeCells("C{$currentRow}:F{$currentRow}");
+        }
         $currentRow++;
 
-        $sheet->setCellValue("B{$currentRow}", "Forma de pago:");
-        $sheet->getStyle("B{$currentRow}")->getFont()->setBold(true);
+        if ($quotation->payment_method) {
+            $sheet->setCellValue("B{$currentRow}", "Forma de pago:");
+            $sheet->getStyle("B{$currentRow}")->getFont()->setBold(true);
 
-        $sheet->setCellValue("C{$currentRow}", "Una vez se confirme el arribo del embarque a puerto de destino.");
-        $sheet->getStyle("C{$currentRow}:F{$currentRow}")->getAlignment()->setWrapText(true);
-        $sheet->mergeCells("C{$currentRow}:F{$currentRow}");
+            $sheet->setCellValue("C{$currentRow}", $quotation->payment_method);
+            $sheet->getStyle("C{$currentRow}:F{$currentRow}")->getAlignment()->setWrapText(true);
+            $sheet->mergeCells("C{$currentRow}:F{$currentRow}");
+        } else {
+            $sheet->setCellValue("B{$currentRow}", "Forma de pago:");
+            $sheet->getStyle("B{$currentRow}")->getFont()->setBold(true);
+
+            $sheet->setCellValue("C{$currentRow}", "Una vez se confirme el arribo del embarque a puerto de destino.");
+            $sheet->getStyle("C{$currentRow}:F{$currentRow}")->getAlignment()->setWrapText(true);
+            $sheet->mergeCells("C{$currentRow}:F{$currentRow}");
+        }
         $currentRow++;
 
-        $sheet->setCellValue("B{$currentRow}", "Validez:");
-        $sheet->getStyle("B{$currentRow}")->getFont()->setBold(true);
+        if ($quotation->validity) {
+            $sheet->setCellValue("B{$currentRow}", "Validez:");
+            $sheet->getStyle("B{$currentRow}")->getFont()->setBold(true);
 
-        $sheet->setCellValue("C{$currentRow}", "Los fletes son válidos hasta 10 días, posterior a ese tiempo, validar si los costos aún están vigentes.");
-        $sheet->getStyle("C{$currentRow}:F{$currentRow}")->getAlignment()->setWrapText(true);
-        $sheet->mergeCells("C{$currentRow}:F{$currentRow}");
+            $sheet->setCellValue("C{$currentRow}", $quotation->validity);
+            $sheet->getStyle("C{$currentRow}:F{$currentRow}")->getAlignment()->setWrapText(true);
+            $sheet->mergeCells("C{$currentRow}:F{$currentRow}");
+        } else {
+            $sheet->setCellValue("B{$currentRow}", "Validez:");
+            $sheet->getStyle("B{$currentRow}")->getFont()->setBold(true);
+
+            $sheet->setCellValue("C{$currentRow}", "Los fletes son válidos hasta 10 días, posterior a ese tiempo, validar si los costos aún están vigentes.");
+            $sheet->getStyle("C{$currentRow}:F{$currentRow}")->getAlignment()->setWrapText(true);
+            $sheet->mergeCells("C{$currentRow}:F{$currentRow}");
+        }
         $currentRow++;
 
-        $sheet->setCellValue("B{$currentRow}", "Observaciones:");
-        $sheet->getStyle("B{$currentRow}")->getFont()->setBold(true);
+        if ($quotation->observations) {
+            $sheet->setCellValue("B{$currentRow}", "Observaciones:");
+            $sheet->getStyle("B{$currentRow}")->getFont()->setBold(true);
 
-        $sheet->setCellValue("C{$currentRow}", "Se debe considerar como un tiempo de tránsito 48 a 50 días hasta puerto de Iquique.");
-        $sheet->getStyle("C{$currentRow}:F{$currentRow}")->getAlignment()->setWrapText(true);
-        $sheet->mergeCells("C{$currentRow}:F{$currentRow}");
+            $sheet->setCellValue("C{$currentRow}", $quotation->observations);
+            $sheet->getStyle("C{$currentRow}:F{$currentRow}")->getAlignment()->setWrapText(true);
+            $sheet->mergeCells("C{$currentRow}:F{$currentRow}");
+        } else {
+            $sheet->setCellValue("B{$currentRow}", "Observaciones:");
+            $sheet->getStyle("B{$currentRow}")->getFont()->setBold(true);
 
+            $sheet->setCellValue("C{$currentRow}", "Se debe considerar como un tiempo de tránsito 48 a 50 días hasta puerto.");
+            $sheet->getStyle("C{$currentRow}:F{$currentRow}")->getAlignment()->setWrapText(true);
+            $sheet->mergeCells("C{$currentRow}:F{$currentRow}");
+        }
         $sheet->getStyle("B{$infoStartRow}:F{$currentRow}")->getBorders()->getOutline()->setBorderStyle(Border::BORDER_THIN);
         $currentRow += 2;
 
+        // Contact information
+        $contactName = $quotation->users_id
+            ? $quotation->user->name . ' ' . $quotation->user->surname
+            : 'Aidee Callisaya.';
+
+        $contactPosition = $quotation->users_id
+            ? 'Responsable ' . match ($quotation->user->role->description) {
+                'operator' => 'Operador.',
+                'commercial' => 'Comercial.',
+                'admin' => 'Logística y Comex.',
+                default => $quotation->user->role->name,
+            }
+            : 'Responsable Comercial';
+
+        $sheet->setCellValue("B{$currentRow}", "Atentamente:");
+        $currentRow++;
+
+        $sheet->setCellValue("B{$currentRow}", $contactName);
+        $currentRow++;
+
+        $sheet->setCellValue("B{$currentRow}", $contactPosition);
+        $sheet->getStyle("B{$currentRow}")->getFont()->setBold(true);
+        $currentRow++;
 
         $cleanRef = str_replace('/', '_', $quotationRef);
         $filename = 'cotizacion_' . $cleanRef . '.xlsx';

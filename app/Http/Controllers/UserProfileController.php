@@ -38,7 +38,7 @@ class UserProfileController extends Controller
             'email' => 'required|string|email|max:255|unique:users,email,'.$user->id,
             'phone' => 'nullable|string|max:20',
             'current_password' => 'nullable|required_with:new_password|string|current_password',
-            'new_password' => 'nullable|string|min:8|confirmed|different:current_password',
+            'new_password' => 'nullable|string|min:8|different:current_password',
         ],
         [
             'name.required' => 'El nombre es obligatorio.',
@@ -49,7 +49,6 @@ class UserProfileController extends Controller
             'phone.max' => 'El teléfono no puede tener más de 20 caracteres.',
             'current_password.current_password' => 'La contraseña actual es incorrecta.',
             'new_password.min' => 'La nueva contraseña debe tener al menos 8 caracteres.',
-            'new_password.confirmed' => 'Las contraseñas no coinciden.',
             'new_password.different' => 'La nueva contraseña debe ser diferente a la actual.',
         ]);
 

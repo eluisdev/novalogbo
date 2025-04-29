@@ -7,7 +7,6 @@ use App\Models\Customer;
 use App\Models\Quotation;
 use App\Models\BillingNote;
 use App\Models\InvoiceItem;
-use App\Models\ExchangeRate;
 use Illuminate\Http\Request;
 use PhpOffice\PhpWord\PhpWord;
 use PhpOffice\PhpWord\IOFactory;
@@ -19,92 +18,138 @@ use App\Helpers\NumberToWordsConverter;
 
 class InvoiceController extends Controller
 {
-    // ... (métodos index, create, show se mantienen igual)
-
-    public function download(Request $request)
+    public function view()
     {
-        $validatedData = $request->validate([
-            'quotation_id' => 'required|exists:quotations,id',
-            'visible' => 'required|boolean'
+        return view('invoices.view');
+    }
+    public function create()
+    {
+        $customers = Customer::all();
+        $quotations = Quotation::all();
+        return view('invoices.create', compact('customers', 'quotations'));
+    }
+    public function store(Request $request)
+    {
+        // Valores
+    }
+    public function show($id)
+    {
+        $invoice = Invoice::with(['customer', 'items.cost', 'quotation.products'])->findOrFail($id);
+        return view('invoices.show', compact('invoice'));
+    }
+    public function edit($id)
+    {
+        $invoice = Invoice::with(['customer', 'items.cost', 'quotation.products'])->findOrFail($id);
+        $customers = Customer::all();
+        $quotations = Quotation::all();
+        return view('invoices.edit', compact('invoice', 'customers', 'quotations'));
+    }
+    public function delete($id)
+    {
+        $invoice = Invoice::findOrFail($id);
+        $invoice->delete();
+        return redirect()->route('invoices.view')->with('success', 'Factura eliminada exitosamente.');
+    }
+    public function toggleStatus(Request $request, $id)
+    {
+        $request->validate([
+            'status' => 'required|string'
         ]);
-        $quotationId = $request->quotation_id;
+        $invoice = Invoice::findOrFail($id);
+        $invoice->status = $request->status;
+        $invoice->save();
+        return redirect()->route('invoices.view')->with('success', 'Estado de la factura actualizado exitosamente.');
+    }
+
+    public function generateInvoiceFromBillingNote(Request $request)
+    {
+        $request->validate(
+            [
+                'id' => 'required|integer|exists:billing_notes,id',
+                'visible' => 'required|boolean',
+                'use_exchange_rate' => 'sometimes|boolean',
+            ],
+            [
+                'id.required' => 'El ID de la nota de cobranza es obligatorio.',
+                'id.integer' => 'El ID de la nota de cobranza debe ser un número entero.',
+                'id.exists' => 'La nota de cobranza no existe.',
+                'visible.required' => 'El campo visible es obligatorio.',
+            ]
+        );
+
+        $billingNote = BillingNote::with(['items', 'quotation.customer'])
+            ->findOrFail($request->id);
+        //dd($request->all(), $billingNote);
+
         $visible = $request->visible ?? true;
-        $quotation = Quotation::with(['customer', 'costDetails.cost'])->find($quotationId);
+        $isParallel = $request->use_exchange_rate ?? false;
+
         DB::beginTransaction();
         try {
-            $existingInvoice = Invoice::where('quotation_id', $quotationId)->first();
+            // Check if invoice already exists for this billing note
+            $existingInvoice = Invoice::where('billing_note_id', $billingNote->id)->first();
+
             if (!$existingInvoice) {
-                $rateValue = $quotation->exchange_rate;
-                $subtotal = 0;
-                $taxRate = 0.13; // IVA de Bolivia (13%)
-
-                foreach ($quotation->costDetails as $costDetail) {
-                    $subtotal += $costDetail->amount;
-                }
-
-                $taxAmount = $subtotal * $taxRate;
-                $totalAmount = $subtotal + $taxAmount;
-
-                $invoice = new Invoice([
+                // Create the invoice from billing note data
+                $invoice = Invoice::create([
                     'invoice_number' => Invoice::generateInvoiceNumber(),
                     'invoice_date' => now(),
                     'due_date' => now()->addDays(30),
-                    'subtotal' => $subtotal,
-                    'tax_amount' => $taxAmount,
-                    'total_amount' => $totalAmount,
-                    'currency' => $quotation->currency,
-                    'exchange_rate' => $rateValue,
+                    'subtotal' => $billingNote->total_amount,
+                    'tax_amount' => 0, // Assuming no tax for now
+                    'total_amount' => $billingNote->total_amount,
+                    'currency' => $billingNote->currency,
+                    'exchange_rate' => $billingNote->exchange_rate,
                     'status' => 'issued',
-                    'notes' => "Factura generada automáticamente de cotización #{$quotation->reference_number}",
+                    'notes' => "Factura generada automáticamente desde la nota de cobranza #{$billingNote->op_number}",
                     'user_id' => Auth::id(),
-                    'customer_nit' => $quotation->customer_nit,
-                    'quotation_id' => $quotation->id,
+                    'customer_nit' => $billingNote->customer_nit,
+                    'quotation_id' => $billingNote->quotation_id,
+                    'billing_note_id' => $billingNote->id,
                 ]);
 
-                $invoice->save();
+                // Create invoice items from billing note items
+                foreach ($billingNote->items as $item) {
+                    $amount = $item->is_amount_parallel ? $item->amount_parallel : $item->amount;
 
-                foreach ($quotation->costDetails as $costDetail) {
-                    $itemSubtotal = $costDetail->amount;
-                    $itemTaxAmount = $itemSubtotal * $taxRate;
-                    $itemTotal = $itemSubtotal + $itemTaxAmount;
-
-                    $invoiceItem = new InvoiceItem([
+                    InvoiceItem::create([
                         'invoice_id' => $invoice->id,
-                        'cost_id' => $costDetail->cost_id,
-                        'description' => $costDetail->concept,
+                        'description' => $item->description,
+                        'is_amount_parallel' => $item->is_amount_parallel,
+                        'type' => $item->type,
+                        'amount' => $amount,
+                        'amount_parallel' => $item->amount_parallel,
                         'quantity' => 1,
-                        'unit_price' => $itemSubtotal,
-                        'tax_rate' => $taxRate * 100,
-                        'tax_amount' => $itemTaxAmount,
-                        'subtotal' => $itemSubtotal,
-                        'total' => $itemTotal,
-                        'currency' => $costDetail->currency,
+                        'unit_price' => $amount,
+                        'tax_rate' => 0,
+                        'tax_amount' => 0,
+                        'subtotal' => $amount,
+                        'total' => $amount,
+                        'currency' => $item->currency,
+                        'exchange_rate' => $item->exchange_rate,
                     ]);
-
-                    $invoiceItem->save();
                 }
+
+                $invoice->load('items');
+            } else {
+                $invoice = $existingInvoice;
             }
 
-            $invoice = Invoice::where('quotation_id', $quotation->id)->first();
             DB::commit();
 
-            return $this->generateWordDocument($invoice, $visible);
+            // Generate the Word document with the invoice data
+            return $this->generateInvoiceWordDocument($invoice, $visible, $isParallel);
         } catch (\Exception $e) {
             DB::rollBack();
-            return back()->withErrors(['error' => 'Error al crear la factura: ' . $e->getMessage()]);
+            return back()
+                ->withInput()
+                ->with('error', 'Error al generar la factura: ' . $e->getMessage());
         }
     }
 
-    private function generateWordDocument($invoice, $visible)
+
+    private function generateInvoiceWordDocument(Invoice $invoice, $visible, $isParallel = false)
     {
-        $invoice->load(['customer', 'items.cost', 'quotation.products']);
-
-        // Calcular totales en ambas monedas
-        $totalForeign = $invoice->total_amount;
-        $totalBs = $invoice->total_amount * $invoice->exchange_rate;
-        $subtotalBs = $invoice->subtotal * $invoice->exchange_rate;
-        $taxAmountBs = $invoice->tax_amount * $invoice->exchange_rate;
-
         $phpWord = new PhpWord();
         $phpWord->getSettings()->setThemeFontLang(new Language(Language::ES_ES));
         $properties = $phpWord->getDocInfo();
@@ -195,26 +240,26 @@ class InvoiceController extends Controller
 
         $clientTable->addRow();
         $clientTable->addCell(1500)->addText('Nombre:', ['bold' => true]);
-        $clientTable->addCell(3500)->addText($invoice->customer->name);
+        $clientTable->addCell(3500)->addText($invoice->quotation->customer->name);
 
         $clientTable->addRow();
         $clientTable->addCell(1500)->addText('NIT:', ['bold' => true]);
-        $clientTable->addCell(3500)->addText($invoice->customer->NIT);
+        $clientTable->addCell(3500)->addText($invoice->customer_nit);
 
         $clientTable->addRow();
         $clientTable->addCell(1500)->addText('Email:', ['bold' => true]);
-        $clientTable->addCell(3500)->addText($invoice->customer->email);
+        $clientTable->addCell(3500)->addText($invoice->quotation->customer->email ?? '');
 
-        if ($invoice->customer->phone) {
+        if ($invoice->quotation->customer->phone) {
             $clientTable->addRow();
             $clientTable->addCell(1500)->addText('Teléfono:', ['bold' => true]);
-            $clientTable->addCell(3500)->addText($invoice->customer->phone);
+            $clientTable->addCell(3500)->addText($invoice->quotation->customer->phone);
         }
 
-        if ($invoice->customer->address) {
+        if ($invoice->quotation->customer->address) {
             $clientTable->addRow();
             $clientTable->addCell(1500)->addText('Dirección:', ['bold' => true]);
-            $clientTable->addCell(3500)->addText($invoice->customer->address);
+            $clientTable->addCell(3500)->addText($invoice->quotation->customer->address);
         }
 
         // Celda de información de factura
@@ -244,45 +289,10 @@ class InvoiceController extends Controller
             $detailsTable->addCell(3000)->addText($invoice->quotation->reference_number);
         }
 
-        $section->addTextBreak(1);
-
-        // Productos de la cotización
-        if ($invoice->quotation && count($invoice->quotation->products) > 0) {
-            $productsBanner = $section->addTable(['borderSize' => 0, 'cellMargin' => 0, 'width' => 100, 'unit' => 'pct']);
-            $productsBanner->addRow(400);
-            $productsBannerCell = $productsBanner->addCell(12000, ['bgColor' => 'E8EEF4', 'valign' => 'center', 'borderSize' => 1, 'borderColor' => '1F497D']);
-            $productsBannerCell->addText('DETALLE DE PRODUCTOS', $headerStyle, $centerOptions);
-
-            $productsTable = $section->addTable([
-                'borderSize' => 6,
-                'borderColor' => '1F497D',
-                'cellMargin' => 30,
-                'width' => 100,
-                'unit' => 'pct',
-            ]);
-
-            $productsTable->addRow(400, ['bgColor' => '1F497D', 'tblHeader' => true]);
-            $productsTable->addCell(2000, $tableHeaderStyle)->addText('Origen', ['color' => 'FFFFFF'], $centerOptions);
-            $productsTable->addCell(2000, $tableHeaderStyle)->addText('Destino', ['color' => 'FFFFFF'], $centerOptions);
-            $productsTable->addCell(1000, $tableHeaderStyle)->addText('Incoterm', ['color' => 'FFFFFF'], $centerOptions);
-            $productsTable->addCell(1500, $tableHeaderStyle)->addText('Cantidad', ['color' => 'FFFFFF'], $centerOptions);
-            $productsTable->addCell(1500, $tableHeaderStyle)->addText('Peso', ['color' => 'FFFFFF'], $centerOptions);
-            $productsTable->addCell(2000, $tableHeaderStyle)->addText('Volumen', ['color' => 'FFFFFF'], $centerOptions);
-            $productsTable->addCell(2000, $tableHeaderStyle)->addText('Nombre', ['color' => 'FFFFFF'], $centerOptions);
-
-            $rowCount = 0;
-            foreach ($invoice->quotation->products as $product) {
-                $bgColor = ($rowCount % 2 == 0) ? 'F2F6FC' : 'FFFFFF';
-                $productsTable->addRow(350, ['bgColor' => $bgColor]);
-                $productsTable->addCell(2000)->addText($product->origin->name, null, $centerOptions);
-                $productsTable->addCell(2000)->addText($product->destination->name, null, $centerOptions);
-                $productsTable->addCell(1200)->addText($product->incoterm->code, null, $centerOptions);
-                $productsTable->addCell(1500)->addText($product->quantity . ' ' . $product->quantityDescription->name, null, $centerOptions);
-                $productsTable->addCell(1500)->addText($product->weight . ' kg', null, $centerOptions);
-                $productsTable->addCell(1800)->addText($product->volume_unit == 'm3' ? $product->volume . ' ' . ' M3' : $product->volume . ' ' . ' KG/VOL', null, $centerOptions);
-                $productsTable->addCell(1500)->addText($product->name ? $product->name : 'Sin Nombre', null, $centerOptions);
-                $rowCount++;
-            }
+        if ($invoice->billingNote) {
+            $detailsTable->addRow();
+            $detailsTable->addCell(2000)->addText('Nota de Cobranza:', ['bold' => true]);
+            $detailsTable->addCell(3000)->addText($invoice->billingNote->op_number);
         }
 
         $section->addTextBreak(1);
@@ -310,19 +320,58 @@ class InvoiceController extends Controller
         $conceptsTable->addCell(1500, $tableHeaderStyle)->addText('Total', ['color' => 'FFFFFF'], $centerOptions);
         $conceptsTable->addCell(1500, $tableHeaderStyle)->addText('Total BS', ['color' => 'FFFFFF'], $centerOptions);
 
+        $totalForeign = 0;
+        $totalBs = 0;
+        $itemsToShow = [];
+
+        foreach ($invoice->items as $item) {
+            $amount = $item->is_amount_parallel ? $item->amount_parallel : $item->amount;
+
+            if ($isParallel) {
+                if ($item->exchange_rate != $invoice->exchange_rate) {
+                    $exchangeRateDifference = abs($invoice->exchange_rate - $item->exchange_rate);
+                    $amountBs = $amount * $exchangeRateDifference;
+
+                    $itemsToShow[] = [
+                        'description' => $item->description,
+                        'amount' => $amount,
+                        'amountBs' => $amountBs,
+                        'quantity'=> $item->quantity,
+                        'show' => true
+                    ];
+                    $totalForeign += $amount;
+                    $totalBs += $amountBs;
+                }
+            } else {
+                // Mostrar todos los items, convertir usando exchange_rate de billing_note
+                $amountBs = $amount * $invoice->exchange_rate;
+                $itemsToShow[] = [
+                    'description' => $item->description,
+                    'amount' => $amount,
+                    'amountBs' => $amountBs,
+                    'quantity'=> $item->quantity,
+                    'show' => true
+                ];
+                $totalForeign += $amount;
+                $totalBs += $amountBs;
+            }
+        }
+
         $counter = 1;
         $rowCount = 0;
-        foreach ($invoice->items as $item) {
-            $bgColor = ($rowCount % 2 == 0) ? 'F2F6FC' : 'FFFFFF';
-            $conceptsTable->addRow(350, ['bgColor' => $bgColor]);
-            $conceptsTable->addCell(500)->addText($counter, null, $centerOptions);
-            $conceptsTable->addCell(4000)->addText($item->cost->name, null, $paragraphOptions);
-            $conceptsTable->addCell(1000)->addText($item->quantity, null, $centerOptions);
-            $conceptsTable->addCell(1500)->addText($item->currency . ' ' . number_format($item->unit_price, 2), null, $rightOptions);
-            $conceptsTable->addCell(1500)->addText($item->currency . ' ' . number_format($item->total, 2), null, $rightOptions);
-            $conceptsTable->addCell(1500)->addText('BS ' . number_format($item->total * $invoice->exchange_rate, 2), null, $rightOptions);
-            $counter++;
-            $rowCount++;
+        foreach ($itemsToShow as $item) {
+            if ($item['show']) {
+                $bgColor = ($rowCount % 2 == 0) ? 'F2F6FC' : 'FFFFFF';
+                $conceptsTable->addRow(350, ['bgColor' => $bgColor]);
+                $conceptsTable->addCell(500)->addText($counter, null, $centerOptions);
+                $conceptsTable->addCell(4000)->addText($item['description'], null, $paragraphOptions);
+                $conceptsTable->addCell(1000)->addText($item['quantity'], null, $centerOptions);
+                $conceptsTable->addCell(1500)->addText($invoice->currency . ' ' . number_format($item['amount'], 2), null, $rightOptions);
+                $conceptsTable->addCell(1500)->addText($invoice->currency . ' ' . number_format($item['amount'], 2), null, $rightOptions);
+                $conceptsTable->addCell(1500)->addText('BS ' . number_format($item['amountBs'], 2), null, $rightOptions);
+                $counter++;
+                $rowCount++;
+            }
         }
 
         $section->addTextBreak(1);
@@ -347,12 +396,18 @@ class InvoiceController extends Controller
         $totalInnerTable->addRow();
         $totalInnerTable->addCell(2000)->addText('Subtotal:', ['bold' => true], $rightOptions);
         $totalInnerTable->addCell(2500)->addText($invoice->currency . ' ' . number_format($invoice->subtotal, 2), null, $rightOptions);
-        $totalInnerTable->addCell(2500)->addText('BS ' . number_format($subtotalBs, 2), null, $rightOptions);
+
+        if($isParallel ){
+            $totalInnerTable->addCell(2500)->addText('BS ' . number_format($totalBs, 2), null, $rightOptions);
+        }
+        else{
+            $totalInnerTable->addCell(2500)->addText('BS ' . number_format($invoice->subtotal * $invoice->exchange_rate, 2), null, $rightOptions);
+        }
 
         $totalInnerTable->addRow();
-        $totalInnerTable->addCell(2000)->addText('IVA (' . number_format($invoice->items->first()->tax_rate, 0) . '%):', ['bold' => true], $rightOptions);
+        $totalInnerTable->addCell(2000)->addText('IVA (0%):', ['bold' => true], $rightOptions);
         $totalInnerTable->addCell(2500)->addText($invoice->currency . ' ' . number_format($invoice->tax_amount, 2), null, $rightOptions);
-        $totalInnerTable->addCell(2500)->addText('BS ' . number_format($taxAmountBs, 2), null, $rightOptions);
+        $totalInnerTable->addCell(2500)->addText('BS ' . number_format($invoice->tax_amount * $invoice->exchange_rate, 2), null, $rightOptions);
 
         $totalInnerTable->addRow(400, ['bgColor' => 'E8EEF4']);
         $totalInnerTable->addCell(2000)->addText('TOTAL:', ['bold' => true, 'size' => 12, 'color' => '1F497D'], $rightOptions);
@@ -374,11 +429,11 @@ class InvoiceController extends Controller
             $currencyInWords
         );
 
-
         $totalInWordsBs = NumberToWordsConverter::convertToWords(
             $totalBs,
             'BOLIVIANOS'
         );
+
         // Tabla para los literales
         $literalTable = $section->addTable(['borderSize' => 1, 'cellMargin' => 20, 'width' => 100, 'unit' => 'pct']);
 
@@ -420,12 +475,71 @@ class InvoiceController extends Controller
             'align' => 'left'
         ]);
 
+        // Información de la empresa
+        // $section->addText(
+        //     'NOVALOGBO SRL',
+        //     [
+        //         'size' => 8,
+        //         'bold' => true
+        //     ],
+        //     [
+        //         'spaceBefore' => Converter::pointToTwip(8),
+        //         'spaceAfter' => 0,
+        //     ]
+        // );
+        // $section->addText(
+        //     'NIT: 412B48023',
+        //     [
+        //         'size' => 8,
+        //         'bold' => true
+        //     ],
+        //     [
+        //         'spaceAfter' => 0,
+        //         'spaceBefore' => 0,
+        //     ]
+        // );
+        // $section->addText(
+        //     'BANCO BISA',
+        //     [
+        //         'size' => 8,
+        //         'bold' => true
+        //     ],
+        //     [
+        //         'spaceAfter' => 0,
+        //         'spaceBefore' => 0,
+        //     ]
+        // );
+        // $section->addText(
+        //     'BS: 7994826010',
+        //     [
+        //         'size' => 8,
+        //         'bold' => true
+        //     ],
+        //     [
+        //         'spaceAfter' => 0,
+        //         'spaceBefore' => 0,
+        //     ]
+        // );
+        // $section->addText(
+        //     'BS: 7994829064',
+        //     [
+        //         'size' => 8,
+        //         'bold' => true
+        //     ],
+        //     [
+        //         'spaceAfter' => 0,
+        //         'spaceBefore' => 0,
+        //     ]
+        // );
+
         // Generar el archivo
-        $filename = 'factura-' . $invoice->invoice_number . '.docx';
+        $cleanRef = str_replace('/', '_', $invoice->invoice_number);
+        $filename = "Factura_{$cleanRef}.docx";
         $tempFile = tempnam(sys_get_temp_dir(), 'PHPWord');
         $writer = IOFactory::createWriter($phpWord, 'Word2007');
         $writer->save($tempFile);
 
         return response()->download($tempFile, $filename)->deleteFileAfterSend(true);
     }
+
 }

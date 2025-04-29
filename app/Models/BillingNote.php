@@ -22,6 +22,7 @@ class BillingNote extends Model
         'user_id',
         'quotation_id',
         'customer_nit',
+        'status',
     ];
 
     protected $dates = ['emission_date'];
@@ -39,12 +40,16 @@ class BillingNote extends Model
 
      public function customer(): BelongsTo
      {
-         return $this->belongsTo(Customer::class, 'customer_nit', 'NIT');
+         return $this->belongsTo(Customer::class, 'customer_nit');
      }
 
     public function items()
     {
         return $this->hasMany(BillingNoteItem::class);
+    }
+    public function invoice()
+    {
+        return $this->hasOne(Invoice::class);
     }
 
     // Generar números de nota automáticos

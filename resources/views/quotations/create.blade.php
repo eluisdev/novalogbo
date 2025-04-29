@@ -1,5 +1,7 @@
 @if (Auth::user()->role_id == '1')
     @php $layout = 'layouts.admin'; @endphp
+@elseif (Auth::user()->role_id == '2')
+    @php $layout = 'layouts.commercial'; @endphp
 @else
     @php $layout = 'layouts.operator'; @endphp
 @endif
@@ -41,6 +43,7 @@
                     @include('quotations.partials.products')
                     @include('quotations.partials.services')
                     @include('quotations.partials.costs')
+                    @include('quotations.partials.details')
                     @include('quotations.partials.actions')
                 </form>
             </div>
@@ -49,4 +52,3 @@
     <x-quotations.modal-customer />
     <x-quotations.modal-quotation-description />
     <x-quotations.modal-preview />
-@endsection

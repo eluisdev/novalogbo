@@ -1,5 +1,7 @@
 @if (Auth::user()->role_id == '1')
     @php $layout = 'layouts.admin'; @endphp
+@elseif (Auth::user()->role_id == '2')
+    @php $layout = 'layouts.commercial'; @endphp
 @else
     @php $layout = 'layouts.operator'; @endphp
 @endif
@@ -114,16 +116,22 @@
                                     <td class="px-6 py-4 whitespace-nowrap">
                                         <div class="text-sm text-gray-900">{{ $quotation->delivery_date }}</div>
                                     </td>
+                                    {{-- TODO: Revisar estados de cotizaciones --}}
                                     <td class="px-6 py-4 whitespace-nowrap">
                                         @if (strtolower($quotation->status) == 'pending')
                                             <div
-                                                class="text-sm text-white bg-red-500 rounded-full px-3 py-1 inline-flex items-center justify-center">
-                                                <span class="mr-1 font-bold">•</span> Pendiente
+                                                class="text-sm text-white bg-yellow-500 rounded-full px-3 py-1 inline-flex items-center justify-center">
+                                                <span class="mr-1 font-bold">•</span> Pendiente de respuesta
+                                            </div>
+                                        @elseif (strtolower($quotation->status) == 'accepted')
+                                            <div
+                                                class="text-sm text-white bg-green-500 rounded-full px-3 py-1 inline-flex items-center justify-center">
+                                                <span class="mr-1 font-bold">•</span> Confirmada
                                             </div>
                                         @else
                                             <div
-                                                class="text-sm text-white bg-green-500 rounded-full px-3 py-1 inline-flex items-center justify-center">
-                                                <span class="mr-1 font-bold">•</span> Finalizado
+                                                class="text-sm text-white bg-red-500 rounded-full px-3 py-1 inline-flex items-center justify-center">
+                                                <span class="mr-1 font-bold">•</span> Rechazada
                                             </div>
                                         @endif
                                     </td>

@@ -7,7 +7,7 @@
         <div class="flex-grow flex flex-col justify-center px-4 py-8">
             <h1 class="text-3xl md:text-4xl font-extrabold text-center mb-8 md:mb-12 text-amber-300">Aplicaciones</h1>
 
-            <ul class="grid sm:grid-cols-3 md:grid-cols-5 lg:grid-cols-6 gap-6 md:gap-8 max-w-6xl mx-auto">
+            <ul class="grid sm:grid-cols-3 md:grid-cols-5 lg:grid-cols-7 gap-6 md:gap-8 max-w-6xl mx-auto">
 
                 <li
                     class="p-6 rounded-full hover:bg-[#131f24] transition-colors duration-150 ease-in text-white hover:text-amber-500">
@@ -45,6 +45,46 @@
                             </svg>
                         </div>
                         <p class="text-center font-medium">Cotizaciones</p>
+                    </a>
+                </li>
+                <li
+                    class="p-6 rounded-full hover:bg-[#131f24] transition-colors duration-150 ease-in text-white hover:text-amber-500">
+                    <a href="{{ route('operations.index') }}" class="flex flex-col items-center">
+                        <div class="p-4 rounded-full mb-2">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" class="h-12 w-12">
+                                <!-- Engranaje minimalista -->
+                                <circle cx="256" cy="256" r="120" fill="none" stroke="currentColor"
+                                    stroke-width="40" />
+                                <circle cx="256" cy="256" r="60" fill="currentColor" />
+
+                                <!-- Dientes (8 dientes) -->
+                                <g stroke="currentColor" stroke-width="40" stroke-linecap="square">
+                                    <line x1="256" y1="60" x2="256" y2="140" />
+                                    <line x1="371" y1="141" x2="316" y2="196" />
+                                    <line x1="452" y1="256" x2="372" y2="256" />
+                                    <line x1="371" y1="371" x2="316" y2="316" />
+                                    <line x1="256" y1="452" x2="256" y2="372" />
+                                    <line x1="141" y1="371" x2="196" y2="316" />
+                                    <line x1="60" y1="256" x2="140" y2="256" />
+                                    <line x1="141" y1="141" x2="196" y2="196" />
+                                </g>
+                            </svg>
+                        </div>
+                        <p class="text-center font-medium">Operaciones</p>
+                    </a>
+                </li>
+                <li
+                    class="p-6 rounded-full hover:bg-[#131f24] transition-colors duration-150 ease-in text-white hover:text-amber-500">
+                    <a href="{{ route('reports.quotations') }}" class="flex flex-col items-center">
+                        <div class="p-4 rounded-full mb-2">
+                            <!-- ICONO NUEVO PARA REPORTES -->
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12" fill="currentColor"
+                                viewBox="0 0 24 24">
+                                <path
+                                    d="M4 3h16a1 1 0 0 1 1 1v16a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1zm1 2v14h14V5H5zm3 3h8v2H8V8zm0 4h8v2H8v-2z" />
+                            </svg>
+                        </div>
+                        <p class="text-center font-medium">Reportes</p>
                     </a>
                 </li>
                 <li
@@ -160,32 +200,7 @@
                     </a>
                 </li>
 
-                <li
-                    class="p-6 rounded-full hover:bg-[#131f24] transition-colors duration-150 ease-in text-white hover:text-amber-500">
-                    <a href="{{ route('operations.index') }}" class="flex flex-col items-center">
-                        <div class="p-4 rounded-full mb-2">
-                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" class="h-12 w-12">
-                                <!-- Engranaje minimalista -->
-                                <circle cx="256" cy="256" r="120" fill="none" stroke="currentColor"
-                                    stroke-width="40" />
-                                <circle cx="256" cy="256" r="60" fill="currentColor" />
 
-                                <!-- Dientes (8 dientes) -->
-                                <g stroke="currentColor" stroke-width="40" stroke-linecap="square">
-                                    <line x1="256" y1="60" x2="256" y2="140" />
-                                    <line x1="371" y1="141" x2="316" y2="196" />
-                                    <line x1="452" y1="256" x2="372" y2="256" />
-                                    <line x1="371" y1="371" x2="316" y2="316" />
-                                    <line x1="256" y1="452" x2="256" y2="372" />
-                                    <line x1="141" y1="371" x2="196" y2="316" />
-                                    <line x1="60" y1="256" x2="140" y2="256" />
-                                    <line x1="141" y1="141" x2="196" y2="196" />
-                                </g>
-                            </svg>
-                        </div>
-                        <p class="text-center font-medium">Operaciones</p>
-                    </a>
-                </li>
             </ul>
         </div>
     @endsection

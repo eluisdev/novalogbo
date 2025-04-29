@@ -19,7 +19,7 @@
 
     </div>
     <div class="mb-2">
-        <p class="text-sm text-gray-700">El costo paralelo solo se aplicara en la cotización si la opcion "Cambio
+        <p class="text-sm text-gray-700">El costo paralelo solo se aplicara y se guardara en la cotización si la opcion "Cambio
             paralelo en Bs" <span class="text-blue-500 font-bold">esta activa.</span></p>
         <div class="flex sm:flex-row flex-col gap-3 mt-2">
             <div class="flex items-center gap-3 my-2">

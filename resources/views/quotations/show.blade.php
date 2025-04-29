@@ -213,11 +213,11 @@
                     <p class="text-sm font-medium text-gray-500">Estado cotizacion</p>
                     <span
                         class="inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold mt-2 
-    {{ $quotation_data['status'] === 'accepted'
-        ? 'bg-green-100 text-green-800'
-        : ($quotation_data['status'] === 'pending'
-            ? 'bg-yellow-100 text-yellow-800'
-            : 'bg-red-100 text-red-800') }}">
+                        {{ $quotation_data['status'] === 'accepted'
+                            ? 'bg-green-100 text-green-800'
+                            : ($quotation_data['status'] === 'pending'
+                                ? 'bg-yellow-100 text-yellow-800'
+                                : 'bg-red-100 text-red-800') }}">
                         {{ $quotation_data['status'] === 'accepted'
                             ? 'Aceptada'
                             : ($quotation_data['status'] === 'pending'
@@ -226,6 +226,11 @@
                     </span>
                 </div>
 
+
+                <div class="border-b border-gray-100 pb-2">
+                    <p class="text-sm font-medium text-gray-500">Referencia cliente</p>
+                    <p class="text-lg font-semibold text-gray-900">{{ $quotation_data['reference_customer'] }}</p>
+                </div>
             </div>
         </div>
 
@@ -238,7 +243,13 @@
                 @foreach ($quotation_data['products'] as $product)
                     <div class="mb-8 p-4 border border-gray-200 rounded-lg">
                         <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-4">
-                            <!-- Detalles del Producto -->
+                            @if (isset($product['name']))
+                                <div class="space-y-2">
+                                    <p class="text-sm font-medium text-gray-500">Nombre</p>
+                                    <p class="text-gray-700">{{ $product['name'] }}</p>
+                                </div>
+                            @endif
+
                             <div>
                                 <p class="text-sm font-medium text-gray-500">Peso</p>
                                 <p class="text-gray-700">{{ $product['weight'] }} kg</p>
@@ -265,6 +276,7 @@
                                 <p class="text-sm font-medium text-gray-500">Incoterm</p>
                                 <p class="text-gray-700">{{ $product['incoterm_name'] }}</p>
                             </div>
+
                         </div>
                     </div>
                 @endforeach
@@ -324,6 +336,10 @@
                                         class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                         Monto
                                     </th>
+                                    <th scope="col"
+                                        class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        Monto Paralelo
+                                    </th>
                                 </tr>
                             </thead>
                             <tbody class="bg-white divide-y divide-gray-200">
@@ -335,6 +351,11 @@
                                             </td>
                                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                                                 {{ $quotation_data['currency'] }} {{ $cost['amount'] }}
+                                            </td>
+
+                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                                {{ $quotation_data['currency'] }}
+                                                {{ $cost['amount_parallel'] ? $cost['amount_parallel'] : '0.00' }}
                                             </td>
                                         </tr>
                                     @endif
@@ -397,29 +418,59 @@
             </div>
 
             <div class="p-6">
-                <div class="flex justify-end">
-                    <div class="w-full md:w-1/3">
+                <div class="flex gap-3 justify-end space-x-8 flex-wrap"> <!-- Añadido space-x-8 para separar los dos resúmenes -->
+                    <!-- Resumen 1: Solo costos originales -->
+                    <div class="w-full md:w-1/3 bg-gray-50 p-4 rounded-lg mr-0">
+                        <h3 class="font-bold text-gray-700 mb-3">Resumen Original</h3>
                         @php
-                            $subtotal = array_reduce(
+                            $subtotal_original = array_reduce(
                                 $quotation_data['costs'],
                                 function ($carry, $item) {
-                                    return $carry + ($item['enabled'] == '1' ? $item['amount'] : 0);
+                                    $amount = is_numeric($item['amount']) ? (float)$item['amount'] : 0;
+                                    return $carry + ($item['enabled'] == '1' ? $amount : 0);
                                 },
-                                0,
+                                0
                             );
                         @endphp
-
                         <div class="flex justify-between py-2 border-b border-gray-200">
                             <span class="text-gray-600">Subtotal:</span>
                             <span class="font-medium">
-                                {{ $quotation_data['currency'] }} {{ number_format($subtotal, 2) }}
+                                {{ $quotation_data['currency'] }} {{ number_format($subtotal_original, 2) }}
                             </span>
                         </div>
-
                         <div class="flex justify-between py-2 border-b border-gray-200">
                             <span class="text-gray-600">Total:</span>
                             <span class="font-bold text-lg text-[#0B628D]">
-                                {{ $quotation_data['currency'] }} {{ number_format($subtotal, 2) }}
+                                {{ $quotation_data['currency'] }} {{ number_format($subtotal_original, 2) }}
+                            </span>
+                        </div>
+                    </div>
+            
+                    <!-- Resumen 2: Usa costos paralelos (si existen) -->
+                    <div class="w-full md:w-1/3 bg-blue-50 p-4 rounded-lg">
+                        <h3 class="font-bold text-gray-700 mb-3">Resumen con Costos Paralelos</h3>
+                        @php
+                            $subtotal_parallel = array_reduce(
+                                $quotation_data['costs'],
+                                function ($carry, $item) {
+                                    $amount = isset($item['amount_parallel']) && is_numeric($item['amount_parallel']) 
+                                        ? (float)$item['amount_parallel'] 
+                                        : (is_numeric($item['amount']) ? (float)$item['amount'] : 0);
+                                    return $carry + ($item['enabled'] == '1' ? $amount : 0);
+                                },
+                                0
+                            );
+                        @endphp
+                        <div class="flex justify-between py-2 border-b border-gray-200">
+                            <span class="text-gray-600">Subtotal:</span>
+                            <span class="font-medium">
+                                {{ $quotation_data['currency'] }} {{ number_format($subtotal_parallel, 2) }}
+                            </span>
+                        </div>
+                        <div class="flex justify-between py-2 border-b border-gray-200">
+                            <span class="text-gray-600">Total:</span>
+                            <span class="font-bold text-lg text-[#0B628D]">
+                                {{ $quotation_data['currency'] }} {{ number_format($subtotal_parallel, 2) }}
                             </span>
                         </div>
                     </div>

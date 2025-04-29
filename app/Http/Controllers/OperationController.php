@@ -419,12 +419,11 @@ class OperationController extends Controller
     }
     public function downloadOperation(Request $request)
     {
-        dd($request->all());
         $request->validate(
             [
                 'id' => 'required|integer|exists:billing_notes,id',
                 'visible' => 'required|boolean',
-                'is_parallel' => 'sometimes|boolean',
+                'use_exchange_rate' => 'sometimes|boolean',
             ],
             [
                 'id.required' => 'El ID de la nota de cobranza es obligatorio.',
@@ -436,7 +435,7 @@ class OperationController extends Controller
         $billingNote = BillingNote::with(['items', 'quotation.customer'])
             ->findOrFail($request->id);
         $visible = $request->visible ?? true;
-        $isParallel = $request->is_parallel ?? false;
+        $isParallel = $request->use_exchange_rate ?? false;
         try {
             $docuement = $this->generateWordDocument($billingNote, $visible, $isParallel);
             return $docuement;

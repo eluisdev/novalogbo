@@ -5,7 +5,7 @@
 @extends($layout)
 
 @section('dashboard-option')
-    <div class="w-full mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="w-full mx-auto px-4 sm:px-6 lg:px-8 pb-6">
         <div
             class="flex flex-col sm:flex-row items-center justify-between gap-4 bg-white rounded-xl shadow-sm p-3 mb-6 border border-gray-200">
             <h2 class="text-xl font-black text-gray-800">
@@ -79,6 +79,10 @@
                 </ul>
             </div>
         @endif
+        <div class="bg-yellow-100 p-2 rounded-lg mb-2">
+            <p>Si la tasa modificada esta habilitada y hay una diferencia de tasas en la operacion se creara solo la 2da
+                nota de cobranza.</p>
+        </div>
         <div
             class="flex flex-col justify-between items-center gap-4 bg-white rounded-xl shadow-sm p-3 mb-6 border border-gray-200">
             <form action="{{ route('operations.download') }}" method="POST"
@@ -92,28 +96,20 @@
                     <label class="inline-flex items-center cursor-pointer w-full">
                         <input type="hidden" name="visible" value="0">
                         <input type="checkbox" name="visible" value="1"
-                            class="form-checkbox h-5 w-5 text-[#4CAF50] rounded border-gray-300 focus:ring-[#4CAF50] mr-3 ml-2"
-                            checked>
+                            class="form-checkbox h-5 w-5 text-[#4CAF50] rounded border-gray-300 focus:ring-[#4CAF50] mr-3 ml-2">
                         <span class="text-gray-700 font-medium">Fondo + Logo</span>
                     </label>
                 </div>
 
-                <!-- Select de tipo de cotización -->
-                <div class="flex-1 min-w-0">
-                    <select id="exchange_option_operation" name="exchange_option"
-                        class="w-full h-full px-3 py-2 text-sm text-gray-800 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-[#4CAF50] focus:border-[#4CAF50] hover:border-gray-400 transition-colors cursor-pointer"
-                        onchange="updateHiddenInputsOperation()">
-                        <option value="" disabled selected class="text-gray-400">Seleccione una opción</option>
-                        <option value="1">USD (valor original) y tasa original</option>
-                        <option value="2">USD (valor paralelo) y tasa original</option>
-                        <option value="3">USD (valor original) y tasa modificada</option>
-                        <option value="4">USD (valor paralelo) y tasa modificada</option>
-                    </select>
+                <div
+                    class="flex items-center bg-white rounded-lg border border-gray-200 p-1.5 shadow-sm flex-1 sm:flex-none">
+                    <label class="inline-flex items-center cursor-pointer w-full">
+                        <input type="hidden" name="use_exchange_rate" value="0">
+                        <input type="checkbox" name="use_exchange_rate" value="1"
+                            class="form-checkbox h-5 w-5 text-[#4CAF50] rounded border-gray-300 focus:ring-[#4CAF50] mr-3 ml-2">
+                        <span class="text-gray-700 font-medium">Utilizar tasa modificada</span>
+                    </label>
                 </div>
-
-                <!-- Inputs ocultos -->
-                <input type="hidden" name="is_parallel" id="is_parallel" value="0">
-                <input type="hidden" name="use_exchange_rate" id="use_exchange_rate" value="0">
 
                 <!-- Botón enviar -->
                 <button type="submit"
@@ -126,10 +122,18 @@
                     Crear nota de cobranza
                 </button>
             </form>
+        </div>
+        @if ($billingNote->status === 'completed')
+            <div class="bg-yellow-100 p-2 rounded-lg mb-2">
+                <p>Si la tasa modificada esta habilitada y hay una diferencia de tasas en la operacion se creara solo la
+                    2da
+                    nota de cobranza.</p>
+            </div>
+            <div
+                class="flex flex-col justify-between items-center gap-4 bg-white rounded-xl shadow-sm p-3 mb-6 border border-gray-200">
 
-            @if ($billingNote->status === 'completed')
                 <form action="{{ route('invoice.download') }}" method="POST"
-                    class="w-full flex flex-col sm:flex-row gap-4 items-stretch sm:items-center">
+                    class="w-full flex flex-col     sm:flex-row gap-4 items-stretch sm:items-center">
                     @csrf
                     <input type="hidden" name="id" value="{{ $billingNote['id'] }}" />
 
@@ -139,28 +143,20 @@
                         <label class="inline-flex items-center cursor-pointer w-full">
                             <input type="hidden" name="visible" value="0">
                             <input type="checkbox" name="visible" value="1"
-                                class="form-checkbox h-5 w-5 text-[#4CAF50] rounded border-gray-300 focus:ring-[#4CAF50] mr-3 ml-2"
-                                checked>
+                                class="form-checkbox h-5 w-5 text-[#4CAF50] rounded border-gray-300 focus:ring-[#4CAF50] mr-3 ml-2">
                             <span class="text-gray-700 font-medium">Fondo + Logo</span>
                         </label>
                     </div>
 
-                    <!-- Select de tipo de cotización -->
-                    <div class="flex-1 min-w-0">
-                        <select id="exchange_option_operation" name="exchange_option"
-                            class="w-full h-full px-3 py-2 text-sm text-gray-800 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-[#4CAF50] focus:border-[#4CAF50] hover:border-gray-400 transition-colors cursor-pointer"
-                            onchange="updateHiddenInputsOperation()">
-                            <option value="" disabled selected>Seleccione una opción</option>
-                            <option value="1">USD (valor original) y tasa original</option>
-                            <option value="2">USD (valor paralelo) y tasa original</option>
-                            <option value="3">USD (valor original) y tasa modificada</option>
-                            <option value="4">USD (valor paralelo) y tasa modificada</option>
-                        </select>
+                    <div
+                        class="flex items-center bg-white rounded-lg border border-gray-200 p-1.5 shadow-sm flex-1 sm:flex-none">
+                        <label class="inline-flex items-center cursor-pointer w-full">
+                            <input type="hidden" name="use_exchange_rate" value="0">
+                            <input type="checkbox" name="use_exchange_rate" value="1"
+                                class="form-checkbox h-5 w-5 text-[#4CAF50] rounded border-gray-300 focus:ring-[#4CAF50] mr-3 ml-2">
+                            <span class="text-gray-700 font-medium">Utilizar tasa modificada</span>
+                        </label>
                     </div>
-
-                    <!-- Inputs ocultos -->
-                    <input type="hidden" name="is_parallel" id="is_parallel_operation" value="0">
-                    <input type="hidden" name="use_exchange_rate" id="use_exchange_rate_operation" value="0">
 
                     <!-- Botón enviar -->
                     <button type="submit"
@@ -173,321 +169,264 @@
                         Crear factura
                     </button>
                 </form>
-            @endif
+        @endif
+    </div>
+
+    <div class="bg-white shadow-md rounded-lg overflow-hidden border border-gray-200 mb-6">
+        <div class="px-6 py-4 border-b border-gray-200">
+            <h3 class="text-lg font-medium text-gray-900">Información General</h3>
         </div>
 
-        <div class="bg-white shadow-md rounded-lg overflow-hidden border border-gray-200 mb-6">
-            <div class="px-6 py-4 border-b border-gray-200">
-                <h3 class="text-lg font-medium text-gray-900">Información General</h3>
-            </div>
-
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 p-6">
-                <!-- Columna 1: Moneda y Tipo de Cambio -->
-                <div class="space-y-4">
-                    <div class="border-b border-gray-100 pb-2">
-                        <p class="text-sm font-medium text-gray-500">Moneda</p>
-                        <p class="text-lg font-semibold text-gray-900">{{ $billingNote->quotation['currency'] }}</p>
-                    </div>
-                    <div class="border-b border-gray-100 pb-2">
-                        <p class="text-sm font-medium text-gray-500">Tipo de Cambio</p>
-                        <p class="text-lg font-semibold text-gray-900">{{ $billingNote->quotation['exchange_rate'] }}</p>
-                    </div>
-                </div>
-
-                <!-- Columna 2: Datos del Cliente -->
-                <div class="space-y-4">
-                    <div class="border-b border-gray-100 pb-2">
-                        <p class="text-sm font-medium text-gray-500">NIT Cliente</p>
-                        <p class="text-lg font-semibold text-gray-900">{{ $billingNote->quotation['customer_nit'] }}</p>
-                    </div>
-                    <div class="border-b border-gray-100 pb-2">
-                        <p class="text-sm font-medium text-gray-500">Nombre Cliente</p>
-                        <p class="text-lg font-semibold text-gray-900">{{ $billingNote->customer['name'] }}</p>
-                    </div>
-                </div>
-
-                <!-- Columna 3: Contacto del Cliente -->
-                <div class="space-y-4">
-                    <div class="border-b border-gray-100 pb-2">
-                        <p class="text-sm font-medium text-gray-500">Correo Cliente</p>
-                        <p class="text-lg font-semibold text-gray-900">{{ $billingNote->customer['email'] }}</p>
-                    </div>
-                    <div class="border-b border-gray-100 pb-2">
-                        <p class="text-sm font-medium text-gray-500">Teléfono Cliente</p>
-                        <p class="text-lg font-semibold text-gray-900">{{ $billingNote->customer['cellphone'] }}</p>
-                    </div>
-                </div>
-
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 p-6">
+            <!-- Columna 1: Moneda y Tipo de Cambio -->
+            <div class="space-y-4">
                 <div class="border-b border-gray-100 pb-2">
-                    <p class="text-sm font-medium text-gray-500">Estado cotizacion</p>
-                    <p class="text-lg font-semibold text-gray-900">
-                        {{ $billingNote->quotation['status'] === 'accepted' ? 'Confirmado' : 'Pendiente de respuesta' }}
-                    </p>
+                    <p class="text-sm font-medium text-gray-500">Moneda</p>
+                    <p class="text-lg font-semibold text-gray-900">{{ $billingNote->quotation['currency'] }}</p>
                 </div>
-
                 <div class="border-b border-gray-100 pb-2">
-                    <p class="text-sm font-medium text-gray-500">Estado operacion</p>
-                    <p class="text-lg font-semibold text-gray-900">
-                        {{ $billingNote->status === 'completed' ? 'Finalizado' : 'Abierta' }}
-                    </p>
+                    <p class="text-sm font-medium text-gray-500">Tipo de Cambio</p>
+                    <p class="text-lg font-semibold text-gray-900">{{ $billingNote->quotation['exchange_rate'] }}</p>
                 </div>
             </div>
+
+            <!-- Columna 2: Datos del Cliente -->
+            <div class="space-y-4">
+                <div class="border-b border-gray-100 pb-2">
+                    <p class="text-sm font-medium text-gray-500">NIT Cliente</p>
+                    <p class="text-lg font-semibold text-gray-900">{{ $billingNote->quotation['customer_nit'] }}</p>
+                </div>
+                <div class="border-b border-gray-100 pb-2">
+                    <p class="text-sm font-medium text-gray-500">Nombre Cliente</p>
+                    <p class="text-lg font-semibold text-gray-900">{{ $billingNote->customer['name'] }}</p>
+                </div>
+            </div>
+
+            <!-- Columna 3: Contacto del Cliente -->
+            <div class="space-y-4">
+                <div class="border-b border-gray-100 pb-2">
+                    <p class="text-sm font-medium text-gray-500">Correo Cliente</p>
+                    <p class="text-lg font-semibold text-gray-900">{{ $billingNote->customer['email'] }}</p>
+                </div>
+                <div class="border-b border-gray-100 pb-2">
+                    <p class="text-sm font-medium text-gray-500">Teléfono Cliente</p>
+                    <p class="text-lg font-semibold text-gray-900">{{ $billingNote->customer['cellphone'] }}</p>
+                </div>
+            </div>
+
+            <div class="border-b border-gray-100 pb-2">
+                <p class="text-sm font-medium text-gray-500">Estado cotizacion</p>
+                <p class="text-lg font-semibold text-gray-900">
+                    {{ $billingNote->quotation['status'] === 'accepted' ? 'Confirmado' : 'Pendiente de respuesta' }}
+                </p>
+            </div>
+
+            <div class="border-b border-gray-100 pb-2">
+                <p class="text-sm font-medium text-gray-500">Estado operacion</p>
+                <p class="text-lg font-semibold text-gray-900">
+                    {{ $billingNote->status === 'completed' ? 'Finalizado' : 'Abierta' }}
+                </p>
+            </div>
+
         </div>
+    </div>
 
-        <div class="space-y-6">
-            <!-- Tabla de Costos -->
-            <div class="bg-white shadow-md rounded-lg overflow-hidden border border-gray-200">
-                <div class="px-6 py-4 border-b border-gray-200 bg-red-100">
-                    <h3 class="text-lg font-medium text-gray-900">Costos</h3>
-                </div>
-
-                <div class="p-6">
-                    <div class="overflow-x-auto">
-                        <table class="min-w-full table-fixed divide-y divide-gray-200"> <!-- Añadido table-fixed -->
-                            <thead class="bg-gray-50">
-                                <tr>
-                                    <th scope="col"
-                                        class="w-2/5 px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                        Concepto
-                                    </th>
-                                    <th scope="col"
-                                        class="w-1/5 px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                        Monto
-                                    </th>
-                                    <th scope="col"
-                                        class="w-1/5 px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                        Monto Paralelo
-                                    </th>
-                                    <th scope="col"
-                                        class="w-1/5 px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                        Tasa de cambio
-                                    </th>
-                                </tr>
-                            </thead>
-                            <tbody class="bg-white divide-y divide-gray-200">
-                                @foreach ($costsDetails as $item)
-                                    @if ($item['enabled'] == '1' && $item['type'] == 'cost')
-                                        <tr>
-                                            <td
-                                                class="w-2/5 px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                                                {{ $item['concept'] }}
-                                            </td>
-                                            <td class="w-1/5 px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                                {{ number_format($item['amount'], 2) }}
-                                            </td>
-                                            <td class="w-1/5 px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                                {{ number_format($item['amount_parallel'], 2) }}
-                                            </td>
-                                            <td class="w-1/5 px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                                {{ $item['exchange_rate'] }}
-                                            </td>
-                                        </tr>
-                                    @endif
-                                @endforeach
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Tabla de Cargos -->
-            <div class="bg-white shadow-md rounded-lg overflow-hidden border border-gray-200">
-                <div class="px-6 py-4 border-b border-gray-200 bg-green-100">
-                    <h3 class="text-lg font-medium text-gray-900">Cargos</h3>
-                </div>
-
-                <div class="p-6">
-                    <div class="overflow-x-auto">
-                        <table class="min-w-full table-fixed divide-y divide-gray-200"> <!-- Añadido table-fixed -->
-                            <thead class="bg-gray-50">
-                                <tr>
-                                    <th scope="col"
-                                        class="w-2/5 px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                        Concepto
-                                    </th>
-                                    <th scope="col"
-                                        class="w-1/5 px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                        Monto
-                                    </th>
-                                    <th scope="col"
-                                        class="w-1/5 px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                        Monto Paralelo
-                                    </th>
-                                    <th scope="col"
-                                        class="w-1/5 px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                        Tasa de cambio
-                                    </th>
-                                </tr>
-                            </thead>
-                            <tbody class="bg-white divide-y divide-gray-200">
-                                @foreach ($costsDetails as $item)
-                                    @if ($item['enabled'] == '1' && $item['type'] == 'charge')
-                                        <tr>
-                                            <td
-                                                class="w-2/5 px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                                                {{ $item['concept'] }}
-                                            </td>
-                                            <td class="w-1/5 px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                                {{ number_format($item['amount'], 2) }}
-                                            </td>
-                                            <td class="w-1/5 px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                                {{ number_format($item['amount_parallel'], 2) }}
-                                            </td>
-                                            <td class="w-1/5 px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                                {{ $item['exchange_rate'] }}
-                                            </td>
-                                        </tr>
-                                    @endif
-                                @endforeach
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="bg-white shadow-md rounded-lg overflow-hidden border border-gray-200 mt-6">
-            <div class="px-6 py-4 border-b border-gray-200">
-                <h3 class="text-lg font-medium text-gray-900">Resumen Total</h3>
+    <div class="space-y-6">
+        <!-- Tabla de Costos -->
+        <div class="bg-white shadow-md rounded-lg overflow-hidden border border-gray-200">
+            <div class="px-6 py-4 border-b border-gray-200 bg-red-100">
+                <h3 class="text-lg font-medium text-gray-900">Costos</h3>
             </div>
 
             <div class="p-6">
-                <div class="flex justify-end">
-                    <div class="w-full md:w-1/3 space-y-2">
-                        @php
-                            // Calcular subtotal de costos
-                            $subtotalCosts = array_reduce(
-                                $costsDetails,
-                                function ($carry, $item) {
-                                    return $carry +
-                                        ($item['enabled'] == '1' && $item['type'] == 'cost' ? $item['amount'] : 0);
-                                },
-                                0,
-                            );
+                <div class="overflow-x-auto">
+                    <table class="min-w-full table-fixed divide-y divide-gray-200"> <!-- Añadido table-fixed -->
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th scope="col"
+                                    class="w-2/5 px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Concepto
+                                </th>
+                                <th scope="col"
+                                    class="w-1/5 px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Monto
+                                </th>
+                                <th scope="col"
+                                    class="w-1/5 px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Monto Paralelo
+                                </th>
+                                <th scope="col"
+                                    class="w-1/5 px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Tasa de cambio
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200">
+                            @foreach ($costsDetails as $item)
+                                @if ($item['enabled'] == '1' && $item['type'] == 'cost')
+                                    <tr>
+                                        <td class="w-2/5 px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                                            {{ $item['concept'] }}
+                                        </td>
+                                        <td class="w-1/5 px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                            {{ number_format($item['amount'], 2) }}
+                                        </td>
+                                        <td class="w-1/5 px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                            {{ number_format($item['amount_parallel'], 2) }}
+                                        </td>
+                                        <td class="w-1/5 px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                            {{ $item['exchange_rate'] }}
+                                        </td>
+                                    </tr>
+                                @endif
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
 
-                            // Calcular subtotal de cargos
-                            $subtotalCharges = array_reduce(
-                                $costsDetails,
-                                function ($carry, $item) {
-                                    return $carry +
-                                        ($item['enabled'] == '1' && $item['type'] == 'charge' ? $item['amount'] : 0);
-                                },
-                                0,
-                            );
+        <!-- Tabla de Cargos -->
+        <div class="bg-white shadow-md rounded-lg overflow-hidden border border-gray-200">
+            <div class="px-6 py-4 border-b border-gray-200 bg-green-100">
+                <h3 class="text-lg font-medium text-gray-900">Cargos</h3>
+            </div>
 
-                            // Calcular total general
-                            $total = $subtotalCosts + $subtotalCharges;
-                        @endphp
-
-                        <!-- Subtotal de Costos -->
-                        <div class="flex justify-between py-2 border-b border-gray-200">
-                            <span class="text-gray-600">Subtotal Costos:</span>
-                            <span class="font-medium">
-                                {{ number_format($subtotalCosts, 2) }}
-                            </span>
-                        </div>
-
-                        <!-- Subtotal de Cargos -->
-                        <div class="flex justify-between py-2 border-b border-gray-200">
-                            <span class="text-gray-600">Subtotal Cargos:</span>
-                            <span class="font-medium">
-                                {{ number_format($subtotalCharges, 2) }}
-                            </span>
-                        </div>
-
-                        <!-- Total General -->
-                        <div class="flex justify-between py-3 border-t-2 border-gray-300 mt-2">
-                            <span class="text-gray-800 font-semibold">Total General:</span>
-                            <span class="font-bold text-lg text-[#0B628D]">
-                                {{ number_format($total, 2) }}
-                            </span>
-                        </div>
-
-                        <!-- Opcional: Mostrar total en moneda paralela si aplica -->
-                        @php
-                            $hasParallel = array_reduce(
-                                $costsDetails,
-                                function ($carry, $item) {
-                                    return $carry || ($item['is_amount_parallel'] == '1' && $item['enabled'] == '1');
-                                },
-                                false,
-                            );
-                        @endphp
-
-                        @if ($hasParallel)
-                            @php
-                                $totalParallel = array_reduce(
-                                    $costsDetails,
-                                    function ($carry, $item) {
-                                        $amount =
-                                            $item['is_amount_parallel'] == '1'
-                                                ? $item['amount_parallel']
-                                                : $item['amount'] / $item['exchange_rate'];
-                                        return $carry + ($item['enabled'] == '1' ? $amount : 0);
-                                    },
-                                    0,
-                                );
-                            @endphp
-                        @endif
-                    </div>
+            <div class="p-6">
+                <div class="overflow-x-auto">
+                    <table class="min-w-full table-fixed divide-y divide-gray-200"> <!-- Añadido table-fixed -->
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th scope="col"
+                                    class="w-2/5 px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Concepto
+                                </th>
+                                <th scope="col"
+                                    class="w-1/5 px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Monto
+                                </th>
+                                <th scope="col"
+                                    class="w-1/5 px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Monto Paralelo
+                                </th>
+                                <th scope="col"
+                                    class="w-1/5 px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Tasa de cambio
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200">
+                            @foreach ($costsDetails as $item)
+                                @if ($item['enabled'] == '1' && $item['type'] == 'charge')
+                                    <tr>
+                                        <td class="w-2/5 px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                                            {{ $item['concept'] }}
+                                        </td>
+                                        <td class="w-1/5 px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                            {{ number_format($item['amount'], 2) }}
+                                        </td>
+                                        <td class="w-1/5 px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                            {{ number_format($item['amount_parallel'], 2) }}
+                                        </td>
+                                        <td class="w-1/5 px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                            {{ $item['exchange_rate'] }}
+                                        </td>
+                                    </tr>
+                                @endif
+                            @endforeach
+                        </tbody>
+                    </table>
                 </div>
             </div>
         </div>
     </div>
-    <script>
-        function updateHiddenInputs() {
-            const select = document.getElementById('exchange_option');
-            const isParallel = document.getElementById('is_parallel');
-            const useExchangeRate = document.getElementById('use_exchange_rate');
+    <div class="bg-white shadow-md rounded-lg overflow-hidden border border-gray-200 mt-6">
+        <div class="px-6 py-4 border-b border-gray-200">
+            <h3 class="text-lg font-medium text-gray-900">Resumen Total</h3>
+            <p>A tasa original de operación {{$billingNote->quotation['exchange_rate']}}</p>
+        </div>
 
-            switch (select.value) {
-                case '1':
-                    isParallel.value = 0;
-                    useExchangeRate.value = 0;
-                    break;
-                case '2':
-                    isParallel.value = 1;
-                    useExchangeRate.value = 0;
-                    break;
-                case '3':
-                    isParallel.value = 0;
-                    useExchangeRate.value = 1;
-                    break;
-                case '4':
-                    isParallel.value = 1;
-                    useExchangeRate.value = 1;
-                    break;
-                default:
-                    isParallel.value = 0;
-                    useExchangeRate.value = 0;
-            }
-        }
+        <div class="p-6">
+            <div class="flex justify-end">
+                <div class="w-full md:w-1/3 space-y-2">
+                    @php
+                        // Calcular subtotal de costos
+                        $subtotalCosts = array_reduce(
+                            $costsDetails,
+                            function ($carry, $item) {
+                                return $carry +
+                                    ($item['enabled'] == '1' && $item['type'] == 'cost' ? $item['amount'] : 0);
+                            },
+                            0,
+                        );
 
-        function updateHiddenInputsOperation() {
-            const select = document.getElementById('exchange_option_operation');
-            const isParallel = document.getElementById('is_parallel_operation');
-            const useExchangeRate = document.getElementById('use_exchange_rate_operation');
+                        // Calcular subtotal de cargos
+                        $subtotalCharges = array_reduce(
+                            $costsDetails,
+                            function ($carry, $item) {
+                                return $carry +
+                                    ($item['enabled'] == '1' && $item['type'] == 'charge' ? $item['amount'] : 0);
+                            },
+                            0,
+                        );
 
-            switch (select.value) {
-                case '1':
-                    isParallel.value = 0;
-                    useExchangeRate.value = 0;
-                    break;
-                case '2':
-                    isParallel.value = 1;
-                    useExchangeRate.value = 0;
-                    break;
-                case '3':
-                    isParallel.value = 0;
-                    useExchangeRate.value = 1;
-                    break;
-                case '4':
-                    isParallel.value = 1;
-                    useExchangeRate.value = 1;
-                    break;
-                default:
-                    isParallel.value = 0;
-                    useExchangeRate.value = 0;
-            }
-        }
-    </script>
+                        // Calcular total general
+                        $total = $subtotalCosts + $subtotalCharges;
+                    @endphp
+
+                    <!-- Subtotal de Costos -->
+                    <div class="flex justify-between py-2 border-b border-gray-200">
+                        <span class="text-gray-600">Subtotal Costos:</span>
+                        <span class="font-medium">
+                            {{ number_format($subtotalCosts, 2) }}
+                        </span>
+                    </div>
+
+                    <!-- Subtotal de Cargos -->
+                    <div class="flex justify-between py-2 border-b border-gray-200">
+                        <span class="text-gray-600">Subtotal Cargos:</span>
+                        <span class="font-medium">
+                            {{ number_format($subtotalCharges, 2) }}
+                        </span>
+                    </div>
+
+                    <!-- Total General -->
+                    <div class="flex justify-between py-3 border-t-2 border-gray-300 mt-2">
+                        <span class="text-gray-800 font-semibold">Total General:</span>
+                        <span class="font-bold text-lg text-[#0B628D]">
+                            {{ number_format($total, 2) }}
+                        </span>
+                    </div>
+
+                    <!-- Opcional: Mostrar total en moneda paralela si aplica -->
+                    @php
+                        $hasParallel = array_reduce(
+                            $costsDetails,
+                            function ($carry, $item) {
+                                return $carry || ($item['is_amount_parallel'] == '1' && $item['enabled'] == '1');
+                            },
+                            false,
+                        );
+                    @endphp
+
+                    @if ($hasParallel)
+                        @php
+                            $totalParallel = array_reduce(
+                                $costsDetails,
+                                function ($carry, $item) {
+                                    $amount =
+                                        $item['is_amount_parallel'] == '1'
+                                            ? $item['amount_parallel']
+                                            : $item['amount'] / $item['exchange_rate'];
+                                    return $carry + ($item['enabled'] == '1' ? $amount : 0);
+                                },
+                                0,
+                            );
+                        @endphp
+                    @endif
+                </div>
+            </div>
+        </div>
+    </div>
+    </div>
 @endsection

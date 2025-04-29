@@ -312,7 +312,7 @@ class QuotationController extends Controller
                 'products.*.volume_unit' => 'nullable|string|max:10',
                 'products.*.description' => 'nullable|string',
                 'products.*.is_container' => 'nullable|boolean',
-                'costs' => 'nullable|array',
+                'costs' => 'required|array',
                 'services' => 'nullable|array',
                 'observations' => 'nullable|string',
                 'insurance' => 'nullable|string',
@@ -340,7 +340,7 @@ class QuotationController extends Controller
                 'products.*.volume_unit.string' => 'La unidad de volumen debe ser una cadena de texto.',
                 'products.*.volume_unit.max' => 'La unidad de volumen no puede exceder los 10 caracteres.',
                 'products.*.description.string' => 'La descripción debe ser una cadena de texto.',
-
+                'costs.required' => 'Los costos son obligatorios.',
             ]
         );
 
@@ -650,7 +650,7 @@ class QuotationController extends Controller
             'products.*.volume_unit' => 'nullable|string|max:10',
             'products.*.description' => 'nullable|string',
             'products.*.is_container' => 'nullable|boolean',
-            'services' => 'required|array',
+            'services' => 'nullable|array',
             'costs' => 'required|array',
             'costs.*.cost_id' => 'required|exists:costs,id',
             'costs.*.amount' => 'nullable|numeric',
@@ -732,15 +732,17 @@ class QuotationController extends Controller
             }
 
             // Procesar y guardar los servicios
-            foreach ($validatedData['services'] as $serviceId => $status) {
-                // if (is_numeric($serviceId)) { // Asegurar que es un ID válido
-                if (is_numeric($serviceId) && $status !== 'none') { // Asegurar que es un ID válido
-                    $quotationService = new QuotationService([
-                        'quotation_id' => $quotation->id,
-                        'service_id' => $serviceId,
-                        'included' => $status === 'include'
-                    ]);
-                    $quotationService->save();
+            if ($request->has('services')) {
+                foreach ($validatedData['services'] as $serviceId => $status) {
+                    // if (is_numeric($serviceId)) { // Asegurar que es un ID válido
+                    if (is_numeric($serviceId) && $status !== 'none') { // Asegurar que es un ID válido
+                        $quotationService = new QuotationService([
+                            'quotation_id' => $quotation->id,
+                            'service_id' => $serviceId,
+                            'included' => $status === 'include'
+                        ]);
+                        $quotationService->save();
+                    }
                 }
             }
 

@@ -37,70 +37,96 @@
 
     function fetchPreviewContent() {
         const previewData = collectPreviewData();
-        console.log(previewData);
         const contentModal = document.querySelector('.content-modal-quotation');
-        // Simulamos una carga con setTimeout (reemplaza esto con tu llamada AJAX real)
         contentModal.innerHTML = '';
 
-        // Crear estructura del modal con los datos
         const previewHTML = `
-            <img src="/images/pestop.png" class="w-[80%] absolute top-19 right-6" />
-            <div class=" mt-15">
-                <img src="/images/logoNova.png" class="w-32 h-28 -mx-1" />
-                <h4 class="font-medium my-2">Señores</h4>
-                <p class="uppercase mb-2 font-bold">${previewData.basicInfo.clientName}</p>
-                <p>Presente.-</p>
-                <span class="font-bold block my-2 underline">REF: ${previewData.basicInfo.referenceNumber ? `COTIZACION ${previewData.basicInfo.referenceNumber}` : 'Sin numero de cotizacion'}</span>
-                <p>Estimado cliente, por medio la presente tenemos el agrado de enviarle nuestra cotización de acuerdo con su requerimiento e información proporcionada.</p>
+        <img src="/images/pestop.png" class="w-[80%] absolute md:top-19 top-27 md:right-6 right-5" />
+        <div class="mt-15">
+            <img src="/images/logoNova.png" class="w-32 h-28 -mx-1" />
+            <h4 class="font-medium my-2">Señores</h4>
+            <p class="uppercase mb-2 font-bold">${previewData.basicInfo.clientName}</p>
+            <p>Presente.-</p>
+            <span class="font-bold block my-2 underline">
+                REF: ${previewData.basicInfo.referenceNumber !== "Sin número de cotizacion" ? 
+                    `COTIZACION ${previewData.basicInfo.referenceNumber}` : 'Sin número de cotización'}
+            </span>
+            <p>Estimado cliente, por medio la presente tenemos el agrado de enviarle nuestra cotización de acuerdo con su requerimiento e información proporcionada.</p>
+        </div>
+
+        <div class="preview-section">
+        ${previewData.products.length > 0 ? `
+            <div>
+            ${previewData.products.map((product, index) => `
+                <div class="grid grid-cols-1 md:grid-cols-[68%_30%] gap-4 mt-5">
+                    <div class="flex flex-col md:flex-row border">
+                        <div class="bg-blue-300 w-full md:w-auto">
+                            <div class="p-3 border-b font-bold">CLIENTE</div>
+                            <div class="p-3 border-b font-bold">ORIGEN</div>
+                            <div class="p-3 border-b font-bold">DESTINO</div>
+                            <div class="p-3 font-bold">INCOTERM</div>
+                        </div>
+                        <div class="border-l flex-grow">
+                            <div class="p-3 border-b uppercase">${previewData.basicInfo.clientName || 'Sin cliente'}</div>
+                            <div class="p-3 border-b">${product.origin}</div>
+                            <div class="p-3 border-b">${product.destination}</div>
+                            <div class="p-3">${product.incoterm}</div>
+                        </div>
+                    </div>
+                    
+                    <div class="h-full flex flex-col justify-end">
+                        <div class="flex flex-col md:flex-row border h-full">
+                            <div class="bg-blue-300 w-full md:w-auto">
+                                <div class="p-3 border-b font-bold">CANTIDAD</div>
+                                <div class="p-3 border-b font-bold">PESO</div>
+                                <div class="p-3 uppercase font-bold">${product.volumeUnit}</div>
+                            </div>
+                            <div class="border-l flex-grow">
+                                <div class="p-3 border-b">${product.quantity}</div>
+                                <div class="p-3 border-b">${product.weight || '0'} KG</div>
+                                <div class="p-3 uppercase">${product.volume} ${product.volumeUnit}</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `).join('')}
+            </div>
+            ` : '<p class="text-sm text-gray-500">No se han agregado productos/servicios</p>'}
+        </div>
+
+        
+        <p>Para el requerimiento de transporte y logistica los costos se encuentran líneas abajo</p>
+
+        ${previewData.isParallelChecked ? `
+            <p class="bg-yellow-300 p-1 inline-block font-semibold underline">OPCION 1) PAGO EN EFECTIVO A UN TC DE ${previewData.exchange_rate.value}</p>
+            <div class="preview-section">
+                <div class="w-full">
+                    <table class="w-3/4 border border-black border-collapse mx-auto">
+                        <thead class="bg-blue-300">
+                            <tr class="text-center">
+                                <th class="font-bold w-[70%] border border-black">CONCEPTO</th>  
+                                <th class="font-bold w-[30%] border border-black">MONTO ${previewData.basicInfo.currency}</th>
+                            </tr>   
+                        </thead>
+                        <tbody>
+                            ${previewData.costs.map(cost => `
+                                <tr>
+                                    <td class="text-center w-[70%] border border-black">${cost.name}</td>
+                                    <td class="text-center w-[30%] border border-black">${cost.amount_parallel || cost.amount}</td>
+                                </tr>
+                            `).join('')}
+                            <tr class="font-bold">
+                                <td class="text-center w-[70%] border border-black">TOTAL</td>
+                                <td class="text-center w-[30%] border border-black">
+                                    ${previewData.costs.reduce((total, cost) => total + parseFloat(cost.amount_parallel || cost.amount), 0)}
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
                 </div>
             </div>
-        
 
-            <div class="preview-section">
-                ${previewData.products.length > 0 ? `
-                    <div class="">
-                        ${previewData.products.map((product, index) => `
-                            <div class="grid grid-cols-[68%_30%] gap-4"> <!-- Cambiado a 70%/30% -->
-
-                                <div class="flex border">
-                                    <div class="bg-blue-300">
-                                        <div class="p-3 border-b font-bold">CLIENTE</div>
-                                        <div class="p-3 border-b font-bold">ORIGEN</div>
-                                        <div class="p-3 border-b font-bold">DESTINO</div>
-                                        <div class="p-3 font-bold">INCOTERM</div>
-                                    </div>
-                                
-                                    <div class="border-l flex-grow">
-                                        <div class="p-3 border-b uppercase">${previewData.basicInfo.clientName}</div>
-                                        <div class="p-3 border-b ">${product.origin}</div>
-                                        <div class="p-3 border-b ">${product.destination}</div>
-                                        <div class="p-3">${product.incoterm}</div>
-                                    </div>
-                                </div>
-                            
-                                <div class="h-full flex flex-col justify-end">
-                                    <div class="flex border">
-                                        <div class="bg-blue-300">
-                                            <div class="p-3 border-b font-bold">CANTIDAD</div>
-                                            <div class="p-3 border-b font-bold">PESO</div>
-                                            <div class="p-3 uppercase font-bold">${product.volumeUnit}</div>
-                                        </div>
-                                    
-                                        <div class="border-l flex-grow">
-                                            <div class="p-3 border-b ">${product.quantity}</div>
-                                            <div class="p-3 border-b ">${product.weight || '0'} KG</div>
-                                            <div class="p-3 uppercase">${product.volume} ${product.volumeUnit}</div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        `).join('')}
-                    </div>
-                ` : '<p class="text-sm text-gray-500">No se han agregado productos/servicios</p>'}
-            </div>
-            <p class="">Para el requerimiento de transporte y logistica los costos se encuentran líneas abajo</p>
-
-         
+            <p class="bg-yellow-300 p-1 inline-block font-semibold underline my-5">OPCION 2) PAGO EFECTIVO EN USD O DE ACUERDO CON EL TC PARALELO</p>
             <div class="preview-section">
                 <div class="w-full">
                     <table class="w-3/4 border border-black border-collapse mx-auto">
@@ -117,7 +143,6 @@
                                     <td class="text-center w-[30%] border border-black">${cost.amount}</td>
                                 </tr>
                             `).join('')}
-                            <!-- Fila del total -->
                             <tr class="font-bold">
                                 <td class="text-center w-[70%] border border-black">TOTAL</td>
                                 <td class="text-center w-[30%] border border-black">
@@ -127,50 +152,104 @@
                         </tbody>
                     </table>
                 </div>
-                <p class="font-bold mt-3 align-text-bottom">** De acuerdo con el TC paralelo vigente.</p>
             </div>
-            ${previewData.services.included.length > 0 ? (
-                `<div class="preview-section">
-                    <p class="font-bold mb-3">El servicio incluye:</p>
-                        <div class="">
-                        ${previewData.services.included.map(item => `
-                            <div class="flex items-start mb-3">
-                                <span class="mr-8">-</span>
-                                <p>${item.name}</p>
-                            </div>`)
-                            .join('')
-                        }
-                </div>`) :  ''
-            }    
-                    
-            ${previewData.services.excluded.length > 0 ? (
-                `<div class="preview-section">
-                    <p class="font-bold mb-3">El servicio no incluye:</p>
-                        <div class="">
-                        ${previewData.services.excluded.map(item => `
-                            <div class="flex items-start mb-3">
-                                <span class="mr-8">-</span>
-                                <p>${item.name}</p>
-                            </div>`)
-                            .join('')
-                        }
-                </div>`) :  ''
-            }  
+        ` : `
+            <p class="bg-yellow-300 p-1 inline-block font-semibold underline">OPCION 1) PAGO EN EFECTIVO EN BS DE EN BOLIVIA</p>
+            <div class="preview-section">
+                <div class="w-full">
+                    <table class="w-3/4 border border-black border-collapse mx-auto">
+                        <thead class="bg-blue-300">
+                            <tr class="text-center">
+                                <th class="font-bold w-[70%] border border-black">CONCEPTO</th>  
+                                <th class="font-bold w-[30%] border border-black">MONTO ${previewData.basicInfo.currency}</th>
+                            </tr>   
+                        </thead>
+                        <tbody>
+                            ${previewData.costs.map(cost => `
+                                <tr>
+                                    <td class="text-center w-[70%] border border-black">${cost.name}</td>
+                                    <td class="text-center w-[30%] border border-black">${cost.amount}</td>
+                                </tr>
+                            `).join('')}
+                            <tr class="font-bold">
+                                <td class="text-center w-[70%] border border-black">TOTAL</td>
+                                <td class="text-center w-[30%] border border-black">
+                                    ${previewData.costs.reduce((total, cost) => total + parseFloat(cost.amount), 0)}
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
                 </div>
             </div>
-                       
-            <p><span class="font-bold">Seguro:</span> Se recomienda tener una póliza de seguro para el embarque, ofrecemos la misma de manera adicional considerando el 0.35% sobre el valor declarado, con un min de 30 usd, previa autorización por la compañía de seguros.</p>
-            <p><span class="font-bold">Forma de pago:</span> Una vez se confirme el arribo del embarque a puerto de destino.</p>
-            <p><span class="font-bold">Validez:</span> Los fletes son válidos hasta 10 días, posterior a ese tiempo, validar si los costos aún están vigentes.</p>
-            <p><span class="font-bold">Observaciones:</span> Se debe considerar como un tiempo de tránsito 48 a 50 días hasta puerto de Iquique. </p>
-            <p>Atentamente</p>
-            <div class="">
-                <p>Aidee Callisaya</p>
-                <p class="font-bold pb-30">Responsable</p>
+            <p class="font-bold mt-3 align-text-bottom">** De acuerdo con el TC paralelo vigente.</p>
+        `}
+
+        ${previewData.services.included.length > 0 ? `
+            <div class="preview-section">
+                <p class="font-bold mb-3">El servicio incluye:</p>
+                <div>
+                    ${previewData.services.included.map(item => `
+                        <div class="flex items-start mb-3">
+                            <span class="mr-8">-</span>
+                            <p>${item.name}</p>
+                        </div>
+                    `).join('')}
+                </div>
             </div>
-            <img src="/images/contacto.png" class="w-[40%] absolute bottom-22 right-14" />    
-            <img src="/images/pesbottom.png" class="w-[93%] absolute bottom-6 left-8" />    
-        `
+        ` : ''}
+
+        ${previewData.services.excluded.length > 0 ? `
+            <div class="preview-section">
+                <p class="font-bold mb-3">El servicio no incluye:</p>
+                <div>
+                    ${previewData.services.excluded.map(item => `
+                        <div class="flex items-start mb-3">
+                            <span class="mr-8">-</span>
+                            <p>${item.name}</p>
+                        </div>
+                    `).join('')}
+                </div>
+            </div>
+        ` : ''}
+
+        <p>
+            <span class="font-bold">Seguro: </span>
+            ${previewData.insurance.value ? previewData.insurance.value : 'Se recomienda tener una póliza de seguro para el embarque, ofrecemos la misma de manera adicional considerando el 0.35% sobre el valor declarado, con un min de 30 usd, previa autorización por la compañía de seguros.'}
+        </p>
+
+        <p>
+            <span class="font-bold">Forma de pago: </span>
+            ${previewData.payment_method.value ? previewData.payment_method.value : 'Una vez se confirme el arribo del embarque a puerto de destino.'}
+        </p>
+
+        <p>
+            <span class="font-bold">Validez: </span>
+            ${previewData.validity.value ? previewData.validity.value : 'Los fletes son válidos hasta 10 días, posterior a ese tiempo, validar si los costos aún están vigentes.'}
+        </p>
+
+        <p>
+            <span class="font-bold">Observaciones: </span>
+            ${previewData.observations.value ? previewData.observations.value : 'Se debe considerar como un tiempo de tránsito 48 a 50 días hasta puerto de Iquique.'}
+        </p>
+
+        ${previewData.isParallelChecked ? `
+            <span class="bg-yellow-300 p-1 inline-block font-semibold">
+                **Debido a la coyuntura actual, en la presente cotización se está aplicando el costo de 
+                transferencia del ${juncture.value || '113'}% (CCFEE) sobre los recargos generados en origen, de acuerdo 
+                con la comisión que cobra nuestro banco actualmente. Si esta llega a variar, considerar 
+                la modificación de ese monto de acuerdo con la tarifa vigente.
+            </span>
+        ` : ''}
+
+        <p>Atentamente</p>
+        <div>
+            <p>${previewData.userName}</p>
+            <p class="font-bold pb-30">${previewData.charge}</p>
+        </div>
+        <img src="/images/contacto.png" class="w-[40%] absolute bottom-22 right-14" />    
+        <img src="/images/pesbottom.png" class="w-[93%] absolute bottom-6 left-8" />
+    `;
+
         contentModal.innerHTML = previewHTML;
     }
 
@@ -183,32 +262,44 @@
             currency: document.getElementById('currency').value,
             exchangeRate: document.getElementById('exchange_rate').value,
         };
-
         // Recolectar costos logísticos
         const costs = [];
-        document.querySelectorAll('.cost-card').forEach(card => {
-            const checkbox = card.querySelector('.cost-toggle');
-            if (checkbox.checked) {
-                const costId = checkbox.dataset.costId;
-                const costName = card.querySelector('label[for^="cost_"]').textContent.trim();
-                const amount = card.querySelector('.cost-amount').value;
-                const currencySymbol = card.querySelector('.currency-symbol').textContent;
-                const currencyCode = card.querySelector('.currency-code').textContent;
+        const isParallelChecked = document.getElementById('parallel_exchange_checkbox').checked;
 
-                costs.push({
-                    id: costId,
-                    name: costName,
-                    amount: amount,
-                    currencySymbol: currencySymbol,
-                    currencyCode: currencyCode
-                });
-            }
+        document.querySelectorAll('.cost-item').forEach(card => {
+            const costId = card.dataset.costId; // Obtiene el ID del cost-item
+            const costName = card.querySelector('h4').textContent
+                .trim(); // Nombre del concepto (ej: "FLETE TERRESTRE")
+
+            // Obtiene el valor del importe principal
+            const amountInput = card.querySelector('input[name^="costs"][name$="[amount]"]');
+            const amount = amountInput ? parseFloat(amountInput.value) || 0 : 0;
+
+            // Obtiene el valor del importe paralelo (si existe)
+            const amountParallelInput = card.querySelector('input[name^="costs"][name$="[amount_parallel]"]');
+            const amountParallel = amountParallelInput ? parseFloat(amountParallelInput.value) || null :
+                null; // null si está vacío
+
+            // Obtiene la moneda (asumiendo que es la misma para ambos campos)
+            const currencyCode = card.querySelector('.currency-code').textContent;
+
+            costs.push({
+                id: costId,
+                name: costName,
+                amount: amount,
+                amount_parallel: amountParallel, // Agregado el campo paralelo
+                currencyCode: currencyCode
+            });
         });
 
         // Recolectar detalles de productos/servicios
         const products = [];
         document.querySelectorAll('.product-block').forEach(productBlock => {
+
             const index = productBlock.dataset.index || 0;
+            const isContainer = productBlock.querySelector(
+                `input[name="products[${index}][is_container]"]:checked`).value; //1 is_container
+            // Lógica para obtener los demás valores del producto
             const productName = productBlock.querySelector(`[name="products[${index}][name]"]`).value;
             const originSelect = productBlock.querySelector(`[name="products[${index}][origin_id]"]`);
             const origin = originSelect ? originSelect.options[originSelect.selectedIndex]?.textContent : '';
@@ -219,16 +310,25 @@
             const incotermSelect = productBlock.querySelector(`[name="products[${index}][incoterm_id]"]`);
             const incoterm = incotermSelect ? incotermSelect.options[incotermSelect.selectedIndex]
                 ?.textContent : '';
-            const quantity = productBlock.querySelector(`[name="products[${index}][quantity]"]`).value;
-            const quantityDescriptionSelect = productBlock.querySelector(
-                `[name="products[${index}][quantity_description_id]"]`);
-            const quantityDescription = quantityDescriptionSelect ? quantityDescriptionSelect.options[
-                quantityDescriptionSelect.selectedIndex]?.textContent : '';
+            let quantity;
+            if (isContainer == 1) {
+                quantity = productBlock.querySelector(`[name="products[${index}][quantity]"]`).value;
+            } else {
+                const selectElement = productBlock.querySelector(
+                    `[name="products[${index}][quantity_description_id]"]`);
+                const selectedOption = selectElement.options[selectElement
+                    .selectedIndex]; // Obtiene la opción seleccionada
+                const selectedText = selectedOption.text;
+
+                quantity = productBlock.querySelector(`[name="products[${index}][quantity]"]`).value + ' ' +
+                    selectedText;
+            }
             const volume = productBlock.querySelector(`[name="products[${index}][volume]"]`).value;
             const volumeUnitSelect = productBlock.querySelector(`[name="products[${index}][volume_unit]"]`);
             const volumeUnit = volumeUnitSelect ? volumeUnitSelect.options[volumeUnitSelect.selectedIndex]
                 ?.textContent : '';
 
+            // Añadir el producto al array
             products.push({
                 index: index,
                 productName: productName,
@@ -237,9 +337,8 @@
                 weight: weight,
                 incoterm: incoterm,
                 quantity: quantity,
-                quantityDescription: quantityDescription,
                 volume: volume,
-                volumeUnit: volumeUnit
+                volumeUnit: volumeUnit,
             });
         });
 
@@ -248,28 +347,53 @@
             excluded: []
         };
 
-        document.querySelectorAll('input[name^="services["]:checked').forEach(radio => {
-            const card = radio.closest('div[data-service-id]');
-            const serviceId = card.dataset.serviceId;
-            const serviceName = card.querySelector('h4').textContent.trim();
-            if (radio.value === "include") {
+        document.querySelectorAll('#selectedServices div[data-service-id]').forEach(serviceDiv => {
+            const serviceId = serviceDiv.dataset.serviceId;
+            const serviceName = serviceDiv.childNodes[0].textContent
+                .trim(); // El primer nodo de texto contiene el nombre
+            const selectElement = serviceDiv.querySelector('select[name^="services["]');
+            const status = selectElement.value;
+
+            if (status === "include") {
                 services.included.push({
                     id: serviceId,
-                    name: serviceName,
+                    name: serviceName
                 });
-            } else if (radio.value === "exclude") {
+            } else if (status === "exclude") {
                 services.excluded.push({
                     id: serviceId,
-                    name: serviceName,
+                    name: serviceName
                 });
             }
         });
+
+        const insurance = document.querySelector('#insurance')
+        const payment_method = document.querySelector('#payment_method')
+        const validity = document.querySelector('#validity')
+        const observations = document.querySelector('#observations')
+
+        const exchange_rate = document.querySelector('#exchange_rate')
+        const juncture = document.querySelector('#juncture')
+
+        const user = @json(Auth::user());
+        const userName = `${user.name} ${user.surname}`;
+        const role = user.role ?? 'user'; // valor por defecto en caso de que no haya role
+        const charge = role.description == 'admin' ? 'Responsable de Logística y Comex.' : 'Responsable Comercial.';
 
         const previewData = {
             basicInfo: basicInfo,
             costs: costs,
             products: products,
-            services
+            services,
+            isParallelChecked,
+            insurance,
+            payment_method,
+            validity,
+            observations,
+            userName,
+            charge,
+            exchange_rate,
+            juncture
         };
 
         return previewData;

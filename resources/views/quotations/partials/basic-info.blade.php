@@ -47,27 +47,11 @@
 
         <div>
             <label for="exchange_rate" class="block text-sm font-medium text-gray-700 mb-1">Tipo de Cambio *</label>
-            <input type="number" step="0.0001" id="exchange_rate" name="exchange_rate"
+            <input type="number" step="0.01" id="exchange_rate" name="exchange_rate"
                 value="{{ isset($quotation_data) ? $quotation_data['formData']['exchange_rate'] : '' }}"
                 class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
         </div>
 
-        {{-- @if (isset($quotation_data) && $quotation_data['formData']['date_finalization'])
-            <div>
-                <label for="reference_number" class="block text-sm font-medium text-gray-700 mb-1">Numero de
-                    cotizacion</label>
-                <input type="text" id="reference_number" name="reference_number" readonly
-                    value="{{ $quotation_data['formData']['reference_number'] }}"
-                    class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 bg-gray-200">
-            </div>
-        @endif --}}
-
-        {{-- <div>
-            <label for="valid_until" class="block text-sm font-medium text-gray-700 mb-1">Válido hasta *</label>
-            <input type="date" id="valid_until" name="valid_until"
-                value="{{ $quotation ? $quotation->valid_until->format('Y-m-d') : '' }}"
-                class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
-        </div> --}}
     </div>
     <div>
         <div class="grid sm:grid-cols-2 gap-6 mt-2">
@@ -103,6 +87,8 @@
 </div>
 
 <script>
+    const existExchangeRate = @json($quotation_data['formData']['exchange_rate'] ?? null);
+    const originalCurrency = @json($quotation_data['formData']['currency'] ?? 'USD');
     document.addEventListener('DOMContentLoaded', function() {
         $('#NIT').select2({
             theme: 'bootstrap-5',
@@ -266,7 +252,38 @@
                     });
             });
         }
+        updateExchangeRate();
+        document.getElementById('currency').addEventListener('change', updateExchangeRate)
+
     });
+
+    function updateExchangeRate() {
+        const currencySelect = document.getElementById('currency');
+        const exchangeRateInput = document.getElementById('exchange_rate');
+        const selectedOption = currencySelect.options[currencySelect.selectedIndex];
+        const selectedCurrency = currencySelect.value;
+        const rate = selectedOption.getAttribute('data-rate');
+        const symbol = selectedOption.getAttribute('data-symbol');
+
+        if (selectedCurrency === originalCurrency && existExchangeRate !== null) {
+            // Si es la misma moneda de la cotización anterior y hay exchange_rate, usarlo
+            exchangeRateInput.value = existExchangeRate;
+        } else {
+            // Si es una moneda diferente, usar el nuevo data-rate
+            exchangeRateInput.value = rate;
+        }
+
+        console.log('Exchange Rate actualizado:', exchangeRateInput.value);
+
+        // Actualizar símbolos en toda la página
+        document.querySelectorAll('.currency-symbol').forEach(el => {
+            el.textContent = symbol;
+        });
+
+        document.querySelectorAll('.currency-code').forEach(el => {
+            el.textContent = selectedCurrency;
+        });
+    }
 
     window.closeModalUserQuotation = function() {
         document.getElementById('create-customer-quotation').classList.add('hidden');

@@ -18,9 +18,9 @@
 
     @php
         $fields = [
-            'name' => 'Nombres',
-            'surname' => 'Apellidos',
-            'email' => 'Correo electrónico',
+            'name' => 'Nombres *',
+            'surname' => 'Apellidos *',
+            'email' => 'Correo electrónico *',
             'phone' => 'Teléfono',
         ];
     @endphp
@@ -72,7 +72,7 @@
     @endif
 
     <div class="mb-4">
-        <label class="block font-semibold text-gray-700 mb-2">Rol del usuario</label>
+        <label class="block font-semibold text-gray-700 mb-2">Rol del usuario *</label>
         <div class="flex sm:flex-row flex-col justify-around">
             @foreach ([
         '1' => 'Administrador',

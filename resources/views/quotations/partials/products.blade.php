@@ -219,9 +219,6 @@
         });
     }
 
-
-
-
     function removeProductBlock(button) {
         const productBlocks = document.querySelectorAll('.product-block');
 
@@ -259,15 +256,31 @@
         const uniqueSuffix = '_clone_' + Date.now();
 
         const $clone = $lastBlock.clone();
-
         $clone.attr('data-index', newIndex);
 
         // Update IDs, names and for attributes
         $clone.find('[id], [name], [for]').each(function() {
-            if (this.id) this.id = this.id.replace(/\d+(_clone_\d+)?/, newIndex + uniqueSuffix);
+            if (this.id) {
+                // Maneja específicamente los IDs quantity_part1_ y quantity_part2_
+                if (this.id.startsWith('quantity_part1_') || this.id.startsWith('quantity_part2_')) {
+                    const parts = this.id.split('_');
+                    // Conserva part1/part2 y solo reemplaza el índice final
+                    this.id = `${parts[0]}_${parts[1]}_${newIndex}${uniqueSuffix}`;
+                } else {
+                    // Para otros IDs usa el reemplazo original
+                    this.id = this.id.replace(/\d+(_clone_\d+)?$/, newIndex + uniqueSuffix);
+                }
+            }
             if (this.name) this.name = this.name.replace(/\[\d+]/, `[${newIndex}]`);
-            if (this.htmlFor) this.htmlFor = this.htmlFor.replace(/\d+(_clone_\d+)?/, newIndex +
-                uniqueSuffix);
+            if (this.htmlFor) {
+                // Aplica la misma lógica para los atributos 'for'
+                if (this.htmlFor.startsWith('quantity_part1_') || this.htmlFor.startsWith('quantity_part2_')) {
+                    const parts = this.htmlFor.split('_');
+                    this.htmlFor = `${parts[0]}_${parts[1]}_${newIndex}${uniqueSuffix}`;
+                } else {
+                    this.htmlFor = this.htmlFor.replace(/\d+(_clone_\d+)?$/, newIndex + uniqueSuffix);
+                }
+            }
         });
 
         // Clear Select2 properly
@@ -283,17 +296,6 @@
         // Reinitialize Select2
         initSelect2ForBlock($clone);
         initSelect2ForBlock($lastBlock);
-    }
-
-    function updateRealQuantity() {
-        const index = this.getAttribute('data-index');
-        const part1 = document.getElementById(`quantity_part1_${index}`)?.value || '';
-        const part2 = document.getElementById(`quantity_part2_${index}`)?.value || '';
-        const realQuantityInput = document.getElementById(`real_quantity_${index}`);
-
-        if (realQuantityInput) {
-            realQuantityInput.value = part1 && part2 ? `${part1} x ${part2}` : '';
-        }
     }
 
     // Inicializar Select2 cuando el DOM esté listo

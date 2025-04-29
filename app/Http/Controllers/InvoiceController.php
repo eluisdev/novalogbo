@@ -67,7 +67,7 @@ class InvoiceController extends Controller
             [
                 'id' => 'required|integer|exists:billing_notes,id',
                 'visible' => 'required|boolean',
-                'is_parallel' => 'sometimes|boolean',
+                'use_exchange_rate' => 'sometimes|boolean',
             ],
             [
                 'id.required' => 'El ID de la nota de cobranza es obligatorio.',
@@ -82,7 +82,7 @@ class InvoiceController extends Controller
         //dd($request->all(), $billingNote);
 
         $visible = $request->visible ?? true;
-        $isParallel = $request->is_parallel ?? false;
+        $isParallel = $request->use_exchange_rate ?? false;
 
         DB::beginTransaction();
         try {

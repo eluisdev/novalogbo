@@ -5,7 +5,7 @@
 @extends($layout)
 
 @section('dashboard-option')
-    <div class="w-full mx-auto px-4 sm:px-6 lg:px-8 pb-6">
+    <div class="w-full mx-auto pb-6">
         <div
             class="flex flex-col sm:flex-row items-center justify-between gap-4 bg-white rounded-xl shadow-sm p-3 mb-6 border border-gray-200">
             <h2 class="text-xl font-black text-gray-800">
@@ -94,9 +94,9 @@
                 <div
                     class="flex items-center bg-white rounded-lg border border-gray-200 p-1.5 shadow-sm flex-1 sm:flex-none">
                     <label class="inline-flex items-center cursor-pointer w-full">
-                        <input type="hidden" name="visible" value="0">
+                        <input type="hidden" name="visible" value="0" >
                         <input type="checkbox" name="visible" value="1"
-                            class="form-checkbox h-5 w-5 text-[#4CAF50] rounded border-gray-300 focus:ring-[#4CAF50] mr-3 ml-2">
+                            class="form-checkbox h-5 w-5 text-[#4CAF50] rounded border-gray-300 focus:ring-[#4CAF50] mr-3 ml-2" checked>
                         <span class="text-gray-700 font-medium">Fondo + Logo</span>
                     </label>
                 </div>
@@ -143,7 +143,7 @@
                         <label class="inline-flex items-center cursor-pointer w-full">
                             <input type="hidden" name="visible" value="0">
                             <input type="checkbox" name="visible" value="1"
-                                class="form-checkbox h-5 w-5 text-[#4CAF50] rounded border-gray-300 focus:ring-[#4CAF50] mr-3 ml-2">
+                                class="form-checkbox h-5 w-5 text-[#4CAF50] rounded border-gray-300 focus:ring-[#4CAF50] mr-3 ml-2" checked>
                             <span class="text-gray-700 font-medium">Fondo + Logo</span>
                         </label>
                     </div>

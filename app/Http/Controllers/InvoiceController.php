@@ -147,6 +147,7 @@ class InvoiceController extends Controller
         }
     }
 
+
     private function generateInvoiceWordDocument(Invoice $invoice, $visible, $isParallel = false)
     {
         $phpWord = new PhpWord();
@@ -319,10 +320,9 @@ class InvoiceController extends Controller
         $conceptsTable->addCell(1500, $tableHeaderStyle)->addText('Total', ['color' => 'FFFFFF'], $centerOptions);
         $conceptsTable->addCell(1500, $tableHeaderStyle)->addText('Total BS', ['color' => 'FFFFFF'], $centerOptions);
 
-        $counter = 1;
-        $rowCount = 0;
         $totalForeign = 0;
         $totalBs = 0;
+        $itemsToShow = [];
 
         foreach ($invoice->items as $item) {
             $amount = $item->is_amount_parallel ? $item->amount_parallel : $item->amount;
@@ -331,26 +331,47 @@ class InvoiceController extends Controller
                 if ($item->exchange_rate != $invoice->exchange_rate) {
                     $exchangeRateDifference = abs($invoice->exchange_rate - $item->exchange_rate);
                     $amountBs = $amount * $exchangeRateDifference;
-                } else {
-                    $amountBs = $amount * $invoice->exchange_rate;
+
+                    $itemsToShow[] = [
+                        'description' => $item->description,
+                        'amount' => $amount,
+                        'amountBs' => $amountBs,
+                        'quantity'=> $item->quantity,
+                        'show' => true
+                    ];
+                    $totalForeign += $amount;
+                    $totalBs += $amountBs;
                 }
             } else {
+                // Mostrar todos los items, convertir usando exchange_rate de billing_note
                 $amountBs = $amount * $invoice->exchange_rate;
+                $itemsToShow[] = [
+                    'description' => $item->description,
+                    'amount' => $amount,
+                    'amountBs' => $amountBs,
+                    'quantity'=> $item->quantity,
+                    'show' => true
+                ];
+                $totalForeign += $amount;
+                $totalBs += $amountBs;
             }
+        }
 
-            $totalForeign += $amount;
-            $totalBs += $amountBs;
-
-            $bgColor = ($rowCount % 2 == 0) ? 'F2F6FC' : 'FFFFFF';
-            $conceptsTable->addRow(350, ['bgColor' => $bgColor]);
-            $conceptsTable->addCell(500)->addText($counter, null, $centerOptions);
-            $conceptsTable->addCell(4000)->addText($item->description, null, $paragraphOptions);
-            $conceptsTable->addCell(1000)->addText($item->quantity, null, $centerOptions);
-            $conceptsTable->addCell(1500)->addText($item->currency . ' ' . number_format($amount, 2), null, $rightOptions);
-            $conceptsTable->addCell(1500)->addText($item->currency . ' ' . number_format($amount, 2), null, $rightOptions);
-            $conceptsTable->addCell(1500)->addText('BS ' . number_format($amountBs, 2), null, $rightOptions);
-            $counter++;
-            $rowCount++;
+        $counter = 1;
+        $rowCount = 0;
+        foreach ($itemsToShow as $item) {
+            if ($item['show']) {
+                $bgColor = ($rowCount % 2 == 0) ? 'F2F6FC' : 'FFFFFF';
+                $conceptsTable->addRow(350, ['bgColor' => $bgColor]);
+                $conceptsTable->addCell(500)->addText($counter, null, $centerOptions);
+                $conceptsTable->addCell(4000)->addText($item['description'], null, $paragraphOptions);
+                $conceptsTable->addCell(1000)->addText($item['quantity'], null, $centerOptions);
+                $conceptsTable->addCell(1500)->addText($invoice->currency . ' ' . number_format($item['amount'], 2), null, $rightOptions);
+                $conceptsTable->addCell(1500)->addText($invoice->currency . ' ' . number_format($item['amount'], 2), null, $rightOptions);
+                $conceptsTable->addCell(1500)->addText('BS ' . number_format($item['amountBs'], 2), null, $rightOptions);
+                $counter++;
+                $rowCount++;
+            }
         }
 
         $section->addTextBreak(1);
@@ -375,7 +396,13 @@ class InvoiceController extends Controller
         $totalInnerTable->addRow();
         $totalInnerTable->addCell(2000)->addText('Subtotal:', ['bold' => true], $rightOptions);
         $totalInnerTable->addCell(2500)->addText($invoice->currency . ' ' . number_format($invoice->subtotal, 2), null, $rightOptions);
-        $totalInnerTable->addCell(2500)->addText('BS ' . number_format($invoice->subtotal * $invoice->exchange_rate, 2), null, $rightOptions);
+
+        if($isParallel ){
+            $totalInnerTable->addCell(2500)->addText('BS ' . number_format($totalBs, 2), null, $rightOptions);
+        }
+        else{
+            $totalInnerTable->addCell(2500)->addText('BS ' . number_format($invoice->subtotal * $invoice->exchange_rate, 2), null, $rightOptions);
+        }
 
         $totalInnerTable->addRow();
         $totalInnerTable->addCell(2000)->addText('IVA (0%):', ['bold' => true], $rightOptions);
@@ -449,61 +476,61 @@ class InvoiceController extends Controller
         ]);
 
         // Información de la empresa
-        $section->addText(
-            'NOVALOGBO SRL',
-            [
-                'size' => 8,
-                'bold' => true
-            ],
-            [
-                'spaceBefore' => Converter::pointToTwip(8),
-                'spaceAfter' => 0,
-            ]
-        );
-        $section->addText(
-            'NIT: 412B48023',
-            [
-                'size' => 8,
-                'bold' => true
-            ],
-            [
-                'spaceAfter' => 0,
-                'spaceBefore' => 0,
-            ]
-        );
-        $section->addText(
-            'BANCO BISA',
-            [
-                'size' => 8,
-                'bold' => true
-            ],
-            [
-                'spaceAfter' => 0,
-                'spaceBefore' => 0,
-            ]
-        );
-        $section->addText(
-            'BS: 7994826010',
-            [
-                'size' => 8,
-                'bold' => true
-            ],
-            [
-                'spaceAfter' => 0,
-                'spaceBefore' => 0,
-            ]
-        );
-        $section->addText(
-            'BS: 7994829064',
-            [
-                'size' => 8,
-                'bold' => true
-            ],
-            [
-                'spaceAfter' => 0,
-                'spaceBefore' => 0,
-            ]
-        );
+        // $section->addText(
+        //     'NOVALOGBO SRL',
+        //     [
+        //         'size' => 8,
+        //         'bold' => true
+        //     ],
+        //     [
+        //         'spaceBefore' => Converter::pointToTwip(8),
+        //         'spaceAfter' => 0,
+        //     ]
+        // );
+        // $section->addText(
+        //     'NIT: 412B48023',
+        //     [
+        //         'size' => 8,
+        //         'bold' => true
+        //     ],
+        //     [
+        //         'spaceAfter' => 0,
+        //         'spaceBefore' => 0,
+        //     ]
+        // );
+        // $section->addText(
+        //     'BANCO BISA',
+        //     [
+        //         'size' => 8,
+        //         'bold' => true
+        //     ],
+        //     [
+        //         'spaceAfter' => 0,
+        //         'spaceBefore' => 0,
+        //     ]
+        // );
+        // $section->addText(
+        //     'BS: 7994826010',
+        //     [
+        //         'size' => 8,
+        //         'bold' => true
+        //     ],
+        //     [
+        //         'spaceAfter' => 0,
+        //         'spaceBefore' => 0,
+        //     ]
+        // );
+        // $section->addText(
+        //     'BS: 7994829064',
+        //     [
+        //         'size' => 8,
+        //         'bold' => true
+        //     ],
+        //     [
+        //         'spaceAfter' => 0,
+        //         'spaceBefore' => 0,
+        //     ]
+        // );
 
         // Generar el archivo
         $cleanRef = str_replace('/', '_', $invoice->invoice_number);

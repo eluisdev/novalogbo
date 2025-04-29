@@ -862,61 +862,61 @@ class OperationController extends Controller
 
 
         // Información de la empresa
-        $section->addText(
-            'NOVALOGBO SRL',
-            [
-                'size' => 8,
-                'bold' => true
-            ],
-            [
-                'spaceBefore' => Converter::pointToTwip(8),
-                'spaceAfter' => 0,
-            ]
-        );
-        $section->addText(
-            'NIT: 412B48023',
-            [
-                'size' => 8,
-                'bold' => true
-            ],
-            [
-                'spaceAfter' => 0,
-                'spaceBefore' => 0,
-            ]
-        );
-        $section->addText(
-            'BANCO BISA',
-            [
-                'size' => 8,
-                'bold' => true
-            ],
-            [
-                'spaceAfter' => 0,
-                'spaceBefore' => 0,
-            ]
-        );
-        $section->addText(
-            'BS: 7994826010',
-            [
-                'size' => 8,
-                'bold' => true
-            ],
-            [
-                'spaceAfter' => 0,
-                'spaceBefore' => 0,
-            ]
-        );
-        $section->addText(
-            'BS: 7994829064',
-            [
-                'size' => 8,
-                'bold' => true
-            ],
-            [
-                'spaceAfter' => 0,
-                'spaceBefore' => 0,
-            ]
-        );
+        // $section->addText(
+        //     'NOVALOGBO SRL',
+        //     [
+        //         'size' => 8,
+        //         'bold' => true
+        //     ],
+        //     [
+        //         'spaceBefore' => Converter::pointToTwip(8),
+        //         'spaceAfter' => 0,
+        //     ]
+        // );
+        // $section->addText(
+        //     'NIT: 412B48023',
+        //     [
+        //         'size' => 8,
+        //         'bold' => true
+        //     ],
+        //     [
+        //         'spaceAfter' => 0,
+        //         'spaceBefore' => 0,
+        //     ]
+        // );
+        // $section->addText(
+        //     'BANCO BISA',
+        //     [
+        //         'size' => 8,
+        //         'bold' => true
+        //     ],
+        //     [
+        //         'spaceAfter' => 0,
+        //         'spaceBefore' => 0,
+        //     ]
+        // );
+        // $section->addText(
+        //     'BS: 7994826010',
+        //     [
+        //         'size' => 8,
+        //         'bold' => true
+        //     ],
+        //     [
+        //         'spaceAfter' => 0,
+        //         'spaceBefore' => 0,
+        //     ]
+        // );
+        // $section->addText(
+        //     'BS: 7994829064',
+        //     [
+        //         'size' => 8,
+        //         'bold' => true
+        //     ],
+        //     [
+        //         'spaceAfter' => 0,
+        //         'spaceBefore' => 0,
+        //     ]
+        // );
 
         // Guardar y descargar el documento
         $cleanRef = str_replace('/', '_', $billingNote->note_number);
